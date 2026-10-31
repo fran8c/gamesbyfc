@@ -1,0 +1,3095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Pappies Monopoly</title>
+<style>
+  :root{
+    --bg:#070b16; --bg-grad-a:#0d1730; --bg-grad-b:#1a0f24;
+    --surface:#111a2e; --surface-2:#0b1220; --surface-3:#1a2440;
+    --border:#1f2d4a; --border-hi:#2d4066;
+    --text:#e8eefc; --text-dim:#8294b5; --text-muted:#5d6f92;
+    --accent:#38bdf8; --accent-rgb:56,189,248;
+    --accent-glow:rgba(56,189,248,.35); --accent-dim:rgba(56,189,248,.15); --accent-faint:rgba(56,189,248,.05);
+    --gold:#fbbf24; --danger:#fb7185; --success:#4ade80; --pink:#ec4899; --cyan:#22d3ee;
+    --radius-sm:6px; --radius:12px; --radius-lg:18px; --radius-pill:999px;
+    --board-size:500px;
+    --safe-top:env(safe-area-inset-top,0px); --safe-bottom:env(safe-area-inset-bottom,0px);
+    --font:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;
+    --font-display:"Inter","Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;
+    --ease:cubic-bezier(.2,.8,.2,1);
+  }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:var(--font); color:var(--text);
+    background:
+      radial-gradient(1200px 800px at 20% -20%,var(--bg-grad-a) 0%,transparent 55%),
+      radial-gradient(900px 600px at 110% 10%,var(--bg-grad-b) 0%,transparent 50%),
+      var(--bg);
+    background-attachment:fixed; min-height:100dvh;
+    -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent;
+    overscroll-behavior-y:none; font-size:15px; line-height:1.4;
+  }
+  button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+  input,select,textarea{
+    font:inherit;color:inherit;background:var(--surface-2);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:10px 12px;font-size:16px;min-height:44px;
+    transition:border-color .15s,box-shadow .15s;
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+  select{
+    appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='%238294b5' d='M0 0l5 6 5-6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;
+  }
+  option{background:var(--surface-2);color:var(--text)}
+  button.btn{
+    background:linear-gradient(180deg,#2f6bda,#1d4ed8);color:#fff;font-weight:600;
+    padding:12px 20px;border-radius:var(--radius-sm);min-height:44px;
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    transition:transform .1s var(--ease),filter .15s,box-shadow .15s;
+    box-shadow:0 1px 0 rgba(255,255,255,.12) inset,0 2px 6px rgba(0,0,0,.3);
+    user-select:none;touch-action:manipulation;white-space:nowrap;
+  }
+  button.btn:hover{filter:brightness(1.12)}
+  button.btn:active{transform:translateY(1px) scale(.98)}
+  button.btn:disabled{opacity:.4;cursor:not-allowed;filter:grayscale(.6)}
+  button.btn.ghost{background:var(--surface-3);color:var(--text);border:1px solid var(--border-hi);box-shadow:none}
+  button.btn.ghost:hover{background:var(--border)}
+  button.btn.success{background:linear-gradient(180deg,#22c55e,#16a34a)}
+  button.btn.danger{background:linear-gradient(180deg,#f43f5e,#be123c)}
+  button.btn.dice{
+    background:linear-gradient(135deg,#7c3aed,#db2777);
+    box-shadow:0 4px 20px rgba(219,39,119,.35),0 0 0 2px var(--accent-glow),0 0 22px var(--accent-glow);
+    transition:box-shadow .45s ease;
+  }
+  button.icon-btn{
+    width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;
+    border-radius:10px;background:var(--surface-3);border:1px solid var(--border);
+    font-size:18px;transition:background .15s;touch-action:manipulation;
+  }
+  button.icon-btn:hover{background:var(--border)}
+
+  /* ==================== SETUP ==================== */
+  .back-link{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 14px;margin:0 0 14px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--text-dim);text-decoration:none;background:var(--surface-3);border:1px solid var(--border-hi)}
+  .back-link:hover{color:var(--text);border-color:var(--accent)}
+  #setup{max-width:640px;margin:0 auto;padding:calc(20px + var(--safe-top)) 16px calc(24px + var(--safe-bottom));min-height:100dvh}
+  .brand{text-align:center;margin-bottom:24px}
+  .brand h1{font-family:var(--font-display);font-size:clamp(28px,8vw,40px);letter-spacing:.08em;font-weight:900;margin:0;line-height:1;color:#fff}
+  .brand h1 .accent{color:var(--cyan);text-shadow:0 0 20px rgba(34,211,238,.6)}
+  .brand h1 .pink{color:#fff;text-shadow:0 0 8px rgba(244,114,182,.9),0 0 24px rgba(236,72,153,.7),0 0 48px rgba(219,39,119,.5)}
+  .brand p{margin:10px 0 0;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--text-muted);font-weight:600}
+  .brand .subtag{margin-top:8px;font-size:12px;color:var(--text-dim);letter-spacing:.02em;line-height:1.5;font-style:italic}
+  .setup-card{
+    background:linear-gradient(180deg,rgba(17,26,46,.9),rgba(11,18,32,.9));
+    border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;
+    backdrop-filter:blur(20px);box-shadow:0 24px 60px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.04) inset;
+  }
+  .counters{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .counter{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+  .counter-label{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);font-weight:700}
+  .counter-controls{display:flex;align-items:center;gap:8px}
+  .counter-btn{
+    width:36px;height:36px;border-radius:8px;background:var(--surface-3);
+    border:1px solid var(--border-hi);font-size:20px;
+    display:flex;align-items:center;justify-content:center;font-weight:300;transition:background .15s;
+  }
+  .counter-btn:hover{background:var(--border)}
+  .counter-btn:active{transform:scale(.94)}
+  .counter-val{flex:1;text-align:center;font-size:22px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums}
+  .quick-actions{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-bottom:20px}
+  .quick-actions .btn{min-height:48px}
+  .quick-actions .icon-toggle{width:48px;padding:0;font-size:18px;transition:opacity .2s,filter .2s,box-shadow .3s}
+  .quick-actions .icon-toggle.muted{opacity:.35;filter:grayscale(1)}
+  .quick-actions .icon-toggle:not(.muted){animation:musicPulse 2.4s ease-in-out infinite}
+  @keyframes musicPulse{0%,100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}50%{box-shadow:0 0 0 4px rgba(56,189,248,.15)}}
+  #humanConfigs h3,#aiConfigs h3{font-size:11px;text-transform:uppercase;letter-spacing:.16em;color:var(--text-muted);margin:18px 0 10px;font-weight:700}
+  .cfg{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px}
+  .cfg-row{display:flex;gap:8px;flex-wrap:wrap}
+  .cfg-row > *{flex:1 1 140px}
+  .cfg-label{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.1em}
+  .sesHint,.blurb{font-size:12px;line-height:1.5;color:var(--text-dim);padding-top:4px}
+  .start-row{display:flex;flex-direction:column;gap:10px;margin-top:20px}
+  .start-row .btn{width:100%;min-height:52px;font-size:16px;font-weight:700;letter-spacing:.02em}
+  #setupError{color:var(--danger);font-size:13px;text-align:center;min-height:18px}
+
+  /* ==================== GAME SHELL ==================== */
+  #game{display:none;min-height:100dvh;flex-direction:column}
+  #game.visible{display:flex}
+  #gameLeft{display:flex;flex-direction:column;min-width:0;min-height:0}
+  #appHeader{
+    position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;
+    padding:calc(10px + var(--safe-top)) 14px 10px;
+    background:linear-gradient(180deg,rgba(7,11,22,.95) 70%,rgba(7,11,22,0));
+    backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  }
+  .logo-mini{font-family:var(--font-display);font-size:15px;font-weight:900;letter-spacing:.08em;color:#fff;text-shadow:0 0 12px rgba(236,72,153,.7);white-space:nowrap}
+  .logo-mini span{color:var(--cyan);text-shadow:0 0 10px rgba(34,211,238,.6)}
+  .round-badge{flex:1;display:flex;justify-content:center;font-size:12px;color:var(--text-dim);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .round-badge b{color:var(--text);font-weight:700}
+  .hdr-btns{display:flex;gap:6px}
+
+  /* PLAYER STRIP */
+  #playerStrip{
+    display:flex;gap:8px;padding:6px 14px 10px;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;scroll-snap-type:x proximity;
+  }
+  #playerStrip::-webkit-scrollbar{display:none}
+  .pchip{
+    flex:0 0 auto;display:flex;align-items:center;gap:8px;background:var(--surface);
+    border:1px solid var(--border);border-radius:var(--radius-pill);
+    padding:6px 12px 6px 6px;scroll-snap-align:start;max-width:240px;cursor:pointer;
+    transition:border-color .3s,box-shadow .3s,transform .3s,background .3s;
+  }
+  .pchip.current{
+    border-color:var(--accent);
+    box-shadow:0 0 0 2px var(--accent-glow),0 4px 16px var(--accent-glow);
+    background:linear-gradient(180deg,var(--accent-faint),var(--surface));
+    transform:scale(1.03);
+  }
+  .pchip.dead{opacity:.35;filter:grayscale(1)}
+  .pchip-token{
+    width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:16px;flex:0 0 auto;box-shadow:0 2px 6px rgba(0,0,0,.4);overflow:hidden;
+  }
+  .pchip-token img{width:100%;height:100%;object-fit:cover}
+  .pchip-info{min-width:0;display:flex;flex-direction:column;gap:1px}
+  .pchip-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+  .pchip-cash{font-size:11px;color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
+  .pchip-tier{font-size:9px;padding:1px 6px;border-radius:var(--radius-pill);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  .pchip-tier[data-t="1"]{background:rgba(251,191,36,.15);color:var(--gold)}
+  .pchip-tier[data-t="2"]{background:rgba(165,180,252,.15);color:#a5b4fc}
+  .pchip-tier[data-t="3"]{background:rgba(56,189,248,.15);color:var(--accent)}
+  .pchip-tier[data-t="4"]{background:rgba(148,163,184,.15);color:#94a3b8}
+
+  /* MARKET BAR */
+  #marketBar{
+    display:flex;align-items:center;gap:14px;padding:8px 14px;
+    background:var(--surface-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    font-size:11.5px;color:var(--text-dim);overflow-x:auto;white-space:nowrap;
+    scrollbar-width:none;letter-spacing:.02em;
+  }
+  #marketBar::-webkit-scrollbar{display:none}
+  .mkt-item{display:inline-flex;align-items:center;gap:4px;flex:0 0 auto}
+  .mkt-item b{color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+  .mkt-gap b{color:#fda4af}
+  .mkt-leader{color:var(--gold);cursor:pointer}
+  .mkt-leader b{color:var(--gold)}
+  .mkt-sep{color:var(--border-hi)}
+
+  /* ==================== BOARD 3D ==================== */
+  #boardWrap{
+    flex:1;display:flex;justify-content:center;align-items:flex-start;
+    padding:6px 12px 8px;min-height:0;
+    perspective:2000px;perspective-origin:50% 40%;overflow:visible;
+  }
+  #board{
+    width:100%;max-width:min(100%,820px);aspect-ratio:1/1;
+    display:grid;grid-template-columns:repeat(11,minmax(0,1fr));grid-template-rows:repeat(11,minmax(0,1fr));
+    gap:1.5px;padding:4px;border-radius:12px;background:#1a2440;
+    position:relative;isolation:isolate;transform-style:preserve-3d;transform-origin:50% 50%;
+    transition:transform .6s cubic-bezier(.2,.8,.2,1),box-shadow .5s ease;
+    box-shadow:0 0 0 1px #2a3a63,0 0 0 2px #0a1220,0 0 42px var(--accent-glow),inset 0 0 60px var(--accent-faint);
+  }
+  body.tilt-3d #board{transform:rotateX(40deg) rotateZ(-2deg) translateZ(0)}
+  @media (max-width:1023px){body.tilt-3d #board{transform:rotateX(26deg) rotateZ(-1deg)}}
+  #board::before{
+    content:"";position:absolute;inset:0;border-radius:14px;
+    background:linear-gradient(180deg,#18223c 0%,#070c18 100%);
+    transform:translateZ(-18px);pointer-events:none;z-index:-2;
+    box-shadow:0 8px 0 -1px #0d1526,0 16px 0 -2px #080d1a,0 24px 0 -3px #050812,0 50px 80px rgba(0,0,0,.85),0 90px 140px rgba(0,0,0,.45);
+  }
+  @media (max-width:1023px){#board::before{transform:translateZ(-10px)}}
+  #board::after{
+    content:"";position:absolute;inset:0;border-radius:12px;
+    transform:translateZ(2px);pointer-events:none;z-index:20;
+    background:linear-gradient(135deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.03) 18%,transparent 42%,transparent 58%,rgba(0,0,0,.10) 82%,rgba(0,0,0,.22) 100%);
+    mix-blend-mode:overlay;
+  }
+  .space{
+    position:relative;background:#dbe4f2;color:#0b1020;border-radius:3px;
+    font-size:max(7px,calc(var(--board-size)/56));line-height:1.06;
+    padding:calc(var(--board-size)/95) 2px 2px;
+    display:flex;flex-direction:column;cursor:pointer;
+    transform:translateZ(1px);transform-style:preserve-3d;touch-action:manipulation;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.18),inset 1px 0 0 rgba(255,255,255,.12),inset -1px 0 0 rgba(0,0,0,.10);
+  }
+  .space::before{
+    content:"";position:absolute;inset:0;border-radius:3px;background:rgba(0,0,0,.55);
+    transform:translateZ(-2px) translate(1.5px,2.5px);filter:blur(2.5px);pointer-events:none;z-index:-1;
+  }
+  body:not(.tilt-3d) .space::before{display:none}
+  .space .band{position:absolute;top:0;left:0;right:0;height:calc(var(--board-size)/92);background:var(--band,#94a3b8);border-radius:3px 3px 0 0}
+  .space .sname{font-weight:800;word-break:break-word;hyphens:auto;margin-top:2px}
+  .space .sprice{opacity:.55;font-size:.85em;font-weight:600}
+  .space .gate{position:absolute;top:calc(var(--board-size)/95);left:3px;font-size:.75em;font-weight:900;color:#7c2d12}
+  .space .owner{
+    position:absolute;top:calc(var(--board-size)/95);right:3px;
+    width:calc(var(--board-size)/60);height:calc(var(--board-size)/60);
+    border-radius:50%;display:none;border:1px solid rgba(0,0,0,.4);
+    box-shadow:0 1px 3px rgba(0,0,0,.3);transform:translateZ(3px);z-index:2;
+  }
+  .space .mort{
+    position:absolute;right:2px;bottom:calc(var(--board-size)/40);background:#b91c1c;color:#fff;
+    font-size:.75em;font-weight:800;border-radius:3px;padding:0 3px;
+    display:none;transform:translateZ(3px);z-index:2;
+  }
+  .space .tokens{
+    position:absolute;bottom:2px;left:2px;right:2px;
+    display:flex;flex-wrap:wrap;gap:1px;justify-content:center;
+    z-index:3;pointer-events:none;transform-style:preserve-3d;
+  }
+  .space.corner{background:#c7d2e6;justify-content:center;align-items:center;text-align:center;font-weight:800}
+  .space.chance{background:#fef3c7}
+  .space.chest{background:#cffafe}
+  .space.tax{background:#fed7aa}
+  .space.station{background:#cbd5e1}
+  .space.utility{background:#d1d5db}
+  .space.kopitiam{background:#d9f99d}
+  .space .art{position:absolute;right:2px;bottom:2px;font-size:calc(var(--board-size)/46);line-height:1;opacity:.5;pointer-events:none}
+  .space.corner .art{position:static;font-size:calc(var(--board-size)/22);opacity:.85}
+  .tok{
+    position:relative;border-radius:50%;
+    width:calc(var(--board-size)/34);height:calc(var(--board-size)/34);
+    display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--board-size)/44);line-height:1;color:#fff;
+    box-shadow:0 0 0 1.5px #fff,0 2px 6px rgba(0,0,0,.5);
+    transform:translateZ(16px);
+    transition:transform .25s cubic-bezier(.2,.8,.2,1),box-shadow .25s;
+  }
+  .tok img{width:100%;height:100%;object-fit:cover;border-radius:50%}
+  .tok::after{
+    content:"";position:absolute;left:55%;top:60%;width:95%;height:95%;
+    transform:translate(-50%,-50%) translateZ(-16px);
+    background:radial-gradient(ellipse at center,rgba(0,0,0,.6) 0%,rgba(0,0,0,.28) 35%,transparent 72%);
+    border-radius:50%;pointer-events:none;filter:blur(1px);z-index:-1;
+  }
+  .tok.active{
+    z-index:5;
+    box-shadow:0 0 0 2px #fde047,0 0 14px rgba(253,224,71,.95),0 4px 12px rgba(0,0,0,.5);
+    animation:hop3d .95s ease-in-out infinite;
+  }
+  @keyframes hop3d{0%,100%{transform:translateZ(20px)}50%{transform:translateZ(34px)}}
+  .tok.active::after{animation:hopShadow .95s ease-in-out infinite}
+  @keyframes hopShadow{
+    0%,100%{transform:translate(-50%,-50%) translateZ(-20px) scale(1);opacity:.85;filter:blur(1px)}
+    50%{transform:translate(-50%,-50%) translateZ(-34px) scale(.55);opacity:.35;filter:blur(2.5px)}
+  }
+  .space.here{outline:none}
+  .space.here::after{
+    content:"";position:absolute;inset:-1px;border:2px solid var(--accent);border-radius:4px;
+    transform:translateZ(6px);
+    box-shadow:0 0 14px var(--accent-glow),0 0 30px var(--accent-glow),inset 0 0 12px var(--accent-glow);
+    pointer-events:none;transition:border-color .3s,box-shadow .3s;
+    animation:ringPulse 1.8s ease-in-out infinite;
+  }
+  @keyframes ringPulse{0%,100%{opacity:.85}50%{opacity:1}}
+
+  /* ==================== CENTER PANEL — 3-zone vertical layout ==================== */
+  #center{
+    grid-area:2 / 2 / 11 / 11;
+    position:relative;
+    border-radius:10px;
+    overflow:hidden;
+    background:radial-gradient(circle at 50% 40%,#1e2a56 0%,#0a0f1e 68%),#080c18;
+    display:flex;
+    flex-direction:column;
+    transform:translateZ(8px);
+    transform-style:preserve-3d;
+    box-shadow:
+      0 8px 24px rgba(0,0,0,.65),
+      0 0 40px rgba(236,72,153,.08),
+      inset 0 1px 0 rgba(56,189,248,.15),
+      inset 0 0 70px rgba(236,72,153,.14),
+      inset 0 0 26px rgba(34,211,238,.10);
+  }
+  #center::before{
+    content:"";position:absolute;inset:6%;border-radius:10px;
+    border:1px dashed rgba(148,163,184,.15);pointer-events:none;z-index:1;
+  }
+
+  .center-title{
+    flex:0 0 auto;
+    position:relative;
+    z-index:2;
+    text-align:center;
+    padding:calc(var(--board-size) / 22) 4% 0;
+  }
+  .neon-main{
+    font-family:var(--font-display);
+    font-size:calc(var(--board-size) / 20);
+    font-weight:900;
+    letter-spacing:.12em;
+    color:#fff;
+    text-shadow:0 0 6px #f472b6,0 0 18px #ec4899,0 0 38px #db2777,0 0 72px #9d174d;
+    animation:flicker 6s infinite;
+  }
+  .neon-sub{
+    font-family:var(--font-display);
+    font-size:calc(var(--board-size) / 34);
+    font-weight:900;
+    letter-spacing:.28em;
+    color:#ecfeff;
+    text-shadow:0 0 6px #22d3ee,0 0 18px #06b6d4,0 0 40px #0e7490;
+    margin-top:calc(var(--board-size) / 260);
+  }
+  .neon-tag{
+    margin-top:calc(var(--board-size) / 90);
+    font-size:calc(var(--board-size) / 96);
+    letter-spacing:.34em;
+    color:#a5b4fc;
+    text-shadow:0 0 10px rgba(129,140,248,.85);
+    font-weight:700;
+  }
+  @keyframes flicker{0%,17%,21%,24%,52%,56%,100%{opacity:1}19%,23%,54%{opacity:.5}}
+
+  .center-play{
+    flex:1 1 auto;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:calc(var(--board-size) / 55);
+    padding:calc(var(--board-size) / 70) 5% calc(var(--board-size) / 55);
+    min-height:0;
+    position:relative;
+    z-index:3;
+  }
+  .center-dice{
+    display:flex;
+    gap:clamp(6px, calc(var(--board-size) / 90), 14px);
+    flex-shrink:0;
+  }
+  .die{
+    width:clamp(26px, calc(var(--board-size) / 16), 46px);
+    height:clamp(26px, calc(var(--board-size) / 16), 46px);
+    border-radius:clamp(6px, calc(var(--board-size) / 60), 12px);
+    background:linear-gradient(180deg,#f8fafc,#e2e8f0);
+    color:#0b1020;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:clamp(14px, calc(var(--board-size) / 28), 26px);
+    font-weight:900;
+    box-shadow:
+      0 4px 14px rgba(0,0,0,.55),
+      0 0 0 1px rgba(255,255,255,.15) inset,
+      0 2px 0 rgba(255,255,255,.5) inset;
+    font-variant-numeric:tabular-nums;
+  }
+  .die.roll{animation:shake .55s ease-in-out}
+  @keyframes shake{
+    0%{transform:rotate(0) scale(1)}25%{transform:rotate(-16deg) scale(1.12)}
+    50%{transform:rotate(14deg) scale(1.08)}75%{transform:rotate(-8deg) scale(1.04)}100%{transform:rotate(0) scale(1)}
+  }
+
+  .center-outcome{
+    display:none;
+    text-align:center;
+    max-width:100%;
+    flex-shrink:0;
+  }
+  .center-outcome.show{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:clamp(4px, calc(var(--board-size) / 140), 12px);
+    animation:coIn .35s ease;
+  }
+  @keyframes coIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+  .center-outcome .co-icon{
+    font-size:clamp(22px, calc(var(--board-size) / 20), 40px);
+    line-height:1;
+    filter:drop-shadow(0 0 12px var(--accent-glow));
+    animation:coIconIn .5s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes coIconIn{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+  .center-outcome .co-text{
+    font-family:var(--font-display);
+    font-size:clamp(12px, calc(var(--board-size) / 30), 24px);
+    font-weight:800;
+    line-height:1.32;
+    color:var(--text);
+    text-shadow:0 2px 12px rgba(0,0,0,.85);
+    overflow:hidden;
+    display:-webkit-box;
+    -webkit-line-clamp:4;
+    -webkit-box-orient:vertical;
+    word-break:break-word;
+    max-width:100%;
+    padding:0 3%;
+  }
+  .center-outcome.roll .co-text{color:#c4b5fd}
+  .center-outcome.buy .co-text{color:#86efac}
+  .center-outcome.buy .co-icon{filter:drop-shadow(0 0 14px rgba(74,222,128,.9))}
+  .center-outcome.pay .co-text{color:#fca5a5}
+  .center-outcome.pay .co-icon{filter:drop-shadow(0 0 14px rgba(251,113,133,.9))}
+  .center-outcome.jail .co-text{color:#c084fc}
+  .center-outcome.jail .co-icon{filter:drop-shadow(0 0 14px rgba(192,132,252,.9))}
+  .center-outcome.money .co-text{color:var(--gold)}
+  .center-outcome.money .co-icon{filter:drop-shadow(0 0 14px rgba(251,191,36,.9))}
+  .center-outcome.card .co-text{color:var(--cyan)}
+  .center-outcome.press .co-text{color:#fcd34d}
+  .center-outcome.press .co-icon{filter:drop-shadow(0 0 14px rgba(252,211,77,.9))}
+  .center-outcome.town .co-text{color:#a5f3fc}
+  .center-outcome.kopi .co-text{color:#bef264}
+  .center-outcome.gate .co-text{color:#fb923c}
+  .center-outcome.class .co-text{color:#f0abfc}
+  .center-outcome.snark .co-text{color:#94a3b8;font-style:italic}
+  .center-outcome.win .co-text{color:#fde047}
+  .center-outcome.win .co-icon{filter:drop-shadow(0 0 20px rgba(253,224,71,.95))}
+  .center-outcome.bankrupt .co-text{color:var(--danger)}
+
+  .ticker-wrap{
+    flex:0 0 auto;
+    margin:0 6% calc(var(--board-size) / 32);
+    padding:6px 0;
+    overflow:hidden;
+    position:relative;
+    border-top:1px solid rgba(56,189,248,.32);
+    border-bottom:1px solid rgba(56,189,248,.32);
+    background:linear-gradient(180deg,rgba(56,189,248,.04),transparent);
+    -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+    mask-image:linear-gradient(90deg,transparent 0,#000 7%,#000 93%,transparent 100%);
+  }
+  .ticker{
+    display:inline-block;white-space:nowrap;
+    font-size:clamp(10px, calc(var(--board-size) / 45), 18px);
+    letter-spacing:.18em;color:#c4d2ea;font-weight:700;
+    text-shadow:0 0 10px rgba(56,189,248,.3);
+    animation:scrollTicker 40s linear infinite;
+  }
+  @keyframes scrollTicker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* INFO BAR */
+  #infoBar{
+    margin:8px 12px 0;padding:10px 14px;background:var(--surface);
+    border:1px solid var(--border);border-left:3px solid var(--accent);
+    border-radius:var(--radius);font-size:13px;color:var(--text-dim);
+    transition:opacity .2s,border-color .4s;
+  }
+  #infoBar:empty{display:none}
+  #infoBar b{color:var(--text)}
+  #infoBar .hint{font-size:11px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:4px;display:block}
+
+  /* ACTION BAR */
+  #actionBar{
+    position:sticky;bottom:0;z-index:30;margin-top:10px;
+    padding:10px 12px calc(10px + var(--safe-bottom));
+    background:linear-gradient(180deg,rgba(7,11,22,.5) 0%,rgba(7,11,22,.95) 40%,var(--bg) 100%);
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--border);
+  }
+  #actionBar::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(90deg,transparent 0%,var(--accent) 35%,var(--accent) 65%,transparent 100%);
+    opacity:.7;pointer-events:none;transition:background .45s ease;
+  }
+  #actionBtns{display:flex;gap:8px}
+  #actionBtns .btn{flex:1;min-height:48px;font-size:14px;font-weight:700;border-radius:var(--radius)}
+  #statusBanner{text-align:center;font-size:12px;color:var(--text-dim);padding:2px 0 6px;letter-spacing:.02em}
+  #statusBanner:empty{display:none}
+  #statusBanner.cooling{color:#fda4af;font-weight:700;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+  /* DRAWERS */
+  .drawer{position:fixed;inset:0;z-index:100;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .25s var(--ease),visibility 0s linear .3s}
+  .drawer.open{pointer-events:auto;opacity:1;visibility:visible;transition:opacity .25s var(--ease),visibility 0s}
+  .space:focus-visible,.pchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .drawer-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(4px)}
+  .drawer-panel{
+    position:absolute;left:0;right:0;bottom:0;max-height:80dvh;
+    background:var(--surface);border-radius:var(--radius-lg) var(--radius-lg) 0 0;
+    border-top:1px solid var(--accent);display:flex;flex-direction:column;
+    transform:translateY(100%);transition:transform .3s var(--ease),border-top-color .4s;
+    padding-bottom:var(--safe-bottom);
+  }
+  .drawer.open .drawer-panel{transform:translateY(0)}
+  .drawer-header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 16px;border-bottom:1px solid var(--border);flex:0 0 auto;
+  }
+  .drawer-title{font-size:13px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--text-muted)}
+  .drawer-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+
+  /* PORTFOLIO */
+  .pd-header{display:flex;align-items:center;gap:12px;padding:16px;border-bottom:1px solid var(--border)}
+  .pd-token{
+    width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:26px;flex:0 0 auto;box-shadow:0 2px 10px rgba(0,0,0,.5);overflow:hidden;
+  }
+  .pd-info{flex:1;min-width:0}
+  .pd-name{font-size:17px;font-weight:800;color:var(--text);line-height:1.2;overflow:hidden;text-overflow:ellipsis}
+  .pd-meta{font-size:12px;color:var(--text-dim);margin-top:3px}
+  .pd-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:12px 16px;border-bottom:1px solid var(--border)}
+  .pd-stat{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+  .pd-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-muted);font-weight:700}
+  .pd-stat-val{font-size:15px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;margin-top:3px}
+  .pd-stat-val.gold{color:var(--gold)}
+  .pd-stat-val.success{color:var(--success)}
+  .pd-body{padding:12px 16px 20px}
+  .pd-group{margin-bottom:14px}
+  .pd-group-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+  .pd-group-dot{width:12px;height:12px;border-radius:3px;flex:0 0 auto;box-shadow:0 0 0 1px rgba(255,255,255,.15) inset}
+  .pd-group-name{font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:700;color:var(--text-dim)}
+  .pd-group-set{font-size:10px;padding:1px 7px;border-radius:var(--radius-pill);background:rgba(74,222,128,.15);color:var(--success);font-weight:700;letter-spacing:.04em}
+  .pd-prop{display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:4px;font-size:13px;transition:opacity .15s}
+  .pd-prop.mortgaged{opacity:.65}
+  .pd-prop-main{flex:1;min-width:0}
+  .pd-prop-name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pd-prop-sub{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pd-prop-sub .rent{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums}
+  .pd-prop-btn{
+    font-size:11px;padding:6px 10px;border-radius:6px;font-weight:700;
+    background:var(--surface-3);border:1px solid var(--border-hi);cursor:pointer;
+    white-space:nowrap;flex:0 0 auto;color:var(--text);transition:background .15s,color .15s;
+    touch-action:manipulation;min-height:30px;display:inline-flex;align-items:center;
+  }
+  .pd-prop-btn:hover{background:var(--border)}
+  .pd-prop-btn.redeem{background:rgba(74,222,128,.15);color:var(--success);border-color:rgba(74,222,128,.35)}
+  .pd-prop-btn.redeem:hover{background:rgba(74,222,128,.25)}
+  .pd-prop-btn.disabled{opacity:.4;cursor:not-allowed}
+  .pd-prop-badge{font-size:10px;padding:3px 7px;border-radius:var(--radius-pill);font-weight:800;letter-spacing:.06em;text-transform:uppercase;flex:0 0 auto}
+  .pd-prop-badge.mortgaged{background:rgba(251,113,133,.15);color:var(--danger);border:1px solid rgba(251,113,133,.3)}
+  .pd-empty{text-align:center;color:var(--text-muted);font-size:13px;padding:28px 0;font-style:italic}
+
+  /* LOG */
+  #log{padding:12px 16px;font-size:13.5px;line-height:1.55}
+  #log > div{padding:3px 0;color:#b8c6dd;border-bottom:1px solid rgba(255,255,255,.03)}
+  .log .buy{color:var(--success)}
+  .log .pay{color:#fca5a5}
+  .log .money{color:var(--gold)}
+  .log .jail{color:#c084fc}
+  .log .card{color:var(--cyan)}
+  .log .press{color:#fcd34d}
+  .log .town{color:#a5f3fc}
+  .log .kopi{color:#bef264}
+  .log .class{color:#f0abfc;font-weight:700}
+  .log .gate{color:#fb923c}
+  .log .roll{color:#c4b5fd;font-style:italic}
+  .log .win{color:#fde047;font-weight:800;font-size:14.5px}
+  .log .bankrupt{color:var(--danger);font-weight:700}
+  .log .turn{color:#7dd3fc;font-weight:700;margin-top:8px;padding-top:6px;border-top:1px solid rgba(125,211,252,.15)}
+  .log .mortgage{color:#fdba74}
+  .log .snark{color:#94a3b8;font-style:italic}
+
+  /* CARD TOAST */
+  #cardToast{
+    position:fixed;top:calc(60px + var(--safe-top));left:12px;right:12px;z-index:90;
+    background:linear-gradient(180deg,#1a2440,#0f1626);
+    border:1px solid var(--border-hi);border-left:3px solid var(--accent);
+    border-radius:var(--radius);padding:12px 14px;
+    box-shadow:0 12px 40px rgba(0,0,0,.6);
+    transform:translateY(-20px);opacity:0;pointer-events:none;
+    transition:opacity .25s,transform .3s var(--ease);max-height:40vh;overflow:hidden;
+  }
+  #cardToast.show{opacity:1;transform:translateY(0)}
+  #cardToast .card-type{font-size:10px;text-transform:uppercase;letter-spacing:.15em;font-weight:800;color:var(--accent);margin-bottom:4px}
+  #cardToast .card-text{font-size:13.5px;line-height:1.5;color:var(--text)}
+  #cardToast.press{border-left-color:var(--gold)}
+  #cardToast.press .card-type{color:var(--gold)}
+  #cardToast.town{border-left-color:var(--cyan)}
+  #cardToast.town .card-type{color:var(--cyan)}
+  #cardToast.kopi{border-left-color:#bef264}
+  #cardToast.kopi .card-type{color:#bef264}
+
+  /* MENU */
+  .menu-section{padding:16px;border-bottom:1px solid var(--border)}
+  .menu-section:last-child{border-bottom:none}
+  .menu-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;gap:12px;min-height:44px}
+  .menu-row + .menu-row{border-top:1px solid rgba(255,255,255,.05)}
+  .menu-label{font-size:14px;font-weight:500;color:var(--text)}
+  .menu-sub{font-size:12px;color:var(--text-dim);margin-top:2px}
+  .menu-row select{min-width:130px;max-width:180px}
+  .menu-row .btn{padding:8px 16px;min-height:38px;font-size:13px}
+
+  /* GAME OVER */
+  #gameOver{
+    position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;
+    padding:16px;background:rgba(7,11,22,.94);backdrop-filter:blur(14px);
+  }
+  #gameOver.show{display:flex}
+  #gameOver .game-over-card{
+    background:linear-gradient(180deg,#1a2440,#0b1220);
+    border:1px solid var(--border-hi);border-radius:var(--radius-lg);
+    padding:28px 24px 20px;text-align:center;max-width:560px;width:100%;
+    max-height:92vh;display:flex;flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.75),0 0 0 1px rgba(56,189,248,.1) inset;
+    animation:gameOverIn .5s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes gameOverIn{from{opacity:0;transform:translateY(12px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+  .game-over-emoji{font-size:48px;margin-bottom:8px}
+  .game-over-title{font-size:11px;text-transform:uppercase;letter-spacing:.22em;color:var(--text-muted);margin-bottom:8px;font-weight:700}
+  .story-title{font-family:var(--font-display);font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.2;text-shadow:0 0 24px var(--accent-glow);word-break:break-word}
+  .story-subtitle{font-size:11px;color:var(--text-muted);letter-spacing:.18em;text-transform:uppercase;margin-bottom:18px;font-weight:600}
+  .story-body{
+    flex:1;min-height:0;overflow-y:auto;text-align:left;
+    font-size:14px;line-height:1.7;color:var(--text-dim);
+    padding:8px 4px 20px;margin-bottom:14px;
+    border-top:1px solid var(--border);border-bottom:1px solid var(--border);
+    -webkit-overflow-scrolling:touch;animation:storyFade .6s ease-out .15s both;
+  }
+  .story-body::-webkit-scrollbar{width:6px}
+  .story-body::-webkit-scrollbar-thumb{background:var(--border-hi);border-radius:3px}
+  @keyframes storyFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+  .story-body p{margin:0 0 16px;color:#b8c6dd}
+  .story-body p:first-child{color:var(--text);font-size:15px;font-weight:500}
+  .story-body p:first-child::first-letter{font-size:1.6em;font-weight:900;color:var(--accent);float:left;line-height:.95;margin:3px 8px 0 0}
+  .story-body .p-name{color:var(--accent);font-weight:700}
+  .story-body .p-money{color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums}
+  #goNew{flex:0 0 auto}
+
+  /* MOBILE */
+  @media (max-width:1023px){
+    #boardWrap{max-height:none;overflow:visible}
+    #board{max-width:min(100%,62dvh)}
+    .space .sprice{display:none}
+    .space{font-size:max(7.5px,calc(var(--board-size)/50))}
+    .space .sname{line-height:1.04}
+    .space .art{display:none}
+    .space.corner .art{display:block}
+  }
+  @media (max-width:380px){
+    #actionBtns .btn{font-size:13px;padding:10px 12px}
+    .space .sshort{font-size:max(7px,calc(var(--board-size)/53)) !important;letter-spacing:-.02em}
+  }
+  @media (max-width:520px){
+    #gameOver .game-over-card{padding:20px 16px 16px;max-height:94vh}
+    .story-title{font-size:20px}
+    .story-body{font-size:13.5px;line-height:1.65}
+  }
+
+  /* DESKTOP */
+  @media (min-width:1024px){
+    #game.visible{flex-direction:column;min-height:100dvh;padding:16px;gap:14px;max-width:1120px;margin:0 auto}
+    #gameLeft{flex:1;gap:12px}
+    #appHeader{position:static;background:none;backdrop-filter:none;padding:0 0 12px;border-bottom:1px solid var(--border)}
+    #playerStrip{padding:0;flex-wrap:wrap;overflow:visible}
+    #marketBar{border-left:none;border-right:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+    #boardWrap{padding:0;align-items:center;flex:1;min-height:0}
+    #board{max-width:min(100%,calc(100dvh - 300px))}
+    #actionBar{position:relative;margin:0;padding:14px 0 0;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;border-top:1px solid var(--border)}
+    #actionBar::before{display:none}
+    #infoBar{margin:0}
+    .drawer-panel{
+      left:auto;top:0;right:0;bottom:0;width:440px;max-width:100vw;max-height:none;
+      border-radius:var(--radius-lg) 0 0 var(--radius-lg);border-top:none;
+      border-left:1px solid var(--accent);transform:translateX(100%);
+      padding-top:var(--safe-top);padding-bottom:var(--safe-bottom);
+    }
+    .drawer.open .drawer-panel{transform:translateX(0)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
+  }
+  body:not(.tilt-3d) .tok,body:not(.tilt-3d) .tok.active{transform:none;animation:none}
+  body:not(.tilt-3d) .tok::after,body:not(.tilt-3d) .tok.active::after{display:none}
+  body:not(.tilt-3d) #board::before{transform:none;background:#0a0f1e;box-shadow:0 20px 50px rgba(0,0,0,.6)}
+  body:not(.tilt-3d) #center{transform:none}
+  body:not(.tilt-3d) .space.here::after{transform:none;animation:none}
+
+  /* ==================== MOBILE PLAY LAYER ==================== */
+  .space,.pchip,#actionBar,.drawer-header{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+  html,body{touch-action:manipulation}
+  .space .sshort{display:none}
+  .space.picked{box-shadow:0 0 0 2px #fde047,inset 0 0 0 1px #fde047 !important;z-index:4}
+
+  /* prompt line + waiting state in action bar */
+  #turnPrompt{display:block;min-height:22px;
+    font-size:13px;color:var(--text-dim);padding:0 0 8px;text-align:center;line-height:1.3}
+  #turnPrompt:empty{display:none}
+  #turnPrompt b{color:var(--text)}
+  #turnPrompt.you{color:var(--accent);font-weight:700}
+  #turnPrompt.you b{color:#fff}
+  #waitRow{display:none;align-items:center;gap:10px}
+  #waitRow.show{display:flex}
+  .wait-pill{flex:1;display:flex;align-items:center;gap:10px;min-height:48px;padding:0 14px;
+    background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);font-size:13.5px;color:var(--text-dim);min-width:0}
+  .wait-pill .wtok{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex:0 0 auto;overflow:hidden}
+  .wait-pill .wtok img{width:100%;height:100%;object-fit:cover}
+  .wait-pill .wtxt{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .wait-pill .wtxt b{color:var(--text)}
+  .dots{display:inline-flex;gap:3px;margin-left:2px}
+  .dots i{width:4px;height:4px;border-radius:50%;background:var(--accent);animation:dot 1.1s infinite}
+  .dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+  @keyframes dot{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+  #ffBtn{min-height:48px;min-width:64px;padding:0 12px;font-variant-numeric:tabular-nums}
+  #rollBtn.nudge{animation:nudge 2s ease-in-out infinite}
+  @keyframes nudge{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+
+  /* drawers: grab handle for swipe-down */
+  .drawer-grab{display:none;width:40px;height:5px;border-radius:3px;background:var(--border-hi);margin:8px auto 0}
+
+  @media (max-width:1023px){
+    #gameLeft{flex:1}
+    #boardWrap{align-items:flex-start;padding:4px 8px}
+    #board{max-width:min(100%,calc(100dvh - 300px))}
+    .round-badge{visibility:hidden}
+    #playerStrip{padding:4px 12px 8px}
+    .pchip{padding:5px 10px 5px 5px}
+    .pchip-token{width:28px;height:28px;font-size:14px}
+    .space .sname{display:none}
+    .space .sshort{display:block;font-weight:800;margin-top:2px;word-break:normal;overflow-wrap:normal;hyphens:none;
+      letter-spacing:-.01em;line-height:1.02;font-size:max(7.5px,calc(var(--board-size)/48));white-space:nowrap}
+    .space .sshort.two{white-space:normal}
+    .space.corner .sshort{font-size:max(8px,calc(var(--board-size)/42))}
+    .space .art{display:block;font-size:calc(var(--board-size)/34);opacity:.35;right:1px;bottom:1px}
+    .space.corner .art{font-size:calc(var(--board-size)/20);opacity:.85}
+    .space .gate{display:none}
+    .space{padding:calc(var(--board-size)/80) 2px 2px}
+    .tok{width:calc(var(--board-size)/26);height:calc(var(--board-size)/26);font-size:calc(var(--board-size)/34)}
+    .center-outcome .co-text{font-size:clamp(13px,calc(var(--board-size)/26),22px)}
+    .neon-tag{display:none}
+    #actionBar{position:sticky;bottom:0;margin-top:auto}
+    #infoBar,#cardToast{position:fixed;left:10px;right:10px;top:auto;margin:0;z-index:90;
+      bottom:calc(var(--ab-h,96px) + 8px);box-shadow:0 12px 40px rgba(0,0,0,.6)}
+    #infoBar{background:linear-gradient(180deg,#1a2440,#0f1626);border:1px solid var(--border-hi);border-left:3px solid var(--accent);
+      padding:12px 40px 12px 14px;animation:sheetUp .22s var(--ease)}
+    #infoBar .x{position:absolute;top:6px;right:6px;width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+      color:var(--text-dim);font-size:18px;background:var(--surface-3)}
+    #cardToast{transform:translateY(16px)}
+    #cardToast.show{transform:translateY(0)}
+    #cardToast.show{pointer-events:auto}
+    .drawer-grab{display:block}
+    .drawer-header{padding-top:6px}
+  }
+  @keyframes sheetUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+  @media (min-width:1024px){ #infoBar .x{display:none} }
+
+  /* phone on its side: board left, controls right */
+  @media (max-width:1023px) and (orientation:landscape) and (max-height:560px){
+    #gameLeft{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto 1fr;column-gap:12px;
+      padding:0 calc(10px + env(safe-area-inset-right,0px)) 0 calc(10px + env(safe-area-inset-left,0px))}
+    #appHeader{grid-column:1 / -1;padding:6px 4px 4px}
+    #boardWrap{grid-column:1;grid-row:2 / 5;padding:0 0 8px}
+    #board{width:calc(100dvh - 70px);max-width:none}
+    #playerStrip{grid-column:2;grid-row:2;flex-wrap:wrap;overflow:visible;padding:0}
+    #marketBar{grid-column:2;grid-row:3;margin:6px 0;border-radius:8px;border:1px solid var(--border)}
+    #actionBar{grid-column:2;grid-row:4;align-self:end;position:relative;background:none;border-top:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+    #actionBar::before{display:none}
+    #infoBar,#cardToast{left:auto;width:min(380px,45vw)}
+  }
+</style>
+<!-- Games by FC: icons, install, back to arcade -->
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+</head>
+<body>
+
+<div id="setup">
+  <a class="back-link" href="../index.html">← All games</a>
+  <div class="brand">
+    <h1><span class="pink">PAPPIES</span> <span class="accent">MONOPOLY</span></h1>
+    <p>Singapore Property Board · 2026 Edition</p>
+    <div class="subtag">A satire about policy, prices, class and the queue at the kopitiam.</div>
+  </div>
+  <div class="setup-card">
+    <div class="counters">
+      <div class="counter">
+        <div class="counter-label">Humans</div>
+        <div class="counter-controls">
+          <button class="counter-btn" data-target="humanCount" data-dir="-1" aria-label="Fewer humans">−</button>
+          <div class="counter-val" id="humanCountVal">1</div>
+          <button class="counter-btn" data-target="humanCount" data-dir="1" aria-label="More humans">+</button>
+        </div>
+        <input type="hidden" id="humanCount" value="1">
+      </div>
+      <div class="counter">
+        <div class="counter-label">AI Opponents</div>
+        <div class="counter-controls">
+          <button class="counter-btn" data-target="aiCount" data-dir="-1" aria-label="Fewer AI">−</button>
+          <div class="counter-val" id="aiCountVal">3</div>
+          <button class="counter-btn" data-target="aiCount" data-dir="1" aria-label="More AI">+</button>
+        </div>
+        <input type="hidden" id="aiCount" value="3">
+      </div>
+    </div>
+    <div class="quick-actions">
+      <button class="btn ghost" id="randomAllBtn">🎲 Randomise All</button>
+      <button class="btn ghost icon-toggle" id="soundToggleSetup" title="Sound effects">🔊</button>
+      <button class="btn ghost icon-toggle" id="musicToggleSetup" title="Music: On">🎵</button>
+    </div>
+    <div id="humanConfigs"></div>
+    <div id="aiConfigs"></div>
+    <div class="start-row">
+      <div id="setupError"></div>
+      <button class="btn" id="startBtn" style="background:linear-gradient(135deg,#7c3aed,#db2777);box-shadow:0 4px 20px rgba(219,39,119,.35)">Start Game</button>
+    </div>
+  </div>
+</div>
+
+<div id="game">
+  <div id="gameLeft">
+    <header id="appHeader">
+      <div class="logo-mini">PAPPIES <span>M</span></div>
+      <div class="round-badge" id="roundInfo"></div>
+      <div class="hdr-btns">
+        <button class="icon-btn" id="manageBtn" aria-label="My portfolio" title="My portfolio">💼</button>
+        <button class="icon-btn" id="logBtn" aria-label="Log" title="Log">📜</button>
+        <button class="icon-btn" id="menuBtn" aria-label="Menu" title="Menu">☰</button>
+      </div>
+    </header>
+    <div id="playerStrip"></div>
+    <div id="marketBar">
+      <span class="mkt-item" id="mktRound"></span>
+      <span class="mkt-sep">·</span>
+      <span class="mkt-item mkt-gap" id="mktGap"></span>
+      <span class="mkt-sep">·</span>
+      <span class="mkt-item mkt-leader" id="mktLeader"></span>
+    </div>
+    <div id="boardWrap"><div id="board"></div></div>
+    <div id="infoBar" aria-live="polite"></div>
+    <div id="actionBar">
+      <div id="statusBanner"></div>
+      <div id="turnPrompt" aria-live="polite"></div>
+      <div id="waitRow">
+        <div class="wait-pill" id="waitPill"></div>
+        <button class="btn ghost" id="ffBtn" title="Game speed" aria-label="Change game speed">⏩ 1×</button>
+      </div>
+      <div id="actionBtns">
+        <button class="btn dice" id="rollBtn">Roll Dice</button>
+        <button class="btn success" id="buyBtn">Buy</button>
+        <button class="btn ghost" id="passBtn">Pass</button>
+        <button class="btn" id="endBtn">End Turn</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="drawer" id="playerDrawer" role="dialog" aria-modal="true" aria-label="Portfolio">
+  <div class="drawer-backdrop"></div>
+  <div class="drawer-panel">
+    <div class="drawer-grab"></div>
+    <div class="drawer-header">
+      <div class="drawer-title" id="pdTitle">Portfolio</div>
+      <button class="icon-btn" data-close-drawer aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body" id="pdContent"></div>
+  </div>
+</div>
+
+<div class="drawer" id="logDrawer" role="dialog" aria-modal="true" aria-label="Game log">
+  <div class="drawer-backdrop"></div>
+  <div class="drawer-panel">
+    <div class="drawer-grab"></div>
+    <div class="drawer-header">
+      <div class="drawer-title">Game Log</div>
+      <button class="icon-btn" data-close-drawer aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body"><div id="log" role="log" aria-live="polite"></div></div>
+  </div>
+</div>
+
+<div class="drawer" id="menuDrawer" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="drawer-backdrop"></div>
+  <div class="drawer-panel">
+    <div class="drawer-grab"></div>
+    <div class="drawer-header">
+      <div class="drawer-title">Menu</div>
+      <button class="icon-btn" data-close-drawer aria-label="Close">×</button>
+    </div>
+    <div class="drawer-body">
+      <div class="menu-section">
+        <div class="menu-row">
+          <div>
+            <div class="menu-label">Game Speed</div>
+            <div class="menu-sub">AI thinking and animations</div>
+          </div>
+          <select id="speedSel">
+            <option value="0.5">0.5× Slow</option>
+            <option value="1" selected>1× Normal</option>
+            <option value="2">2× Fast</option>
+            <option value="4">4× Very fast</option>
+            <option value="12">Instant</option>
+          </select>
+        </div>
+        <div class="menu-row">
+          <div>
+            <div class="menu-label">Sound Effects</div>
+            <div class="menu-sub">Clicks, dice, coins, cards</div>
+          </div>
+          <button class="btn ghost" id="soundToggleMenu">On</button>
+        </div>
+        <div class="menu-row">
+          <div>
+            <div class="menu-label">Background Music</div>
+            <div class="menu-sub">Lounge theme</div>
+          </div>
+          <button class="btn ghost" id="musicToggleMenu">On</button>
+        </div>
+        <div class="menu-row">
+          <div>
+            <div class="menu-label">3D Board View</div>
+            <div class="menu-sub">Tilted perspective — turn off to flatten</div>
+          </div>
+          <button class="btn ghost" id="tiltToggleMenu">On</button>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-row">
+          <div>
+            <div class="menu-label">All games</div>
+            <div class="menu-sub">Back to the Games by FC arcade</div>
+          </div>
+          <a href="../index.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:8px 16px;border-radius:var(--radius-sm);background:var(--surface-3);border:1px solid var(--border-hi);color:var(--text);font-size:13px;font-weight:600;text-decoration:none;white-space:nowrap">Arcade</a>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-row">
+          <div>
+            <div class="menu-label">New Game</div>
+            <div class="menu-sub">Abandon current game and read the story</div>
+          </div>
+          <button class="btn danger" id="newGame">Restart</button>
+        </div>
+      </div>
+      <div class="menu-section">
+        <div class="menu-sub" style="text-align:center;line-height:1.6">
+          Pappies Monopoly · 2026<br>
+          <span style="color:var(--text-muted);font-style:italic">All policies final. All appeals considered.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="cardToast">
+  <div class="card-type"></div>
+  <div class="card-text"></div>
+</div>
+
+<div id="gameOver">
+  <div class="game-over-card">
+    <div class="game-over-emoji" id="goEmoji">🏆</div>
+    <div class="game-over-title" id="goTitle">Pappies Monopoly</div>
+    <div class="story-title" id="goName">—</div>
+    <div class="story-subtitle" id="goSub"></div>
+    <div class="story-body" id="goStory"></div>
+    <button class="btn" id="goNew" style="width:100%;min-height:48px;background:linear-gradient(135deg,#7c3aed,#db2777);box-shadow:0 4px 20px rgba(219,39,119,.35)">New Game</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   SOUND
+============================================================ */
+const Sound = {
+  ctx:null, muted:false,
+  init(){
+    if(!this.ctx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) this.ctx = new AC();
+    }
+    if(this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+  },
+  beep(freq,dur,opt={}){
+    if(!this.ctx) return;
+    const {type='sine',gain=.1,when=0,slideTo=null}=opt;
+    const t0=this.ctx.currentTime+when;
+    const osc=this.ctx.createOscillator();
+    const g=this.ctx.createGain();
+    osc.type=type; osc.frequency.setValueAtTime(freq,t0);
+    if(slideTo) osc.frequency.exponentialRampToValueAtTime(Math.max(20,slideTo),t0+dur);
+    g.gain.setValueAtTime(.0001,t0);
+    g.gain.exponentialRampToValueAtTime(gain,t0+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t0+dur);
+    osc.connect(g).connect(this.ctx.destination);
+    osc.start(t0); osc.stop(t0+dur+.03);
+  },
+  _nb:{},
+  noiseBuf(dur,pow){
+    const k=dur+'|'+pow;
+    if(!this._nb[k]){
+      const len=Math.max(1,Math.floor(this.ctx.sampleRate*dur));
+      const buf=this.ctx.createBuffer(1,len,this.ctx.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let i=0;i<len;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/len,pow);
+      this._nb[k]=buf;
+    }
+    return this._nb[k];
+  },
+  noise(dur,gain=.1,when=0){
+    if(!this.ctx) return;
+    const t0=this.ctx.currentTime+when;
+    const buf=this.noiseBuf(dur,1);
+    const src=this.ctx.createBufferSource();
+    src.buffer=buf;
+    const g=this.ctx.createGain();
+    g.gain.value=gain;
+    src.connect(g).connect(this.ctx.destination);
+    src.start(t0);
+  },
+  buzz:{dice:12,buy:[18,40,18],pay:30,jail:[40,60,40],gavel:25,bankrupt:[60,80,120],win:[30,50,30,50,60],double:[12,30,12],gate:20},
+  play(name){
+    if(this.muted) return;
+    const v=this.buzz[name];
+    if(v && navigator.vibrate){ try{ navigator.vibrate(v); }catch(e){} }
+    this.init();
+    if(!this.ctx) return;
+    switch(name){
+      case 'click': this.beep(520,.06,{type:'square',gain:.045}); break;
+      case 'dice': for(let i=0;i<5;i++) this.noise(.05,.09,i*.055); break;
+      case 'shuffle': for(let i=0;i<7;i++) this.beep(400+i*90,.05,{type:'triangle',gain:.05,when:i*.045}); break;
+      case 'tick': this.beep(780,.035,{type:'triangle',gain:.04}); break;
+      case 'coin': this.beep(988,.09,{gain:.09}); this.beep(1319,.12,{gain:.07,when:.07}); break;
+      case 'buy': this.beep(523,.12,{gain:.10}); this.beep(784,.20,{gain:.10,when:.10}); break;
+      case 'pay': this.beep(392,.13,{type:'sawtooth',gain:.07}); this.beep(262,.22,{type:'sawtooth',gain:.07,when:.10}); break;
+      case 'press': this.beep(660,.07,{gain:.06}); this.beep(880,.07,{gain:.06,when:.06}); this.beep(1320,.10,{gain:.05,when:.12}); break;
+      case 'town': this.beep(494,.10,{gain:.06}); this.beep(622,.14,{gain:.06,when:.09}); break;
+      case 'kopi': this.noise(.14,.10); this.beep(330,.09,{gain:.05,when:.02}); break;
+      case 'gavel': this.noise(.09,.22); this.beep(120,.18,{type:'square',gain:.10,slideTo:60,when:.05}); break;
+      case 'rally': [392,523,659].forEach((f,i)=>this.beep(f,.18,{type:'square',gain:.06,when:i*.07})); break;
+      case 'jail': this.beep(150,.38,{type:'square',gain:.085,slideTo:70}); break;
+      case 'mortgage': this.beep(300,.18,{type:'triangle',gain:.07,slideTo:170}); break;
+      case 'turn': this.beep(660,.08,{gain:.055}); break;
+      case 'bankrupt': this.beep(420,.55,{type:'sawtooth',gain:.09,slideTo:60}); break;
+      case 'cooling': this.beep(880,.14,{gain:.07}); this.beep(660,.14,{gain:.07,when:.13}); this.beep(440,.26,{gain:.07,when:.26}); break;
+      case 'inflation': this.beep(240,.10,{gain:.05}); this.beep(300,.10,{gain:.05,when:.09}); this.beep(360,.18,{gain:.05,when:.18}); break;
+      case 'up': [523,659,880].forEach((f,i)=>this.beep(f,.16,{gain:.08,when:i*.09})); break;
+      case 'down': [523,415,330].forEach((f,i)=>this.beep(f,.18,{type:'triangle',gain:.08,when:i*.10})); break;
+      case 'gate': this.beep(300,.10,{type:'square',gain:.06}); this.beep(200,.20,{type:'square',gain:.06,when:.09}); break;
+      case 'win': [523,659,784,1047].forEach((f,i)=>this.beep(f,.24,{gain:.10,when:i*.13})); break;
+      case 'start': [392,523,659,784].forEach((f,i)=>this.beep(f,.16,{gain:.085,when:i*.09})); break;
+      case 'double': this.beep(700,.10,{gain:.08}); this.beep(900,.14,{gain:.08,when:.08}); this.beep(1200,.18,{gain:.08,when:.18}); break;
+    }
+  }
+};
+
+/* ============================================================
+   MUSIC
+============================================================ */
+const Music = {
+  playing:false, timerID:null, nextNoteTime:0, step:0, bpm:88,
+  masterGain:null, volume:0.35, muted:false,
+  get stepDur(){ return 60/this.bpm/4; },
+  ensureMaster(){
+    if(!Sound.ctx) return false;
+    if(!this.masterGain){
+      this.masterGain=Sound.ctx.createGain();
+      this.masterGain.gain.value=this.muted?0:this.volume;
+      this.masterGain.connect(Sound.ctx.destination);
+    }
+    return true;
+  },
+  start(){
+    if(this.playing) return;
+    Sound.init();
+    if(!this.ensureMaster()) return;
+    if(Sound.ctx.state==='suspended') Sound.ctx.resume();
+    this.playing=true; this.step=0;
+    this.nextNoteTime=Sound.ctx.currentTime+0.15;
+    if(this.timerID) clearInterval(this.timerID);
+    this.timerID=setInterval(()=>this.scheduler(),40);
+    const t=Sound.ctx.currentTime;
+    this.masterGain.gain.cancelScheduledValues(t);
+    this.masterGain.gain.setValueAtTime(this.muted?0:this.volume,t);
+  },
+  stop(fade=true){
+    if(!this.playing) return;
+    this.playing=false;
+    if(this.timerID){ clearInterval(this.timerID); this.timerID=null; }
+    if(fade && this.masterGain && Sound.ctx){
+      const t=Sound.ctx.currentTime;
+      this.masterGain.gain.cancelScheduledValues(t);
+      this.masterGain.gain.setValueAtTime(this.masterGain.gain.value,t);
+      this.masterGain.gain.linearRampToValueAtTime(0,t+0.5);
+    }
+  },
+  setMuted(m){
+    this.muted=m;
+    if(this.masterGain && Sound.ctx){
+      const t=Sound.ctx.currentTime;
+      this.masterGain.gain.cancelScheduledValues(t);
+      this.masterGain.gain.setValueAtTime(this.masterGain.gain.value,t);
+      this.masterGain.gain.linearRampToValueAtTime(m?0:this.volume,t+0.2);
+    }
+  },
+  scheduler(){
+    if(!Sound.ctx || !this.playing) return;
+    const horizon=Sound.ctx.currentTime+0.2;
+    while(this.nextNoteTime<horizon){
+      this.playStep(this.step,this.nextNoteTime);
+      this.nextNoteTime+=this.stepDur;
+      this.step=(this.step+1)%64;
+    }
+  },
+  playStep(step,time){
+    const bar=Math.floor(step/16), pos=step%16;
+    const chords=[
+      {root:130.81,notes:[261.63,329.63,392.00,493.88]},
+      {root:110.00,notes:[220.00,261.63,329.63,392.00]},
+      {root:87.31,notes:[174.61,220.00,261.63,329.63]},
+      {root:98.00,notes:[196.00,246.94,293.66,349.23]}
+    ];
+    const c=chords[bar];
+    if(pos===0) c.notes.forEach(f=>this.tone(f,time,this.stepDur*16,'sine',0.016,false));
+    if(pos===0||pos===8) this.tone(c.root,time,this.stepDur*7,'triangle',0.05,false);
+    if(pos===12&&(bar===1||bar===3)){
+      const next=chords[(bar+1)%4];
+      this.tone((c.root+next.root)/2,time,this.stepDur*4,'triangle',0.035,false);
+    }
+    if(pos===0) this.noise(time,0.06,0.015);
+    if(pos===2||pos===6||pos===10||pos===14) this.noise(time,0.02,0.006);
+    const melody={0:[659.25,8],12:[783.99,4],16:[587.33,8],28:[659.25,4],32:[523.25,8],44:[440.00,4],48:[587.33,8],60:[659.25,4]};
+    if(melody[step]){
+      const [freq,dur]=melody[step];
+      this.tone(freq,time,this.stepDur*dur,'triangle',0.022,true);
+    }
+  },
+  tone(freq,time,dur,type,gain,withVibrato){
+    if(!Sound.ctx || !this.masterGain) return;
+    const ctx=Sound.ctx;
+    const osc=ctx.createOscillator(), g=ctx.createGain();
+    osc.type=type; osc.frequency.value=freq;
+    g.gain.setValueAtTime(0,time);
+    g.gain.linearRampToValueAtTime(gain,time+0.03);
+    g.gain.linearRampToValueAtTime(gain*0.7,time+dur*0.4);
+    g.gain.linearRampToValueAtTime(0.001,time+dur);
+    if(withVibrato){
+      const lfo=ctx.createOscillator(), lg=ctx.createGain();
+      lfo.frequency.value=4.5; lg.gain.value=freq*0.004;
+      lfo.connect(lg).connect(osc.frequency);
+      lfo.start(time); lfo.stop(time+dur+0.05);
+    }
+    osc.connect(g).connect(this.masterGain);
+    osc.start(time); osc.stop(time+dur+0.05);
+  },
+  noise(time,dur,gain){
+    if(!Sound.ctx || !this.masterGain) return;
+    const ctx=Sound.ctx;
+    const buf=Sound.noiseBuf(dur,2);
+    const src=ctx.createBufferSource(); src.buffer=buf;
+    const g=ctx.createGain(); g.gain.value=gain;
+    src.connect(g).connect(this.masterGain);
+    src.start(time);
+  }
+};
+
+const PREF_KEY='pappies-monopoly-prefs';
+let PREFS={};
+try{ PREFS=JSON.parse(localStorage.getItem(PREF_KEY)||'{}')||{}; }catch(e){ PREFS={}; }
+function savePrefs(){ try{ localStorage.setItem(PREF_KEY,JSON.stringify(PREFS)); }catch(e){} }
+let musicOn = PREFS.music!==false;
+function updateMusicUI(){
+  const m=document.getElementById('musicToggleMenu'), s=document.getElementById('musicToggleSetup');
+  if(m) m.textContent=musicOn?'On':'Off';
+  if(s){ s.classList.toggle('muted',!musicOn); s.title=musicOn?'Music: On':'Music: Off'; }
+}
+function setMusicOn(on){
+  musicOn=on; Music.muted=!on;
+  if(on){ if(!Music.playing) Music.start(); else Music.setMuted(false); }
+  else Music.stop();
+  updateMusicUI();
+  PREFS.music=on; savePrefs();
+}
+document.getElementById('musicToggleSetup').onclick=()=>{ setMusicOn(!musicOn); Sound.play('click'); };
+document.getElementById('musicToggleMenu').onclick=()=>{ setMusicOn(!musicOn); Sound.play('click'); };
+document.addEventListener('visibilitychange',()=>{
+  if(document.hidden){ if(Music.playing){ Music._wasPlaying=true; Music.stop(false); } }
+  else if(Music._wasPlaying && musicOn){ Music._wasPlaying=false; Music.start(); }
+});
+
+function setMuted(m){
+  Sound.muted=m; PREFS.muted=m; savePrefs();
+  const menuBtn=document.getElementById('soundToggleMenu'), setupBtn=document.getElementById('soundToggleSetup');
+  if(menuBtn) menuBtn.textContent=m?'Off':'On';
+  if(setupBtn){ setupBtn.textContent=m?'🔇':'🔊'; setupBtn.classList.toggle('muted',m); }
+}
+document.getElementById('soundToggleSetup').onclick=()=>{ Sound.init(); setMuted(!Sound.muted); Sound.play('click'); };
+document.getElementById('soundToggleMenu').onclick=()=>{ Sound.init(); setMuted(!Sound.muted); Sound.play('click'); };
+
+/* THEME */
+function hexToRgb(hex){
+  const h=hex.replace('#',''), s=h.length===3?h.split('').map(c=>c+c).join(''):h;
+  const n=parseInt(s,16);
+  return [(n>>16)&255,(n>>8)&255,n&255];
+}
+function applyThemeColor(hex){
+  const [r,g,b]=hexToRgb(hex);
+  const root=document.documentElement.style;
+  root.setProperty('--accent',hex);
+  root.setProperty('--accent-rgb',`${r}, ${g}, ${b}`);
+  root.setProperty('--accent-glow',`rgba(${r}, ${g}, ${b}, .35)`);
+  root.setProperty('--accent-dim',`rgba(${r}, ${g}, ${b}, .15)`);
+  root.setProperty('--accent-faint',`rgba(${r}, ${g}, ${b}, .05)`);
+}
+function applyPlayerTheme(p){ if(p && p.color) applyThemeColor(p.color); }
+
+let tilt3D=true;
+function setTilt(on){
+  tilt3D=on; PREFS.tilt=on; savePrefs();
+  document.body.classList.toggle('tilt-3d',on);
+  const btn=document.getElementById('tiltToggleMenu');
+  if(btn) btn.textContent=on?'On':'Off';
+}
+document.getElementById('tiltToggleMenu').onclick=()=>{ setTilt(!tilt3D); Sound.play('click'); };
+
+/* TOKENS */
+const TOKENS=[
+  {id:'scottie',name:'Scottie Dog',icon:'🐕'},
+  {id:'hazel',name:'Hazel the Cat',icon:'🐈'},
+  {id:'racecar',name:'Racecar',icon:'🏎️'},
+  {id:'tophat',name:'Top Hat',icon:'🎩'},
+  {id:'duck',name:'Rubber Ducky',icon:'🦆'},
+  {id:'penguin',name:'Penguin',icon:'🐧'},
+  {id:'merlion',name:'Merlion',icon:'🦁'},
+  {id:'kucinta',name:'Kucinta Cat',icon:'🐱'},
+  {id:'trishaw',name:'Trishaw',icon:'🚲'}
+];
+const COLORS=['#38bdf8','#f472b6','#fbbf24','#34d399','#a78bfa','#fb7185','#22d3ee','#facc15'];
+
+/* SES */
+const SES={
+  1:{key:1,name:'Good Class',short:'GCB',cash:2500000,salary:250000,rentPaid:.85,rentRecv:1.20,buyMult:{HDB:1.10,Condo:1.10,Landed:1.10},wealthTax:.015,
+     desc:'Starting cash S$2.5M. Pays 15% less rent, receives 20% more, pays 1.5% wealth tax at GO. 10% ABSD surcharge on every purchase.'},
+  2:{key:2,name:'Private Enclave',short:'Condo',cash:1800000,salary:180000,rentPaid:1.00,rentRecv:1.10,buyMult:{HDB:1.00,Condo:1.00,Landed:1.00},wealthTax:.005,
+     desc:'Starting cash S$1.8M. Market rent, receives 10% more. Pays 0.5% wealth tax at GO.'},
+  3:{key:3,name:'Heartland',short:'HDB',cash:1200000,salary:130000,rentPaid:1.15,rentRecv:1.00,buyMult:{HDB:.90,Condo:1.00,Landed:1.00},wealthTax:0,
+     desc:'Starting cash S$1.2M. Pays 15% more rent, HDB at a 10% subsidy. Landed property is gated.'},
+  4:{key:4,name:'Precariat',short:'Rental',cash:800000,salary:90000,rentPaid:1.35,rentRecv:.90,buyMult:{HDB:.85,Condo:1.05,Landed:1.00},wealthTax:0,
+     desc:'Starting cash S$800k. Pays 35% more rent, receives 10% less, HDB at a 15% subsidy. Landed property is gated.'}
+};
+const SES_ORDER=[1,2,3,4];
+const PRESTIGE_GATE=10;
+
+const PROFILES={
+  kiasu:{label:'Kiasu Uncle',ses:2,risk:.22,buffer:.40,setFocus:.85,block:.50,prestige:.20,yieldPref:.80,
+    blurb:'Keeps a large cash cushion and refuses to let an undervalued unit slip past, but walks away from anything priced at market.'},
+  agent:{label:'Property Agent',ses:2,risk:.80,buffer:.10,setFocus:.70,block:.40,prestige:.40,yieldPref:.40,
+    blurb:'Runs on volume. Buys early and often, keeps cash thin, chases any listing inside a set already in progress.'},
+  towkay:{label:'Towkay',ses:1,risk:.70,buffer:.20,setFocus:.50,block:.50,prestige:1.00,yieldPref:.20,
+    blurb:'Prestige first. Stretches well past valuation for a landed address and treats a trophy asset as the point of the game.'},
+  scholar:{label:'Scholarship Scholar',ses:2,risk:.45,buffer:.28,setFocus:1.00,block:.85,prestige:.20,yieldPref:.90,
+    blurb:'Runs the numbers before every move. Targets complete sets, weighs yield precisely, rarely overpays.'},
+  auntie:{label:'Hawker Auntie',ses:3,risk:.30,buffer:.30,setFocus:.70,block:.40,prestige:.05,yieldPref:1.00,
+    blurb:'Income over glamour. Prefers steady rent on cheaper units and will not over-leverage.'},
+  civil:{label:'Civil Servant',ses:3,risk:.15,buffer:.45,setFocus:.75,block:.40,prestige:.15,yieldPref:.70,
+    blurb:'Plays it safe. Steady accumulation, no debt, no gambles.'},
+  parent:{label:'Kiasu Parent',ses:2,risk:.45,buffer:.35,setFocus:.90,block:.50,prestige:.55,yieldPref:.60,tierBias:{Condo:1.15,HDB:1.05,Landed:.90},
+    blurb:'Pays a premium within a kilometre of a good school and protects the tuition fund at all costs.'},
+  gig:{label:'Gig Worker',ses:4,risk:.85,buffer:.05,setFocus:.60,block:.35,prestige:.15,yieldPref:.95,tierBias:{HDB:1.25,Condo:1.00,Landed:.70},
+    blurb:'Runs lean and moves fast. Buys anything cheap enough to flip, with almost no cash cushion.'},
+  retiree:{label:'Retiree',ses:3,risk:.20,buffer:.50,setFocus:.75,block:.40,prestige:.20,yieldPref:1.10,tierBias:{HDB:1.20,Condo:1.05,Landed:.80},
+    blurb:'Capital preservation over growth. Buys for steady rent, redeems mortgages early.'},
+  genz:{label:'Gen Z Investor',ses:3,risk:.65,buffer:.15,setFocus:.60,block:.50,prestige:.60,yieldPref:.40,noiseDecay:true,
+    blurb:'Fast and instinctive early on, then settles into a cooler head as the game runs long.'},
+  grassroots:{label:'Grassroots Leader',ses:2,risk:.55,buffer:.25,setFocus:.65,block:.30,prestige:.85,yieldPref:.35,followLeader:true,
+    blurb:'Buys for visibility. Mirrors the front-runner and never misses a photo opportunity.'},
+  opposition:{label:'Opposition Supporter',ses:3,risk:.65,buffer:.15,setFocus:.55,block:.85,prestige:.30,yieldPref:.50,contrarian:true,
+    blurb:'Contrarian by default. Targets whatever the front-runner is collecting.'},
+  colonel:{label:'Retired Colonel',ses:1,risk:.60,buffer:.30,setFocus:.45,block:.50,prestige:1.20,yieldPref:.10,tierBias:{Landed:1.45,Condo:1.00,HDB:.35},
+    blurb:'Landed or nothing. Will overpay badly for a GCB and refuses to touch an HDB.'},
+  taxi:{label:'Taxi Uncle',ses:4,risk:.75,buffer:.08,setFocus:.50,block:.35,prestige:.30,yieldPref:.55,chatty:true,
+    blurb:'Has an opinion on everything. Buys whatever is directly in front of him.'},
+  landlord:{label:'Multiple-Property Landlord',ses:1,risk:.55,buffer:.30,setFocus:.80,block:.70,prestige:.90,yieldPref:.55,tierBias:{Condo:1.20,HDB:1.10,Landed:1.05},
+    blurb:'Collects sets. Blocks rivals out of whole colour groups and rarely sells anything.'}
+};
+const HUMAN_TRAITS={risk:.5,buffer:.25,setFocus:.8,block:.5,prestige:.3,yieldPref:.7};
+const GROUP_COLORS={brown:'#a1887f',lightblue:'#90caf9',pink:'#f48fb1',orange:'#ffb74d',red:'#ef9a9a',yellow:'#fff176',green:'#a5d6a7',darkblue:'#7986cb'};
+const TYPE_COLORS={station:'#94a3b8',utility:'#a3a3a3'};
+
+const BOARD=[
+  {name:'GO',type:'go'},
+  {name:'Yishun HDB',type:'property',tier:'HDB',group:'brown',price:530000,rent:35000},
+  {name:'Meet the People',type:'chest'},
+  {name:'Jurong West HDB',type:'property',tier:'HDB',group:'brown',price:550000,rent:38000},
+  {name:'GST (9%)',type:'tax',amount:90000},
+  {name:'Ang Mo Kio MRT',type:'station',price:250000,rent:22000},
+  {name:'Ang Mo Kio HDB',type:'property',tier:'HDB',group:'lightblue',price:600000,rent:42000},
+  {name:'Press Release',type:'chance'},
+  {name:'Bedok HDB',type:'property',tier:'HDB',group:'lightblue',price:650000,rent:46000},
+  {name:'Tampines HDB',type:'property',tier:'HDB',group:'lightblue',price:720000,rent:50000},
+  {name:'Changi Prison',type:'jail'},
+  {name:'Lentor Gardens',type:'property',tier:'Condo',group:'pink',price:1400000,rent:52000},
+  {name:'SP Group',type:'utility',price:200000,rent:18000},
+  {name:'Pinery Residences',type:'property',tier:'Condo',group:'pink',price:1600000,rent:58000},
+  {name:'The Myst',type:'property',tier:'Condo',group:'pink',price:1500000,rent:55000},
+  {name:'City Hall MRT',type:'station',price:250000,rent:22000},
+  {name:'Grand Dunman',type:'property',tier:'Condo',group:'orange',price:2000000,rent:66000},
+  {name:'Meet the People',type:'chest'},
+  {name:'Dunearn House',type:'property',tier:'Condo',group:'orange',price:2400000,rent:78000},
+  {name:'Bartley Vue',type:'property',tier:'Condo',group:'orange',price:2200000,rent:72000},
+  {name:'Kopitiam Corner',type:'kopitiam'},
+  {name:'Orchard Road',type:'property',tier:'Condo',group:'red',price:3200000,rent:100000},
+  {name:'Press Release',type:'chance'},
+  {name:'Marina Bay',type:'property',tier:'Condo',group:'red',price:4000000,rent:124000},
+  {name:'River Valley',type:'property',tier:'Condo',group:'red',price:5000000,rent:150000},
+  {name:'Jurong East MRT',type:'station',price:250000,rent:22000},
+  {name:'Newton Novena',type:'property',tier:'Condo',group:'yellow',price:4500000,rent:140000},
+  {name:'Tanglin',type:'property',tier:'Condo',group:'yellow',price:4800000,rent:148000},
+  {name:'PUB',type:'utility',price:200000,rent:18000},
+  {name:'Holland Village',type:'property',tier:'Condo',group:'yellow',price:4600000,rent:143000},
+  {name:'Go to Changi Prison',type:'gotojail'},
+  {name:'Suburban Terrace',type:'property',tier:'Landed',group:'green',price:5200000,rent:175000},
+  {name:'Prime Terrace',type:'property',tier:'Landed',group:'green',price:6000000,rent:200000},
+  {name:'Meet the People',type:'chest'},
+  {name:'Semi-Detached',type:'property',tier:'Landed',group:'green',price:7500000,rent:250000},
+  {name:'Bedok MRT',type:'station',price:250000,rent:22000},
+  {name:'Kopitiam Talk',type:'kopitiam'},
+  {name:'Nassim GCB',type:'property',tier:'Landed',group:'darkblue',price:15000000,rent:380000},
+  {name:'ABSD',type:'tax',amount:150000},
+  {name:'Queen Astrid GCB',type:'property',tier:'Landed',group:'darkblue',price:15000000,rent:380000}
+];
+
+const PRESS=[
+  {text:'Cooling measures announced. Rents are halved until the market is allowed to correct itself.',run:p=>coolDown()},
+  {text:'GST rises again. Pay 10% of your cash on hand.',run:p=>payBank(p,Math.round(p.cash*0.10))},
+  {text:'CPIB invites you for a chat. Go to Changi Prison.',run:p=>{p.pos=10;p.jailTurns=1;Sound.play('gavel');}},
+  {text:'COE crosses S$130,000. Pay S$130,000 or explain yourself.',run:p=>payBank(p,130000)},
+  {text:'Your MRT line breaks down during peak hour. Miss a turn.',run:p=>{p.jailTurns=1;}},
+  {text:'A white paper is released. Nothing happens. Nothing at all.',run:p=>log('The white paper has been noted.','snark')},
+  {text:'Employment Pass qualifying salary is raised again. The debate restarts. Pay S$25,000 in arguments.',run:p=>payBank(p,25000)},
+  {text:'The COMPASS framework is updated. Nobody understands it, including the people who wrote it. Nothing changes.',run:p=>log('COMPASS v4.0. Everyone nods.','snark')},
+  {text:'A "locals first" scheme is launched. It is a website. Pay S$20,000.',run:p=>payBank(p,20000)},
+  {text:'You are told Singaporeans must "understand the trade-offs". You understand. Pay S$0.',run:p=>log('You understand. You always understand.','snark')},
+  {text:'Water price rises. Pay S$20,000.',run:p=>payBank(p,20000)},
+  {text:'Carbon tax rises. Pay S$30,000.',run:p=>payBank(p,30000)},
+  {text:'ERP rates go up at three more gantries. Pay S$25,000.',run:p=>payBank(p,25000)},
+  {text:'Cost of living support package. Collect S$40,000.',run:p=>{p.cash+=40000;}},
+  {text:'GST offset voucher. Collect S$25,000.',run:p=>{p.cash+=25000;}},
+  {text:'A foreign fund buys an entire floor of your condo at a good price. Collect S$150,000.',run:p=>{p.cash+=150000;}},
+  {text:'You are fielded in a GRC. Collect S$60,000 in walkabout ang bao, but skip a turn for the rally.',run:p=>{p.cash+=60000;p.jailTurns=1;Sound.play('rally');}},
+  {text:'You are POFMA-ed. Pay S$40,000 and sit out a turn.',run:p=>{payBank(p,40000);p.jailTurns=1;}},
+  {text:'A new MRT line opens beside your holdings. Collect S$80,000 in uplift.',run:p=>{p.cash+=80000;}},
+  {text:'You question the reserves in Parliament. Pay S$50,000 in legal costs.',run:p=>payBank(p,50000)},
+  {text:'The town council lifts break down again. Pay S$45,000.',run:p=>payBank(p,45000)},
+  {text:'HDB resale crosses S$1.5M. Every HDB owner collects S$50,000.',run:p=>{BOARD.forEach(s=>{if(s.tier==='HDB'&&s.owner!=null)S.players[s.owner].cash+=50000;});}},
+  {text:'A by-election is called. Every other player hands you S$20,000 in goodie bags.',run:p=>{S.players.filter(x=>x.alive&&x.id!==p.id).forEach(x=>{const amt=Math.min(20000,x.cash);x.cash-=amt;p.cash+=amt;});}},
+  {text:'An upgrading programme you never asked for reaches your block. Pay S$30,000.',run:p=>payBank(p,30000)},
+  {text:'You are appointed to a statutory board. Rise one class tier.',run:p=>shiftSES(p,-1,'Statutory board appointment')},
+  {text:'The family business is wound up after the third generation. Drop one class tier.',run:p=>shiftSES(p,+1,'Family business wound up')},
+  {text:'You are invited to a closed-door dialogue at a Good Class bungalow. Rise one class tier.',run:p=>shiftSES(p,-1,'Closed-door dialogue')},
+  {text:'Your private banking relationship manager stops replying. Drop one class tier.',run:p=>shiftSES(p,+1,'Private banking relationship ended')}
+];
+const TOWN=[
+  {text:'Baby Bonus payout. Collect S$60,000.',run:p=>{p.cash+=60000;}},
+  {text:'Hospital bill arrives. Pay S$90,000.',run:p=>payBank(p,90000)},
+  {text:'CDC vouchers credited. Collect S$30,000.',run:p=>{p.cash+=30000;}},
+  {text:'National Service call-up. Go to Changi Prison, miss a turn.',run:p=>{p.pos=10;p.jailTurns=1;Sound.play('jail');}},
+  {text:'Your block is selected for SERS. Collect S$120,000.',run:p=>{p.cash+=120000;}},
+  {text:'You are balloted a BTO flat. Pay S$50,000.',run:p=>payBank(p,50000)},
+  {text:'Racial Harmony Day. Every player collects S$20,000.',run:p=>{S.players.forEach(x=>{if(x.alive)x.cash+=20000;});}},
+  {text:'You forgot the conservancy charges. Pay S$15,000.',run:p=>payBank(p,15000)},
+  {text:'You delivered a parliamentary speech about chicken rice. Collect S$25,000.',run:p=>{p.cash+=25000;}},
+  {text:'Grassroots dinner ang bao. Collect S$35,000.',run:p=>{p.cash+=35000;}},
+  {text:'Your MP writes you a letter. It is very polite. Nothing happens.',run:p=>log('The letter has been received.','snark')},
+  {text:'You apply for financial assistance. Collect S$20,000.',run:p=>{p.cash+=20000;}},
+  {text:'You are awarded a scholarship. Collect S$80,000.',run:p=>{p.cash+=80000;}},
+  {text:'You complained on Facebook. You are invited to a dialogue session. Nothing changes.',run:p=>log('The dialogue session was constructive.','snark')},
+  {text:'Your parent is hospitalised. Pay S$90,000.',run:p=>payBank(p,90000)},
+  {text:'You take caregiving leave. Collect S$20,000 but miss a turn.',run:p=>{p.cash+=20000;p.jailTurns=1;}},
+  {text:'You are diagnosed with burnout. Miss a turn.',run:p=>{p.jailTurns=1;}},
+  {text:'Year-end bonus. Collect S$70,000.',run:p=>{p.cash+=70000;}},
+  {text:'Retrenchment exercise. Pay S$50,000 and miss a turn.',run:p=>{payBank(p,50000);p.jailTurns=1;}},
+  {text:'MediSave top-up. Collect S$30,000.',run:p=>{p.cash+=30000;}},
+  {text:'Insurance premium rises. Pay S$35,000.',run:p=>payBank(p,35000)},
+  {text:'Your child gets into a top school. Rise one class tier, and collect S$60,000.',run:p=>{p.cash+=60000;shiftSES(p,-1,'Top school placement');}},
+  {text:'You move to a smaller flat in a further estate. Drop one class tier.',run:p=>shiftSES(p,+1,'Moved to a smaller flat')},
+  {text:'You enrol your child in a brand-name tuition centre. Pay S$60,000 and rise one class tier.',run:p=>{payBank(p,60000);shiftSES(p,-1,'Brand-name tuition');}},
+  {text:'Your family cannot keep up the enrichment classes. Drop one class tier.',run:p=>shiftSES(p,+1,'Enrichment classes dropped')},
+  {text:'You inherit a shophouse from a grandparent. Rise one class tier and collect S$200,000.',run:p=>{p.cash+=200000;shiftSES(p,-1,'Inherited a shophouse');}},
+  {text:'A medical bill wipes out your savings. Drop one class tier.',run:p=>shiftSES(p,+1,'Medical bill')}
+];
+const KOPITIAM=[
+  {text:'The table starts talking about foreign talent. Everyone has a view. Nothing is resolved. You buy the kopi. Pay S$12,000.',run:p=>payBank(p,12000)},
+  {text:'Your new neighbour is here on an Employment Pass. He is polite, pays rent on time and keeps to himself. You feel complicated about this. Collect nothing.',run:p=>log('He seems fine. You still feel complicated.','snark')},
+  {text:'Your company "regionalises" your role and invites you to a town hall. Miss a turn.',run:p=>{p.jailTurns=1;}},
+  {text:'Your landlord raises the rent 20% at renewal. Pay S$60,000.',run:p=>payBank(p,60000)},
+  {text:'Your landlord sells the unit. You have two months to move. Pay S$40,000 and miss a turn.',run:p=>{payBank(p,40000);p.jailTurns=1;}},
+  {text:'You are told to "be more productive". Pay S$30,000 for a course that teaches you this.',run:p=>payBank(p,30000)},
+  {text:'Your salary has not moved in four years. Collect S$10,000. That is the whole card.',run:p=>{p.cash+=10000;}},
+  {text:'Surge pricing on the way home. Pay S$8,000.',run:p=>payBank(p,8000)},
+  {text:'The hawker centre closes for renovation. You eat at a mall. Pay S$15,000.',run:p=>payBank(p,15000)},
+  {text:'Your CPF statement arrives. It says "adequate". You are not sure. Collect S$0.',run:p=>log('It says adequate.','snark')},
+  {text:"Your child's tuition class is full. Pay S$50,000 for the premium slot.",run:p=>payBank(p,50000)},
+  {text:'A tourist asks for directions to a place demolished in 2011. You feel old. Collect S$5,000.',run:p=>{p.cash+=5000;}},
+  {text:'You are asked to return to office. Pay S$20,000 in transport and lunches.',run:p=>payBank(p,20000)},
+  {text:'A scam call comes through. You do not fall for it. Collect S$15,000.',run:p=>{p.cash+=15000;}},
+  {text:"Your neighbour renovates. Drilling starts at 8am on Saturday. Miss a turn.",run:p=>{p.jailTurns=1;}},
+  {text:'You post about immigration on Facebook. It gets 3,000 likes and changes absolutely nothing. Collect S$0.',run:p=>log('3,000 likes. Zero policy changes.','snark')},
+  {text:'You ballot for a flat. Estimated wait: five years. Pay S$20,000 in interim rent.',run:p=>payBank(p,20000)},
+  {text:'A colleague on a work pass is promoted above you. You are told this is what a "global city" looks like. Collect S$0.',run:p=>log('Global city.','snark')},
+  {text:'Your parents need a caregiver. You hire one. Pay S$45,000.',run:p=>payBank(p,45000)},
+  {text:'You take a second job to keep up. Collect S$55,000 but miss a turn.',run:p=>{p.cash+=55000;p.jailTurns=1;}},
+  {text:'The MRT breaks down again. You are late again. Nothing happens to anyone. Miss a turn.',run:p=>{p.jailTurns=1;}},
+  {text:'You are asked to "embrace disruption". You embrace it. Collect S$25,000.',run:p=>{p.cash+=25000;}},
+  {text:'You meet someone who bought a flat in 2003. You listen to them for an hour. Pay S$0.',run:p=>log('They paid S$180,000 for it.','snark')},
+  {text:'A delivery rider waits in the rain while you decide between two brands of milk. Pay S$6,000.',run:p=>payBank(p,6000)},
+  {text:'You finally get a seat on the train. Someone films you for content. Collect S$10,000 in sympathy.',run:p=>{p.cash+=10000;}},
+  {text:'Your estate gets a "refresh". The lift is newer. Everything costs more. Pay S$35,000.',run:p=>payBank(p,35000)},
+  {text:'You are told the gap is narrowing. You look at the numbers. You look at your payslip. Collect S$0.',run:p=>log('The gap is narrowing. Apparently.','snark')},
+  {text:'Someone at the table mentions their child attends an international school. The table goes quiet. Pay S$0.',run:p=>log('The table goes quiet.','snark')},
+  {text:'You apply for a BTO in a mature estate. You are unsuccessful for the fourth time. Miss a turn.',run:p=>{p.jailTurns=1;}},
+  {text:'Your child asks why some classmates have a car and a condo. You change the subject. Pay S$0.',run:p=>log('You change the subject.','snark')},
+  {text:'You marry up. Rise one class tier. Everyone at the table has an opinion.',run:p=>shiftSES(p,-1,'Married up')},
+  {text:'Your family downgrades to a rental flat after a bad year. Drop one class tier.',run:p=>shiftSES(p,+1,'Downgraded to a rental flat')},
+  {text:'You upgrade to a condominium in the OCR. Rise one class tier and pay S$200,000.',run:p=>{payBank(p,200000);shiftSES(p,-1,'OCR condominium upgrade');}},
+  {text:'You cash out and move to a smaller HDB. Drop one class tier and collect S$250,000.',run:p=>{p.cash+=250000;shiftSES(p,+1,'Right-sized to a smaller HDB');}}
+];
+
+const S={
+  players:[], current:0, phase:'roll', pendingBuy:null,
+  gameOver:false, dice:[1,1], turnCount:0, coolingUntil:0,
+  rounds:0, costIndex:1, running:false, actor:null, auctionPrice:0,
+  gen:0, outcome:null, abandoned:false
+};
+let cellRefs=[];
+let SPEED=1, ROUND_CAP=60, BAGS={}, waiter=null;
+let pdPlayerId=null;
+
+const money=n=>'S$'+Math.round(n).toLocaleString('en-SG');
+const shortM=n=>n>=1e6?'S$'+(n/1e6).toFixed(n%1e6===0?0:1)+'M':n>=1e3?'S$'+Math.round(n/1e3)+'k':'S$'+n;
+const rnd6=()=>1+Math.floor(Math.random()*6);
+const clampInt=(v,a,b)=>Math.max(a,Math.min(b,parseInt(v)||0));
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function humanName(i){
+  const el=document.getElementById(`hName${i}`);
+  let n=el?el.value.replace(/\s+/g,' ').trim().slice(0,16):'';
+  if(!n) n=`Human ${i+1}`;
+  const base=n;
+  let c=2;
+  const clash=x=>S.players.some(p=>p.name.toLowerCase()===x.toLowerCase())||
+    Object.values(PROFILES).some(p=>p.label.toLowerCase()===x.toLowerCase());
+  while(clash(n)) n=`${base} ${c++}`;
+  return n;
+}
+function uniqueName(base){
+  let n=base,c=2;
+  while(S.players.some(p=>p.name.toLowerCase()===n.toLowerCase())) n=`${base} ${c++}`;
+  return n;
+}
+function shuffle(arr){
+  const a=arr.slice();
+  for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+function sleep(ms){
+  const g=S.gen|0;
+  return new Promise(r=>setTimeout(()=>{ if((S.gen|0)===g) r(); },ms/SPEED));
+}
+function ask(actor,phase){
+  S.actor=actor; S.phase=phase; updateUI();
+  return new Promise(res=>{ waiter=v=>{ S.actor=null; res(v); }; });
+}
+function resume(v){ if(waiter){ const w=waiter; waiter=null; w(v); } }
+
+function gridPos(pos){
+  if(pos<=10) return {row:11,col:11-pos};
+  if(pos<=20) return {row:11-(pos-10),col:1};
+  if(pos<=30) return {row:1,col:1+(pos-20)};
+  return {row:1+(pos-30),col:11};
+}
+function netWorth(p){
+  return p.cash+BOARD.filter(s=>s.owner===p.id).reduce((a,s)=>a+(s.mortgaged?s.price*0.5:s.price),0);
+}
+function titleFor(p){
+  const nw=netWorth(p);
+  if(nw>=15000000) return 'Senior Minister';
+  if(nw>=8000000) return 'Minister';
+  if(nw>=4000000) return 'Minister of State';
+  if(nw>=2000000) return 'MP';
+  if(nw>=1000000) return 'Grassroots Leader';
+  return 'Resident';
+}
+function leader(){ return S.players.filter(p=>p.alive).reduce((a,b)=>netWorth(a)>=netWorth(b)?a:b); }
+function trailing(){ return S.players.filter(p=>p.alive).reduce((a,b)=>netWorth(a)<=netWorth(b)?a:b); }
+function coolDown(){
+  S.coolingUntil=S.turnCount+S.players.filter(p=>p.alive).length;
+  Sound.play('cooling');
+  updateStatusBanner();
+}
+function newStats(startSES){
+  return {startCash:SES[startSES].cash,startSES,propertiesBought:0,biggestPurchase:null,
+    rentPaid:0,rentReceived:0,jailTrips:0,sesUp:0,sesDown:0,turnsTaken:0,
+    bankruptRound:null,bankruptedBy:null};
+}
+
+const OUTCOME_ICONS={roll:'🎲',buy:'🏠',pay:'💸',jail:'🔒',money:'💰',card:'📰',press:'📰',town:'🏛️',kopi:'☕',gate:'◆',class:'✦',snark:'💬',win:'🏆',bankrupt:'💀','':'•'};
+
+function setOutcome(msg, cls=''){
+  S.outcome = msg ? {msg, cls} : null;
+  renderOutcome();
+}
+function renderOutcome(){
+  const co = document.getElementById('centerOutcome');
+  if(!co) return;
+  const o = S.outcome;
+  if(!o || !o.msg){
+    delete co.dataset.k;
+    co.className = 'center-outcome';
+    return;
+  }
+  const key=o.cls+'|'+o.msg;
+  if(co.dataset.k===key) return;
+  co.dataset.k=key;
+  const ico = OUTCOME_ICONS[o.cls] || OUTCOME_ICONS[''];
+  co.className = 'center-outcome show ' + (o.cls || '');
+  co.innerHTML = `<div class="co-icon">${ico}</div><div class="co-text">${esc(o.msg)}</div>`;
+}
+
+function renderMarketBar(){
+  if(!S.players.length) return;
+  const roundEl=document.getElementById('mktRound');
+  const gapEl=document.getElementById('mktGap');
+  const leaderEl=document.getElementById('mktLeader');
+  const cooled=S.turnCount<S.coolingUntil;
+  roundEl.innerHTML=`R<b>${S.rounds+1}</b> · ×<b>${S.costIndex.toFixed(2)}</b>${cooled?' ❄':''}`;
+  const alive=S.players.filter(p=>p.alive);
+  if(alive.length<2){
+    gapEl.innerHTML=''; gapEl.style.display='none';
+    leaderEl.innerHTML=alive.length===1?`👑 <b>${esc(alive[0].name)}</b>`:'';
+    return;
+  }
+  gapEl.style.display='';
+  const top=Math.max(...alive.map(netWorth));
+  const bot=Math.min(...alive.map(netWorth));
+  const ratio=bot>0?(top/bot).toFixed(1):'∞';
+  gapEl.innerHTML=`Gap <b>${ratio}×</b> · ${shortM(top)} vs ${shortM(bot)}`;
+  const lead=alive.reduce((a,b)=>netWorth(a)>=netWorth(b)?a:b);
+  leaderEl.innerHTML=`👑 <b>${esc(lead.name)}</b>`;
+  leaderEl.onclick=()=>openPlayerDrawer(lead.id);
+}
+
+function updateSesHint(i){
+  const sel=document.getElementById(`hSes${i}`), hint=document.getElementById(`hSesHint${i}`);
+  if(!sel||!hint) return;
+  const v=parseInt(sel.value);
+  if(!v||v===0){ hint.textContent='🎲 Random class tier — drawn at game start. Starting cash, salary, rent multipliers, wealth tax and the landed gate all follow from it.'; return; }
+  hint.textContent=SES[v].desc;
+}
+function updateBlurb(i){
+  const sel=document.getElementById(`aiProf${i}`), b=document.getElementById(`blurb${i}`);
+  if(!sel||!b) return;
+  if(sel.value==='random'){ b.textContent='🎲 Random archetype — drawn at game start, with its own class tier. Random archetypes never duplicate each other unless the pool runs out.'; return; }
+  const prof=PROFILES[sel.value];
+  b.textContent=`${prof.label} · starts as ${SES[prof.ses].name}. ${prof.blurb||''}`;
+}
+function buildSetup(){
+  const keep={};
+  document.querySelectorAll('#humanConfigs select, #humanConfigs input, #aiConfigs select').forEach(s=>keep[s.id]=s.value);
+  const hc=clampInt(document.getElementById('humanCount').value,0,4);
+  const ac=clampInt(document.getElementById('aiCount').value,0,6);
+  const hEl=document.getElementById('humanConfigs');
+  hEl.innerHTML=hc?'<h3>Human Players</h3>':'';
+  for(let i=0;i<hc;i++){
+    const div=document.createElement('div');
+    div.className='cfg';
+    div.innerHTML=`
+      <div class="cfg-label">Human ${i+1}</div>
+      <div class="cfg-row">
+        <input id="hName${i}" type="text" maxlength="16" placeholder="Name (optional)" aria-label="Player ${i+1} name">
+        <select id="hTok${i}"><option value="random">🎲 Random token</option>${TOKENS.map(t=>`<option value="${t.id}">${t.icon} ${t.name}</option>`).join('')}</select>
+        <select id="hSes${i}"><option value="0">🎲 Random class</option>${SES_ORDER.map(k=>`<option value="${k}">${SES[k].name} (${SES[k].short})</option>`).join('')}</select>
+      </div>
+      <div class="sesHint" id="hSesHint${i}"></div>`;
+    hEl.appendChild(div);
+    document.getElementById(`hTok${i}`).value=TOKENS[i%TOKENS.length].id;
+    const sesSel=div.querySelector(`#hSes${i}`);
+    sesSel.value=String(SES_ORDER[i%SES_ORDER.length]);
+    sesSel.addEventListener('change',()=>updateSesHint(i));
+  }
+  const aEl=document.getElementById('aiConfigs');
+  aEl.innerHTML=ac?'<h3>AI Opponents</h3>':'';
+  const keys=Object.keys(PROFILES);
+  for(let i=0;i<ac;i++){
+    const div=document.createElement('div');
+    div.className='cfg';
+    div.innerHTML=`
+      <div class="cfg-label">AI ${i+1}</div>
+      <div class="cfg-row">
+        <select id="aiProf${i}"><option value="random">🎲 Random archetype</option>${keys.map(k=>`<option value="${k}">${PROFILES[k].label}</option>`).join('')}</select>
+        <select id="aiIntel${i}"><option value="random">🎲 Random IQ</option><option value="Low">Low IQ</option><option value="Medium" selected>Medium IQ</option><option value="High">High IQ</option></select>
+      </div>
+      <div class="blurb" id="blurb${i}"></div>`;
+    aEl.appendChild(div);
+    const sel=div.querySelector(`#aiProf${i}`);
+    sel.value=keys[i%keys.length];
+    sel.addEventListener('change',()=>updateBlurb(i));
+  }
+  Object.entries(keep).forEach(([id,v])=>{
+    const el=document.getElementById(id);
+    if(el && (el.tagName==='INPUT' || [...el.options].some(o=>o.value===v))) el.value=v;
+  });
+  for(let i=0;i<hc;i++) updateSesHint(i);
+  for(let i=0;i<ac;i++) updateBlurb(i);
+  document.getElementById('humanCountVal').textContent=hc;
+  document.getElementById('aiCountVal').textContent=ac;
+}
+document.querySelectorAll('.counter-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    Sound.init();
+    const target=btn.dataset.target, dir=parseInt(btn.dataset.dir);
+    const input=document.getElementById(target);
+    const other=target==='humanCount'?document.getElementById('aiCount'):document.getElementById('humanCount');
+    const v=clampInt(input.value,0,6);
+    const nv=v+dir;
+    const total=(target==='humanCount'?nv:parseInt(other.value))+(target==='aiCount'?nv:parseInt(other.value));
+    if(total>6||nv<0||nv>(target==='humanCount'?4:6)) return;
+    input.value=nv;
+    document.getElementById(target+'Val').textContent=nv;
+    buildSetup();
+    Sound.play('click');
+  });
+});
+function randomiseAll(){
+  Sound.init(); Sound.play('shuffle');
+  const hc=clampInt(document.getElementById('humanCount').value,0,4);
+  const ac=clampInt(document.getElementById('aiCount').value,0,6);
+  for(let i=0;i<hc;i++){
+    const t=document.getElementById(`hTok${i}`); if(t) t.value='random';
+    const s=document.getElementById(`hSes${i}`); if(s){ s.value='0'; updateSesHint(i); }
+  }
+  for(let i=0;i<ac;i++){
+    const p=document.getElementById(`aiProf${i}`); if(p){ p.value='random'; updateBlurb(i); }
+    const n=document.getElementById(`aiIntel${i}`); if(n) n.value='random';
+  }
+}
+document.getElementById('randomAllBtn').onclick=randomiseAll;
+
+document.getElementById('startBtn').onclick=()=>{
+  Sound.init(); Sound.play('start');
+  if(musicOn && !Music.playing) Music.start();
+  const hc=clampInt(document.getElementById('humanCount').value,0,4);
+  const ac=clampInt(document.getElementById('aiCount').value,0,6);
+  const err=document.getElementById('setupError');
+  err.textContent='';
+  if(hc+ac<2||hc+ac>6){ err.textContent='Total players must be between 2 and 6.'; return; }
+  const explicitTokens=new Set();
+  for(let i=0;i<hc;i++){
+    const v=document.getElementById(`hTok${i}`).value;
+    if(v!=='random'){ if(explicitTokens.has(v)){ err.textContent='Two humans cannot use the same token.'; return; } explicitTokens.add(v); }
+  }
+  const aiKeys=Object.keys(PROFILES);
+  const explicitProfiles=new Set();
+  for(let i=0;i<ac;i++){
+    const v=document.getElementById(`aiProf${i}`).value;
+    if(v!=='random') explicitProfiles.add(v);
+  }
+  const usedTokens=new Set(explicitTokens);
+  const usedProfiles=new Set(explicitProfiles);
+  const sesPool=shuffle(SES_ORDER);
+  let sesCursor=0;
+  const randomNotes=[];
+  function drawToken(){ const a=TOKENS.filter(t=>!usedTokens.has(t.id)); const pool=a.length?a:TOKENS; const t=pick(pool); usedTokens.add(t.id); return t; }
+  function drawSES(){ let k; if(sesCursor<sesPool.length) k=sesPool[sesCursor++]; else k=pick(SES_ORDER); return k; }
+  function drawProfileKey(){ const a=aiKeys.filter(k=>!usedProfiles.has(k)); const pool=a.length?a:aiKeys; const k=pick(pool); usedProfiles.add(k); return k; }
+  function drawIntel(){ return pick(['Low','Medium','High']); }
+  S.players=[];
+  for(let i=0;i<hc;i++){
+    const rawTok=document.getElementById(`hTok${i}`).value;
+    let token;
+    if(rawTok==='random'){ token=drawToken(); randomNotes.push(`Human ${i+1} rolls 🎲 token → ${token.icon} ${token.name}.`); }
+    else token=TOKENS.find(t=>t.id===rawTok);
+    const rawSes=parseInt(document.getElementById(`hSes${i}`).value);
+    let sesKey;
+    if(!rawSes||rawSes===0){ sesKey=drawSES(); randomNotes.push(`Human ${i+1} rolls 🎲 class → ${SES[sesKey].name} (${SES[sesKey].short}).`); }
+    else sesKey=rawSes;
+    S.players.push({
+      id:S.players.length,name:humanName(i),isAI:false,token,
+      color:COLORS[S.players.length%COLORS.length],profileLabel:'Human',intel:'Human',
+      traits:{...HUMAN_TRAITS},ses:sesKey,stats:newStats(sesKey),
+      cash:SES[sesKey].cash,pos:0,jailTurns:0,skipTurns:0,alive:true,doublesThisTurn:0
+    });
+  }
+  for(let i=0;i<ac;i++){
+    let profileKey;
+    const rawProf=document.getElementById(`aiProf${i}`).value;
+    if(rawProf==='random') profileKey=drawProfileKey(); else profileKey=rawProf;
+    let intel;
+    const rawIntel=document.getElementById(`aiIntel${i}`).value;
+    if(rawIntel==='random') intel=drawIntel(); else intel=rawIntel;
+    const prof=PROFILES[profileKey];
+    if(rawProf==='random'||rawIntel==='random'){
+      const bits=[];
+      if(rawProf==='random') bits.push(`archetype → ${prof.label}`);
+      if(rawIntel==='random') bits.push(`IQ → ${intel}`);
+      randomNotes.push(`AI ${i+1} rolls 🎲 ${bits.join(', ')} (starts ${SES[prof.ses].name}).`);
+    }
+    const token=TOKENS.find(t=>!usedTokens.has(t.id))||pick(TOKENS);
+    usedTokens.add(token.id);
+    S.players.push({
+      id:S.players.length,name:uniqueName(prof.label),isAI:true,token,
+      color:COLORS[S.players.length%COLORS.length],profileLabel:prof.label,intel,
+      traits:{risk:prof.risk,buffer:prof.buffer,setFocus:prof.setFocus,block:prof.block,prestige:prof.prestige,yieldPref:prof.yieldPref,
+        noiseDecay:!!prof.noiseDecay,followLeader:!!prof.followLeader,contrarian:!!prof.contrarian,
+        tierBias:prof.tierBias||null,chatty:!!prof.chatty},
+      ses:prof.ses,stats:newStats(prof.ses),
+      cash:SES[prof.ses].cash,pos:0,jailTurns:0,skipTurns:0,alive:true,doublesThisTurn:0
+    });
+  }
+  BOARD.forEach(sp=>{ sp.owner=null; sp.mortgaged=false; sp.lease=sp.tier==='HDB'?45+Math.floor(Math.random()*46):null; });
+  S.current=0; S.phase='roll'; S.pendingBuy=null; S.actor=null;
+  S.gameOver=false; S.abandoned=false; S.turnCount=0; S.dice=[1,1];
+  S.coolingUntil=0; S.rounds=0; S.costIndex=1;
+  S.gen=(S.gen|0)+1;
+  S.outcome=null;
+  document.getElementById('log').innerHTML='';
+  document.getElementById('setup').style.display='none';
+  document.getElementById('game').classList.add('visible');
+  buildBoard();
+  log('Pappies Monopoly. The board has issued a statement.','turn');
+  log('All policies are final. All appeals will be considered.','snark');
+  if(randomNotes.length){
+    log('Random assignment results:','roll');
+    randomNotes.forEach(n=>log(n,'roll'));
+    Sound.play('shuffle');
+  }
+  S.players.forEach(p=>log(`${p.token.icon} ${p.name} — ${SES[p.ses].name} · ${money(p.cash)}.`));
+  log(`Class tiers set. Landed property requires Good Class or Private Enclave, or ${PRESTIGE_GATE} prestige.`,'gate');
+  updateUI();
+  startTurn();
+};
+
+/* ---------- BOARD BUILD ---------- */
+function buildBoard(){
+  const el=document.getElementById('board');
+  el.innerHTML='';
+  cellRefs=[];
+  BOARD.forEach((sp,i)=>{
+    const cell=document.createElement('div');
+    cell.className='space';
+    cell.setAttribute('role','button'); cell.tabIndex=0;
+    if(['go','jail','gotojail'].includes(sp.type)||i===20) cell.classList.add('corner');
+    cell.classList.add(sp.type);
+    const gp=gridPos(i);
+    cell.style.gridRow=gp.row;
+    cell.style.gridColumn=gp.col;
+    cell.style.setProperty('--band',sp.group?GROUP_COLORS[sp.group]:'transparent');
+    let html='';
+    if(sp.group) html+='<div class="band"></div>';
+    html+=`<div class="sname">${esc(sp.name)}</div><div class="sshort${/ /.test(SHORT_NAMES[i]||'')?' two':''}">${esc(SHORT_NAMES[i]||sp.name)}</div>`;
+    if(sp.price) html+=`<div class="sprice">${shortM(sp.price)}</div>`;
+    if(sp.tier==='Landed') html+=`<div class="gate">◆</div>`;
+    const art=spaceArt(sp,i);
+    if(art) html+=`<div class="art">${art}</div>`;
+    html+=`<div class="owner"></div><div class="mort">M</div><div class="tokens"></div>`;
+    cell.innerHTML=html;
+    el.appendChild(cell);
+    cellRefs.push({cell,ownerEl:cell.querySelector('.owner'),mortEl:cell.querySelector('.mort'),tokensEl:cell.querySelector('.tokens')});
+  });
+  const center=document.createElement('div');
+  center.id='center';
+  const headline=
+    'GST UP · COE UP · RENT UP · EVERYTHING UP · COOLING MEASURES UNDER REVIEW · ' +
+    'WHITE PAPER TO BE RELEASED · SALARY NOT MOVING · THE GAP IS NARROWING · ' +
+    'LANDED PROPERTY IS NOT FOR EVERYONE · NO FURTHER QUESTIONS · ';
+  center.innerHTML=`
+    <div class="center-title">
+      <div class="neon-main">PAPPIES</div>
+      <div class="neon-sub">MONOPOLY</div>
+      <div class="neon-tag">SINGAPORE · 2026</div>
+    </div>
+    <div class="center-play">
+      <div class="center-dice" id="diceBox"></div>
+      <div class="center-outcome" id="centerOutcome" role="status" aria-live="polite"></div>
+    </div>
+    <div class="ticker-wrap"><div class="ticker">${headline}${headline}</div></div>`;
+  el.appendChild(center);
+  if(!buildBoard._observer){
+    buildBoard._observer=new ResizeObserver(entries=>{
+      const w=entries[0].contentRect.width;
+      if(w>0) document.documentElement.style.setProperty('--board-size',w+'px');
+    });
+    buildBoard._observer.observe(el);
+  }
+}
+
+/* Phone-sized labels: full names break mid-word in a 30px cell */
+const SHORT_NAMES=[
+  'GO','Yishun','MPS','Jurong W','GST','AMK MRT','AMK','Press','Bedok','Tamp',
+  'Jail','Lentor','SP','Pinery','Myst','City Hall','Dunman','MPS','Dunearn','Bartley',
+  'Kopi','Orchard','Press','Marina','River V','JE MRT','Newton','Tanglin','PUB','Holland',
+  'CPIB','Terrace','Prime','MPS','Semi-D','Bedok MRT','Kopi','Nassim','ABSD','Astrid'
+];
+var SPACE_ART={};
+function tokenFace(p){ return p.token.img?`<img src="${p.token.img}" alt="">`:p.token.icon; }
+function spaceArt(sp,i){
+  const v=SPACE_ART[i];
+  if(v) return /^data:image\//.test(v)?`<img src="${esc(v)}" alt="">`:esc(v);
+  if(sp.type==='utility') return sp.name==='PUB'?'💧':'⚡';
+  const t={go:'🏁',jail:'🔒',gotojail:'👮',station:'🚇',tax:'🧾',chance:'📰',chest:'🏛️',kopitiam:'☕'}[sp.type];
+  if(t) return t;
+  return sp.tier==='HDB'?'🏢':sp.tier==='Condo'?'🏙️':sp.tier==='Landed'?'🏡':'';
+}
+
+/* ---------- RENDER ---------- */
+const CELL_SHADOW='inset 0 1px 0 rgba(255,255,255,.4),inset 0 -1px 0 rgba(0,0,0,.18),inset 1px 0 0 rgba(255,255,255,.12),inset -1px 0 0 rgba(0,0,0,.10)';
+function renderBoardDynamic(){
+  const cur=S.players[S.current];
+  BOARD.forEach((sp,i)=>{
+    const r=cellRefs[i];
+    if(!r) return;
+    const here=!S.gameOver && !!cur && cur.pos===i;
+    const occ=S.players.filter(p=>p.alive && p.pos===i);
+    const tokHtml=occ.map(p=>`<span class="tok${p.id===S.current && !S.gameOver?' active':''}" style="background:${p.color}" title="${esc(p.name)}">${tokenFace(p)}</span>`).join('');
+    const sig=[sp.owner,sp.mortgaged?1:0,here?1:0,tokHtml].join('|');
+    if(r.sig===sig) return;
+    r.sig=sig;
+    const o=sp.owner!=null?S.players[sp.owner]:null;
+    if(o){ r.ownerEl.style.display='block'; r.ownerEl.style.background=o.color; }
+    else r.ownerEl.style.display='none';
+    r.mortEl.style.display=sp.mortgaged?'block':'none';
+    r.cell.style.boxShadow=o?`inset 0 -4px 0 ${o.color}`:CELL_SHADOW;
+    r.cell.classList.toggle('here',here);
+    if(r.tokensEl.innerHTML!==tokHtml) r.tokensEl.innerHTML=tokHtml;
+    let lbl=sp.name+(sp.price?`, ${shortM(sp.price)}`:'');
+    if(o) lbl+=`, owned by ${o.name}${sp.mortgaged?' (mortgaged)':''}`;
+    else if(sp.price) lbl+=', unowned';
+    if(occ.length) lbl+=`. Here: ${occ.map(p=>p.name).join(', ')}`;
+    r.cell.setAttribute('aria-label',lbl);
+  });
+}
+let lastStripCurrent=-1;
+function renderPlayers(){
+  const el=document.getElementById('playerStrip');
+  el.innerHTML=S.players.map((p,i)=>{
+    const tier=SES[p.ses];
+    return `
+      <div class="pchip ${i===S.current?'current':''} ${p.alive?'':'dead'}" data-i="${i}" title="Tap to view ${esc(p.name)}'s portfolio">
+        <div class="pchip-token" style="background:${p.color}">${tokenFace(p)}</div>
+        <div class="pchip-info">
+          <div class="pchip-name">${esc(p.name)}</div>
+          <div class="pchip-cash">${money(p.cash)}</div>
+        </div>
+        <span class="pchip-tier" data-t="${p.ses}">${tier.short}</span>
+      </div>`;
+  }).join('');
+  el.querySelectorAll('.pchip').forEach(c=>{ c.tabIndex=0; c.setAttribute('role','button'); });
+  if(lastStripCurrent!==S.current){
+    lastStripCurrent=S.current;
+    const c=el.querySelector('.pchip.current');
+    if(c && el.scrollWidth>el.clientWidth) el.scrollTo({left:Math.max(0,c.offsetLeft-16),behavior:'smooth'});
+  }
+}
+function renderDice(animate){
+  const el=document.getElementById('diceBox');
+  if(!el) return;
+  const [a,b]=S.dice;
+  el.innerHTML=`<div class="die ${animate?'roll':''}">${a}</div><div class="die ${animate?'roll':''}">${b}</div>`;
+}
+function updateStatusBanner(){
+  const el=document.getElementById('statusBanner');
+  if(!el) return;
+  if(S.gameOver){ el.textContent='Game over.'; el.classList.remove('cooling'); return; }
+  const cooled=S.turnCount<S.coolingUntil;
+  if(cooled){ el.textContent='❄ Cooling measures active · rents halved'; el.classList.add('cooling'); }
+  else { el.textContent=''; el.classList.remove('cooling'); }
+}
+function updateRoundInfo(){
+  const el=document.getElementById('roundInfo');
+  const cooled=S.turnCount<S.coolingUntil;
+  el.innerHTML=`Round <b>${S.rounds+1}</b> · ×<b>${S.costIndex.toFixed(2)}</b>`+(cooled?' · <span style="color:#fda4af">❄</span>':'');
+}
+function updateUI(){
+  const p=S.players[S.current];
+  if(S.gameOver) applyThemeColor('#fbbf24');
+  else if(S.phase==='auction') applyThemeColor('#fbbf24');
+  else if(p) applyPlayerTheme(p);
+  renderBoardDynamic();
+  renderPlayers();
+  renderDice(false);
+  renderControls();
+  updateStatusBanner();
+  updateRoundInfo();
+  renderOutcome();
+  renderMarketBar();
+}
+function renderControls(){
+  const a=S.actor;
+  const human=!!a && !a.isAI && !S.gameOver;
+  const el=id=>document.getElementById(id);
+  const buying=S.phase==='buy';
+  const auct=S.phase==='auction';
+  el('rollBtn').style.display=(human && S.phase==='roll')?'':'none';
+  el('buyBtn').style.display=(human && (buying||auct))?'':'none';
+  el('passBtn').style.display=(human && (buying||auct))?'':'none';
+  el('endBtn').style.display=(human && S.phase==='end')?'':'none';
+  el('buyBtn').disabled=false;
+  el('buyBtn').textContent='Buy';
+  el('passBtn').textContent='Pass';
+  if(human && buying && S.pendingBuy){
+    const pr=effectivePrice(S.pendingBuy,a);
+    el('buyBtn').textContent=`Buy · ${shortM(pr)}`;
+    el('buyBtn').disabled=a.cash<pr;
+  } else if(human && auct){
+    el('buyBtn').textContent=`Bid · ${shortM(S.auctionPrice)}`;
+    el('buyBtn').disabled=a.cash<S.auctionPrice;
+    el('passBtn').textContent='Drop';
+  }
+  el('rollBtn').classList.toggle('nudge',human && S.phase==='roll');
+
+  // One line telling the player exactly what the game is waiting for
+  const prompt=el('turnPrompt');
+  let ptxt='', you=false;
+  if(human){
+    you=true;
+    const who=S.players.filter(x=>!x.isAI).length>1?`${esc(a.name)}, `:'';
+    if(S.phase==='roll') ptxt=who?`${who}your turn — roll the dice`:'Your turn — roll the dice';
+    else if(buying && S.pendingBuy){
+      const pr=effectivePrice(S.pendingBuy,a);
+      ptxt=a.cash<pr?`Not enough cash for <b>${esc(S.pendingBuy.name)}</b> — pass to send it to auction`
+                    :`Buy <b>${esc(S.pendingBuy.name)}</b>? You have ${shortM(a.cash)}`;
+    }
+    else if(auct && S.pendingBuy) ptxt=`${who?who:''}${who?'bid':'Bid'} ${shortM(S.auctionPrice)} for <b>${esc(S.pendingBuy.name)}</b>?`;
+    else if(S.phase==='end') ptxt=who?`${who}all done — end your turn`:'All done — end your turn';
+  }
+  prompt.innerHTML=ptxt;
+  prompt.classList.toggle('you',you);
+
+  // While the AI plays, show who's moving instead of an empty bar
+  const wait=el('waitRow');
+  const cur=S.players[S.current];
+  const showWait=!human && !S.gameOver && !!cur && S.players.length>0;
+  wait.classList.toggle('show',showWait);
+  if(showWait){
+    const msg=auct?`Auction for <b>${esc(S.pendingBuy?S.pendingBuy.name:'property')}</b>`
+                  :`<b>${esc(cur.name)}</b> ${cur.isAI?'is thinking':'is moving'}`;
+    const key=cur.id+'|'+msg;
+    const pill=el('waitPill');
+    if(pill.dataset.k!==key){
+      pill.dataset.k=key;
+      pill.innerHTML=`<span class="wtok" style="background:${cur.color}">${tokenFace(cur)}</span><span class="wtxt">${msg}</span><span class="dots"><i></i><i></i><i></i></span>`;
+    }
+  }
+  el('ffBtn').textContent=`⏩ ${SPEED>=12?'Max':SPEED+'×'}`;
+
+  // Auto-show the property card while the player decides whether to buy
+  if(human && (buying||auct) && S.pendingBuy) inspect(BOARD.indexOf(S.pendingBuy),true);
+  else if(inspectSticky) hideInspect();
+}
+
+let inspectTimer=null, inspectSticky=false, pickedCell=-1;
+function hideInspect(){
+  clearTimeout(inspectTimer); inspectSticky=false;
+  document.getElementById('infoBar').innerHTML='';
+  if(pickedCell>=0 && cellRefs[pickedCell]) cellRefs[pickedCell].cell.classList.remove('picked');
+  pickedCell=-1;
+}
+function inspect(i,sticky){
+  if(!sticky && pickedCell===i && !inspectSticky){ hideInspect(); return; } // tap again to close
+  if(pickedCell>=0 && cellRefs[pickedCell]) cellRefs[pickedCell].cell.classList.remove('picked');
+  pickedCell=i; if(cellRefs[i]) cellRefs[i].cell.classList.add('picked');
+  inspectSticky=!!sticky;
+  clearTimeout(inspectTimer);
+  if(!sticky) inspectTimer=setTimeout(hideInspect,5000);
+  const sp=BOARD[i], o=sp.owner!=null?S.players[sp.owner]:null;
+  let h=`<button class="x" aria-label="Close" onclick="hideInspect()">×</button><span class="hint">${sp.tier||sp.type}</span><b>${esc(sp.name)}</b>`;
+  if(sp.price) h+=`<br>Price ${money(sp.price)} · rent ${money(Math.round((sp.rent||0)*S.costIndex))}`;
+  if(sp.tier==='HDB') h+=`<br>Lease ${leaseOf(sp)} yrs left · ×${leaseFactor(sp).toFixed(2)}`;
+  if(sp.group) h+=`<br>Set: ${sp.group}${o&&ownsGroup(o,sp.group)?' · complete (×2 rent)':''}`;
+  if(o) h+=`<br>Owner: ${o.token.icon} ${esc(o.name)}${sp.mortgaged?' (mortgaged)':''}`;
+  else if(sp.price) h+='<br><span style="color:var(--text-muted)">Unowned</span>';
+  document.getElementById('infoBar').innerHTML=h;
+}
+
+function canManage(p){
+  return !p.isAI && !S.gameOver && S.players[S.current]===p && !['moving','over'].includes(S.phase);
+}
+function openPlayerDrawer(pid){
+  const p=S.players[pid];
+  if(!p) return;
+  pdPlayerId=pid;
+  renderPlayerDrawer();
+  openDrawer('playerDrawer');
+}
+function renderPlayerDrawer(){
+  if(pdPlayerId==null) return;
+  const p=S.players[pdPlayerId];
+  if(!p){ closeDrawers(); return; }
+  const c=document.getElementById('pdContent');
+  const titleEl=document.getElementById('pdTitle');
+  const owned=BOARD.filter(s=>s.owner===p.id);
+  const propValue=owned.reduce((a,s)=>a+(s.mortgaged?s.price*0.5:s.price),0);
+  const net=p.cash+propValue;
+  const mortCount=owned.filter(s=>s.mortgaged).length;
+  const tiers=SES[p.ses];
+  const manage=canManage(p);
+  titleEl.textContent=manage?'Your Portfolio':'Portfolio';
+  let h=`
+    <div class="pd-header">
+      <div class="pd-token" style="background:${p.color}">${tokenFace(p)}</div>
+      <div class="pd-info">
+        <div class="pd-name">${esc(p.name)}</div>
+        <div class="pd-meta">${tiers.name} · ${p.alive?titleFor(p):'Bankrupt'}${p.isAI?` · ${p.intel}`:''}</div>
+      </div>
+    </div>
+    <div class="pd-stats">
+      <div class="pd-stat"><div class="pd-stat-label">Cash</div><div class="pd-stat-val gold">${money(p.cash)}</div></div>
+      <div class="pd-stat"><div class="pd-stat-label">Property</div><div class="pd-stat-val">${money(propValue)}</div></div>
+      <div class="pd-stat"><div class="pd-stat-label">Net Worth</div><div class="pd-stat-val success">${money(net)}</div></div>
+      <div class="pd-stat"><div class="pd-stat-label">Prestige${mortCount?` · ${mortCount} mortgaged`:''}</div><div class="pd-stat-val">${prestige(p)}</div></div>
+    </div>
+    <div class="pd-body">`;
+  if(owned.length===0){ h+='<div class="pd-empty">No properties yet.</div>'; }
+  else {
+    const groups={};
+    owned.forEach(s=>{ const key=s.group||s.type; (groups[key]=groups[key]||[]).push(s); });
+    const order=['brown','lightblue','pink','orange','red','yellow','green','darkblue','station','utility'];
+    const keys=order.filter(k=>groups[k]).concat(Object.keys(groups).filter(k=>!order.includes(k)));
+    keys.forEach(key=>{
+      const list=groups[key];
+      const isSet=list[0].group && ownsGroup(p,list[0].group);
+      const color=GROUP_COLORS[key]||TYPE_COLORS[key]||'#475569';
+      const groupName=key==='station'?'MRT Stations':key==='utility'?'Utilities':key.charAt(0).toUpperCase()+key.slice(1);
+      h+=`<div class="pd-group">
+        <div class="pd-group-head">
+          <span class="pd-group-dot" style="background:${color}"></span>
+          <span class="pd-group-name">${groupName}</span>
+          ${isSet?'<span class="pd-group-set">×2 rent</span>':''}
+        </div>`;
+      list.forEach(s=>{
+        const rent=rentFor(s,p,null);
+        const mortVal=Math.floor(s.price/2);
+        const redeemCost=mortVal+Math.round(s.price*0.1);
+        const idx=BOARD.indexOf(s);
+        let right='';
+        if(manage){
+          if(s.mortgaged){
+            const afford=p.cash>=redeemCost;
+            right=`<button class="pd-prop-btn redeem${afford?'':' disabled'}" data-mg="${idx}" data-act="redeem">${afford?`Redeem ${shortM(redeemCost)}`:`Need ${shortM(redeemCost)}`}</button>`;
+          } else {
+            right=`<button class="pd-prop-btn" data-mg="${idx}" data-act="mortgage">Mortgage +${shortM(mortVal)}</button>`;
+          }
+        } else if(s.mortgaged){
+          right=`<span class="pd-prop-badge mortgaged">Mortgaged</span>`;
+        }
+        h+=`<div class="pd-prop ${s.mortgaged?'mortgaged':''}">
+          <div class="pd-prop-main">
+            <div class="pd-prop-name">${esc(s.name)}</div>
+            <div class="pd-prop-sub">
+              ${s.mortgaged?`Mortgaged · Redeem ${shortM(redeemCost)}`:`<span class="rent">Rent ${money(rent)}</span>`}
+              ${s.tier?` · ${s.tier}`:''}
+              ${s.tier==='HDB'?` · ${leaseOf(s)}y`:''}
+            </div>
+          </div>
+          ${right}
+        </div>`;
+      });
+      h+='</div>';
+    });
+  }
+  h+='</div>';
+  c.innerHTML=h;
+  c.querySelectorAll('[data-mg]').forEach(btn=>{
+    btn.onclick=()=>{
+      const idx=parseInt(btn.dataset.mg), act=btn.dataset.act;
+      const sp=BOARD[idx];
+      if(!sp||sp.owner!==p.id) return;
+      if(act==='mortgage'){
+        sp.mortgaged=true;
+        const v=Math.floor(sp.price/2);
+        p.cash+=v;
+        log(`${p.name} mortgages ${sp.name} for ${money(v)}.`,'mortgage');
+        Sound.play('mortgage');
+      } else {
+        const cost=Math.floor(sp.price/2)+Math.round(sp.price*0.1);
+        if(p.cash<cost){ log(`${p.name} cannot afford to redeem ${sp.name} (${money(cost)}).`,'pay'); return; }
+        p.cash-=cost; sp.mortgaged=false;
+        log(`${p.name} redeems ${sp.name} for ${money(cost)}.`,'mortgage');
+        Sound.play('mortgage');
+      }
+      renderBoardDynamic(); renderPlayers(); renderMarketBar(); renderPlayerDrawer(); renderControls();
+    };
+  });
+}
+document.getElementById('playerStrip').addEventListener('keydown',e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const c=e.target.closest('.pchip'); if(!c) return;
+  e.preventDefault(); e.stopPropagation(); openPlayerDrawer(+c.dataset.i);
+});
+document.getElementById('playerStrip').addEventListener('click',e=>{
+  const c=e.target.closest('.pchip'); if(!c) return;
+  openPlayerDrawer(+c.dataset.i);
+});
+document.getElementById('board').addEventListener('keydown',e=>{
+  if(e.key!=='Enter' && e.key!==' ') return;
+  const c=e.target.closest('.space'); if(!c) return;
+  e.preventDefault(); e.stopPropagation();
+  const i=cellRefs.findIndex(r=>r.cell===c); if(i>=0) inspect(i);
+});
+document.getElementById('board').addEventListener('click',e=>{
+  const c=e.target.closest('.space'); if(!c) return;
+  const i=cellRefs.findIndex(r=>r.cell===c);
+  if(i>=0) inspect(i);
+});
+document.getElementById('manageBtn').onclick=()=>{
+  if(S.players[S.current]) openPlayerDrawer(S.current);
+};
+
+let drawerOpener=null;
+function openDrawer(id){
+  const was=document.querySelector('.drawer.open');
+  if(!was) drawerOpener=document.activeElement;
+  document.querySelectorAll('.drawer.open').forEach(d=>{ if(d.id!==id) d.classList.remove('open'); });
+  const d=document.getElementById(id);
+  d.classList.add('open');
+  if(id==='playerDrawer') renderPlayerDrawer();
+  const c=d.querySelector('[data-close-drawer]'); if(c) c.focus({preventScroll:true});
+}
+function closeDrawers(){
+  const was=document.querySelector('.drawer.open');
+  document.querySelectorAll('.drawer.open').forEach(d=>d.classList.remove('open'));
+  if(was && drawerOpener && document.contains(drawerOpener)){ try{ drawerOpener.focus({preventScroll:true}); }catch(e){} }
+  drawerOpener=null;
+}
+document.querySelectorAll('[data-close-drawer]').forEach(b=>b.addEventListener('click',closeDrawers));
+document.querySelectorAll('.drawer-backdrop').forEach(b=>b.addEventListener('click',closeDrawers));
+document.getElementById('logBtn').onclick=()=>openDrawer('logDrawer');
+document.getElementById('menuBtn').onclick=()=>openDrawer('menuDrawer');
+
+/* ---------- MOBILE HELPERS ---------- */
+document.getElementById('cardToast').addEventListener('click',e=>{
+  const el=e.currentTarget; clearTimeout(el._t); el.classList.remove('show');
+});
+// Keep floating sheets parked just above the action bar, whatever its height
+new ResizeObserver(en=>{
+  const h=en[0].target.getBoundingClientRect().height;
+  document.documentElement.style.setProperty('--ab-h',Math.round(h)+'px');
+}).observe(document.getElementById('actionBar'));
+// Speed button during AI turns — cycles without digging into the menu
+const FF_STEPS=[1,2,4,12];
+document.getElementById('ffBtn').onclick=()=>{
+  const i=FF_STEPS.indexOf(SPEED);
+  SPEED=FF_STEPS[(i+1)%FF_STEPS.length];
+  PREFS.speed=SPEED; savePrefs();
+  document.getElementById('speedSel').value=String(SPEED);
+  Sound.play('click'); renderControls();
+};
+// Swipe a drawer down (phone) or right (desktop side panel) to close it
+document.querySelectorAll('.drawer-panel').forEach(panel=>{
+  let y0=null,x0=null,dy=0,dx=0,side=false;
+  panel.addEventListener('touchstart',e=>{
+    const body=panel.querySelector('.drawer-body');
+    if(body && body.contains(e.target) && body.scrollTop>0) return; // let it scroll
+    side=window.matchMedia('(min-width:1024px)').matches;
+    y0=e.touches[0].clientY; x0=e.touches[0].clientX; dy=dx=0;
+    panel.style.transition='none';
+  },{passive:true});
+  panel.addEventListener('touchmove',e=>{
+    if(y0==null) return;
+    dy=Math.max(0,e.touches[0].clientY-y0); dx=Math.max(0,e.touches[0].clientX-x0);
+    panel.style.transform=side?`translateX(${dx}px)`:`translateY(${dy}px)`;
+  },{passive:true});
+  panel.addEventListener('touchend',()=>{
+    if(y0==null) return;
+    panel.style.transition=''; panel.style.transform='';
+    if((side?dx:dy)>90) closeDrawers();
+    y0=null;
+  });
+});
+
+function cardToast(text,type){
+  const el=document.getElementById('cardToast');
+  el.className='card-toast show '+(type||'');
+  el.querySelector('.card-type').textContent=
+    type==='press'?'📰 Press Release':type==='town'?'🏛️ Meet the People':type==='kopi'?'☕ Kopitiam':'Card';
+  el.querySelector('.card-text').textContent=text;
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>el.classList.remove('show'),3400);
+}
+
+function leaseOf(sp){
+  if(sp.tier!=='HDB') return null;
+  if(sp.lease==null) sp.lease=45+Math.floor(Math.random()*46);
+  return sp.lease;
+}
+function leaseFactor(sp){
+  const l=leaseOf(sp);
+  if(l==null) return 1;
+  return l>=60?1:Math.max(0.5,0.5+0.5*l/60);
+}
+function effectivePrice(sp,p){
+  let m=SES[p.ses].buyMult[sp.tier]||1;
+  if(sp.tier==='Condo'||sp.tier==='Landed'){
+    const n=BOARD.filter(s=>s.owner===p.id&&s.type==='property').length;
+    m*=1+Math.min(0.30,0.02*n);
+  }
+  return Math.round(sp.price*m*leaseFactor(sp));
+}
+function priceLabel(sp,p){
+  const base=effectivePrice(sp,p)/(sp.price*leaseFactor(sp));
+  let s='';
+  if(base>1.001) s=`+${Math.round((base-1)*100)}% ABSD`;
+  else if(base<0.999) s=`-${Math.round((1-base)*100)}% subsidy`;
+  if(sp.tier==='HDB') s+=`${s?', ':''}${leaseOf(sp)}y lease`;
+  return s?` (${s})`:'';
+}
+function prestige(p){
+  let v=0,nw=p.cash;
+  const seen=new Set();
+  BOARD.forEach(s=>{
+    if(s.owner!==p.id) return;
+    nw+=s.mortgaged?s.price*0.5:s.price;
+    if(s.tier==='Landed') v+=1;
+    if(s.group==='darkblue') v+=2;
+    if(s.group==='red') v+=1;
+    if(s.group && !seen.has(s.group)){ seen.add(s.group); if(ownsGroup(p,s.group)) v+=3; }
+  });
+  if(nw>8000000) v+=2;
+  if(nw>15000000) v+=3;
+  return v;
+}
+function rentFor(sp,owner,payer){
+  if(sp.mortgaged) return 0;
+  let r;
+  if(sp.type==='station'){ r=sp.rent*BOARD.filter(s=>s.type==='station'&&s.owner===owner.id).length; }
+  else if(sp.type==='utility'){ r=sp.rent*BOARD.filter(s=>s.type==='utility'&&s.owner===owner.id).length; }
+  else {
+    r=sp.rent;
+    if(sp.group && ownsGroup(owner,sp.group)) r*=2;
+    r*=leaseFactor(sp);
+  }
+  r=Math.round(r*S.costIndex);
+  r=Math.round(r*SES[owner.ses].rentRecv);
+  if(payer) r=Math.round(r*SES[payer.ses].rentPaid);
+  if(S.turnCount<S.coolingUntil) r=Math.round(r*0.5);
+  return r;
+}
+
+function ensureCash(p,amount){
+  if(p.cash>=amount) return true;
+  const inSet=s=>(s.group&&ownsGroup(p,s.group))?1:0;
+  const owned=BOARD.filter(s=>s.owner===p.id&&!s.mortgaged).sort((a,b)=>inSet(a)-inSet(b)||a.price-b.price);
+  for(const sp of owned){
+    if(p.cash>=amount) break;
+    sp.mortgaged=true;
+    const v=Math.floor(sp.price/2);
+    p.cash+=v;
+    log(`${p.name} mortgages ${sp.name} for ${money(v)}.`,'mortgage');
+    Sound.play('mortgage');
+  }
+  renderBoardDynamic(); renderPlayers(); renderMarketBar();
+  return p.cash>=amount;
+}
+function payBank(p,amount){
+  if(!ensureCash(p,amount)){
+    log(`${p.name} cannot pay ${money(amount)} and leaves the board.`,'bankrupt');
+    Sound.play('bankrupt');
+    removePlayer(p,null);
+    return;
+  }
+  p.cash-=amount;
+  renderPlayers(); renderMarketBar();
+}
+function payPlayer(from,to,amount){
+  if(!ensureCash(from,amount)){
+    log(`${from.name} cannot pay ${money(amount)} and leaves the board.`,'bankrupt');
+    Sound.play('bankrupt');
+    removePlayer(from,to);
+    return;
+  }
+  from.cash-=amount;
+  to.cash+=amount;
+  if(from.stats) from.stats.rentPaid+=amount;
+  if(to.stats) to.stats.rentReceived+=amount;
+  renderPlayers(); renderMarketBar();
+}
+function removePlayer(p,creditor){
+  if(!p.alive) return;
+  p.alive=false;
+  if(p.stats){ p.stats.bankruptRound=S.rounds+1; p.stats.bankruptedBy=creditor?creditor.name:null; }
+  if(creditor) creditor.cash+=p.cash;
+  BOARD.forEach(sp=>{
+    if(sp.owner!==p.id) return;
+    if(creditor) sp.owner=creditor.id;
+    else { sp.owner=null; sp.mortgaged=false; }
+  });
+  p.cash=0;
+  log(`${p.name} is no longer a member of the board.`,'snark');
+  setOutcome(`${p.name} is bankrupt`,'bankrupt');
+  renderBoardDynamic(); renderPlayers(); renderMarketBar();
+  checkWin();
+}
+/* Games by FC: count finished games so the arcade card can show them */
+function recordGame(winner){
+  if(!S.players.some(p=>!p.isAI)) return;
+  try{
+    const k='pappies-monopoly-record';
+    const r=JSON.parse(localStorage.getItem(k)||'{}')||{};
+    r.played=(r.played||0)+1;
+    if(winner&&!winner.isAI) r.won=(r.won||0)+1;
+    localStorage.setItem(k,JSON.stringify(r));
+  }catch(e){}
+}
+function checkWin(){
+  if(S.gameOver) return true;
+  const alive=S.players.filter(p=>p.alive);
+  if(alive.length<=1){
+    S.gameOver=true;
+    if(alive.length===1){
+      log(`🏆 ${alive[0].name} wins Pappies Monopoly and is promoted to Senior Minister.`,'win');
+      setOutcome(`${alive[0].name} wins and is promoted to Senior Minister`,'win');
+      Sound.play('win');
+    } else {
+      log('Everyone is bankrupt. The board remains in surplus.','win');
+      setOutcome('Everyone is bankrupt','bankrupt');
+      Sound.play('bankrupt');
+    }
+    S.phase='over';
+    updateUI();
+    recordGame(alive.length===1?alive[0]:null);
+    showGameOver();
+    return true;
+  }
+  return false;
+}
+function shiftSES(p,delta,reason){
+  const before=p.ses;
+  const after=Math.max(1,Math.min(4,before+delta));
+  if(after===before){ log(`${p.name}: ${reason}. No change in class tier.`,'snark'); return; }
+  p.ses=after;
+  if(p.stats){ if(after<before) p.stats.sesUp++; else p.stats.sesDown++; }
+  const dir=after<before?'rises':'falls';
+  log(`${p.name} ${dir} one class tier — ${SES[before].name} → ${SES[after].name} (${reason}).`,'class');
+  Sound.play(after<before?'up':'down');
+  renderPlayers(); renderMarketBar();
+}
+
+function purchase(p,sp){
+  if(sp.tier==='Landed' && !canBuyLanded(p)){
+    log(`${p.name} cannot view landed property at ${SES[p.ses].name} tier.`,'gate');
+    Sound.play('gate');
+    return false;
+  }
+  const price=effectivePrice(sp,p);
+  if(p.cash<price){ log(`${p.name} cannot afford ${sp.name} at ${money(price)}.`); return false; }
+  p.cash-=price;
+  sp.owner=p.id;
+  sp.mortgaged=false;
+  if(p.stats){
+    p.stats.propertiesBought++;
+    if(!p.stats.biggestPurchase || price>p.stats.biggestPurchase.price)
+      p.stats.biggestPurchase={name:sp.name,price};
+  }
+  log(`${p.name} buys ${sp.name} for ${money(price)}${priceLabel(sp,p)}.`,'buy');
+  setOutcome(`Bought ${sp.name} for ${money(price)}`,'buy');
+  Sound.play('buy');
+  renderBoardDynamic(); renderPlayers(); renderMarketBar();
+  return true;
+}
+function ownsGroup(owner,group){
+  const g=BOARD.filter(s=>s.group===group);
+  return g.length>0 && g.every(s=>s.owner===owner.id);
+}
+function canBuyLanded(p){
+  if(p.ses<=2) return true;
+  return prestige(p)>=PRESTIGE_GATE;
+}
+
+function valuation(sp,p){
+  let v=effectivePrice(sp,p);
+  if(sp.group){
+    const g=BOARD.filter(s=>s.group===sp.group);
+    const mine=g.filter(s=>s.owner===p.id).length;
+    const them=g.filter(s=>s.owner!=null&&s.owner!==p.id).length;
+    if(mine===g.length-1) v*=1+0.90*p.traits.setFocus;
+    else if(mine>0) v*=1+0.12*mine*p.traits.setFocus;
+    if(them>0) v*=1+0.12*p.traits.block;
+  }
+  if(sp.type==='station'){ const mine=BOARD.filter(s=>s.type==='station'&&s.owner===p.id).length; v*=1+0.10*mine; }
+  if(sp.type==='utility'){ const mine=BOARD.filter(s=>s.type==='utility'&&s.owner===p.id).length; v*=1+0.08*mine; }
+  const yieldRatio=sp.rent/sp.price;
+  v*=1+(yieldRatio-0.04)*8*p.traits.yieldPref;
+  if(p.traits.tierBias && p.traits.tierBias[sp.tier]) v*=p.traits.tierBias[sp.tier];
+  else { if(sp.tier==='HDB') v*=1.04; if(sp.tier==='Landed') v*=0.96; }
+  v*=1+p.traits.prestige*(sp.tier==='Landed'?0.30:sp.tier==='Condo'?0.12:0);
+  if(sp.tier==='Landed' && !canBuyLanded(p)) v*=0.0;
+  if(p.traits.followLeader){
+    const lead=leader();
+    if(lead.id!==p.id && sp.group && BOARD.some(s=>s.group===sp.group&&s.owner===lead.id)) v*=1.22;
+  }
+  if(p.traits.contrarian){
+    const lead=leader(), tail=trailing();
+    if(lead.id!==p.id && sp.group && BOARD.some(s=>s.group===sp.group&&s.owner===lead.id)) v*=1.30;
+    if(tail.id!==p.id && sp.group && BOARD.some(s=>s.group===sp.group&&s.owner===tail.id)) v*=0.82;
+  }
+  return v;
+}
+
+function log(msg,cls=''){
+  const el=document.getElementById('log');
+  const d=document.createElement('div');
+  d.className=cls;
+  d.textContent=msg;
+  el.appendChild(d);
+  while(el.children.length>300) el.removeChild(el.firstChild);
+  el.scrollTop=el.scrollHeight;
+}
+
+function drawCard(p,kind){
+  if(!p.alive||S.gameOver) return;
+  let deck,tag,cls;
+  if(kind==='press'){ deck=PRESS; tag='Press Release'; cls='press'; }
+  else if(kind==='town'){ deck=TOWN; tag='Meet the People Sessions'; cls='town'; }
+  else { deck=KOPITIAM; tag='Kopitiam'; cls='kopi'; }
+  if(!BAGS[kind]||!BAGS[kind].length) BAGS[kind]=shuffle(deck);
+  const card=BAGS[kind].pop();
+  log(`${tag} — ${card.text}`,cls);
+  setOutcome(card.text,cls);
+  if(!p.isAI) cardToast(card.text,kind==='press'?'press':kind==='town'?'town':'kopi');
+  const prevPos=p.pos;
+  const j=p.jailTurns;
+  card.run(p);
+  if(p.pos===10 && prevPos!==10 && p.stats) p.stats.jailTrips++;
+  if(p.alive && p.pos!==10 && p.jailTurns>j){
+    p.skipTurns=(p.skipTurns||0)+(p.jailTurns-j);
+    p.jailTurns=j;
+  }
+  renderPlayers(); renderMarketBar();
+  updateStatusBanner();
+  updateRoundInfo();
+  checkWin();
+}
+
+function ageLeases(){
+  BOARD.forEach(s=>{
+    if(s.tier!=='HDB') return;
+    const prev=leaseOf(s);
+    s.lease=Math.max(0,prev-2);
+    if(s.owner!=null && prev>60 && s.lease<=60)
+      log(`${s.name} drops below 60 years of lease. Banks start to hesitate.`,'snark');
+    if(s.lease===0){
+      const o=s.owner!=null?S.players[s.owner]:null;
+      if(o && o.alive){
+        const pay=s.mortgaged?0:Math.round(s.price*0.3);
+        o.cash+=pay;
+        log(`The lease on ${s.name} expires. It reverts to the state. ${o.name} receives ${money(pay)}.`,'press');
+      }
+      s.owner=null; s.mortgaged=false; s.lease=99;
+    }
+  });
+}
+function enBloc(){
+  const groups={};
+  BOARD.forEach(s=>{ if(s.group) (groups[s.group]=groups[s.group]||[]).push(s); });
+  Object.values(groups).forEach(list=>{
+    const o=list[0].owner;
+    if(o==null||!list.every(s=>s.owner===o)) return;
+    const owner=S.players[o]; if(!owner.alive) return;
+    const hdb=list[0].tier==='HDB';
+    const ok=hdb?(list.some(s=>leaseOf(s)<=40)&&Math.random()<0.35):(list[0].tier==='Condo'&&S.rounds>=12&&Math.random()<0.08);
+    if(!ok) return;
+    const pay=list.reduce((a,s)=>a+Math.round(s.price*1.3)-(s.mortgaged?Math.floor(s.price/2):0),0);
+    owner.cash+=pay;
+    list.forEach(s=>{ s.owner=null; s.mortgaged=false; if(hdb) s.lease=99; });
+    log(`Collective sale approved at ${list[0].name}. ${owner.name} collects ${money(pay)}.`,'press');
+    Sound.play('rally');
+  });
+}
+function endByLimit(){
+  if(S.gameOver) return;
+  const w=S.players.filter(x=>x.alive).reduce((a,b)=>netWorth(a)>=netWorth(b)?a:b);
+  log(`Round limit reached. ${w.name} leads with ${money(netWorth(w))} and wins.`,'win');
+  S.gameOver=true; S.phase='over'; Sound.play('win');
+  setOutcome(`${w.name} wins on net worth (${money(netWorth(w))})`,'win');
+  updateUI();
+  recordGame(w);
+  showGameOver();
+}
+function endRound(){
+  S.rounds++;
+  const next=Math.min(2.0,1+0.04*S.rounds);
+  if(next>S.costIndex+0.0001){
+    S.costIndex=next;
+    log(`Cost of living index rises to ${S.costIndex.toFixed(2)}×. Rents adjust accordingly.`,'money');
+    Sound.play('inflation');
+  }
+  ageLeases(); enBloc();
+  renderBoardDynamic(); renderPlayers(); updateRoundInfo(); renderMarketBar();
+  if(S.rounds>=ROUND_CAP) endByLimit();
+}
+function advance(){
+  const n=S.players.length, prev=S.current;
+  let g=0;
+  do { S.current=(S.current+1)%n; g++; } while(!S.players[S.current].alive && g<=n);
+  if(S.current<=prev) endRound();
+}
+
+function aiMargin(p,price){
+  let m=0.03+(1-p.traits.risk)*0.20;
+  const br=(p.cash-price)/Math.max(1,p.cash);
+  if(br<p.traits.buffer) m+=(p.traits.buffer-br)*2.2;
+  return m;
+}
+function aiNoise(p){
+  let n=p.intel==='Low'?0.55:p.intel==='Medium'?0.22:0.06;
+  if(p.traits.noiseDecay) n*=Math.max(0.25,1-S.rounds/12);
+  return n;
+}
+function aiPerceived(p,sp){ return valuation(sp,p)*(1+(Math.random()-0.5)*aiNoise(p)*2); }
+function aiDecides(p,sp){
+  const price=effectivePrice(sp,p);
+  if(p.cash<price){ log(`${p.name} cannot afford ${sp.name}.`); return false; }
+  let m=aiMargin(p,price);
+  if(sp.tier==='HDB') m+=(1-leaseFactor(sp))*0.15;
+  return aiPerceived(p,sp)>price*(1+m);
+}
+function aiMaxBid(p,sp){
+  const m=aiMargin(p,sp.price*0.7);
+  return Math.min(aiPerceived(p,sp)/(1+m), p.cash*(1-p.traits.buffer*0.6));
+}
+function aiUnmortgage(p){
+  const reserve=SES[p.ses].cash*(0.5+p.traits.buffer);
+  if(p.cash<reserve*1.7) return;
+  const mort=BOARD.filter(s=>s.owner===p.id&&s.mortgaged).sort((a,b)=>a.price-b.price);
+  for(const sp of mort){
+    const cost=Math.floor(sp.price/2)+Math.round(sp.price*0.1);
+    if(p.cash-cost<reserve) break;
+    p.cash-=cost; sp.mortgaged=false;
+    log(`${p.name} redeems the mortgage on ${sp.name} for ${money(cost)}.`,'mortgage');
+    Sound.play('mortgage');
+  }
+  renderBoardDynamic(); renderPlayers(); renderMarketBar();
+}
+
+async function auction(sp,declined){
+  const n=S.players.length;
+  const step=Math.max(1000,Math.round(sp.price*0.05/1000)*1000);
+  const start=Math.round(sp.price*0.5/1000)*1000;
+  let active=[];
+  for(let k=1;k<n;k++){
+    const x=S.players[(declined.id+k)%n];
+    if(x.alive && !(sp.tier==='Landed'&&!canBuyLanded(x)) && x.cash>=start) active.push(x);
+  }
+  if(!active.length){ log(`${sp.name} finds no bidders and stays on the market.`,'gate'); setOutcome(`${sp.name} — no bids`,'gate'); return; }
+  log(`${sp.name} goes to auction. Opening bid ${money(start)}.`,'gate');
+  Sound.play('gavel');
+  setOutcome(`Auction: ${sp.name} · opening ${money(start)}`,'gate');
+  const caps=new Map();
+  let top=null,bid=0,guard=0;
+  while(active.length && !(top&&active.length===1) && guard++<400){
+    for(const x of active.slice()){
+      if(S.gameOver) return;
+      if(top&&active.length===1) break;
+      if(x===top) continue;
+      const next=top?bid+step:start;
+      let raise=false;
+      if(x.cash>=next){
+        if(x.isAI){
+          if(!caps.has(x)) caps.set(x,aiMaxBid(x,sp));
+          raise=caps.get(x)>=next;
+          await sleep(120);
+        } else {
+          S.auctionPrice=next; S.pendingBuy=sp;
+          raise=(await ask(x,'auction'))==='buy' && x.cash>=next;
+        }
+      }
+      if(raise){ top=x; bid=next; }
+      else active.splice(active.indexOf(x),1);
+    }
+  }
+  S.pendingBuy=null;
+  if(!top){ log(`No one bids on ${sp.name}.`); setOutcome(`${sp.name} — no bids`,'gate'); return; }
+  top.cash-=bid; sp.owner=top.id; sp.mortgaged=false;
+  if(top.stats){
+    top.stats.propertiesBought++;
+    if(!top.stats.biggestPurchase || bid>top.stats.biggestPurchase.price)
+      top.stats.biggestPurchase={name:sp.name,price:bid};
+  }
+  log(`${top.name} wins ${sp.name} at auction for ${money(bid)}.`,'buy');
+  setOutcome(`${top.name} won ${sp.name} at auction for ${money(bid)}`,'buy');
+  Sound.play('buy');
+  renderBoardDynamic(); renderPlayers(); renderMarketBar();
+}
+
+async function startTurn(){
+  if(S.running) return;
+  S.running=true;
+  try{
+    while(!S.gameOver){
+      if(checkWin()) break;
+      const p=S.players[S.current];
+      if(p.alive){
+        if(p.jailTurns>0){
+          p.jailTurns--;
+          log(`${p.name} sits this turn out in Changi Prison.`,'jail');
+          setOutcome(`Sitting out in Changi Prison`,'jail');
+          Sound.play('jail'); renderPlayers(); await sleep(850);
+        } else if(p.skipTurns>0){
+          p.skipTurns--;
+          log(`${p.name} misses this turn.`,'snark');
+          setOutcome(`Misses a turn`,'snark');
+          renderPlayers(); await sleep(850);
+        } else {
+          await takeTurn(p);
+        }
+      }
+      if(S.gameOver) break;
+      advance();
+    }
+  } catch(e){
+    console.error(e); log('Something went wrong: '+e.message,'bankrupt');
+  }
+  S.running=false;
+}
+
+async function takeTurn(p){
+  S.turnCount++; S.phase='roll'; S.pendingBuy=null; S.actor=null;
+  p.doublesThisTurn=0;
+  setOutcome('');
+  if(p.stats) p.stats.turnsTaken++;
+  log(`— ${p.name}'s turn —`,'turn');
+  Sound.play('turn');
+  updateUI();
+  if(p.isAI){ await sleep(700); aiUnmortgage(p); }
+
+  let rolling=true;
+  let safety=0;
+  while(rolling && !S.gameOver && p.alive && safety++<20){
+    if(!p.isAI){
+      await ask(p,'roll');
+    } else {
+      S.phase='roll'; updateUI();
+      await sleep(550);
+    }
+    if(S.gameOver || !p.alive) return;
+    const again=await doRoll(p);
+    if(S.gameOver || !p.alive) return;
+    if(!again){ rolling=false; }
+    else {
+      log(`${p.name} rolled doubles — rolls again.`,'roll');
+      await sleep(750);
+    }
+  }
+  if(S.gameOver || !p.alive) return;
+  if(p.isAI){ S.phase='end'; updateUI(); await sleep(620); }
+  else await ask(p,'end');
+}
+
+async function doRoll(p){
+  S.phase='moving'; renderControls();
+  const d1=rnd6(), d2=rnd6();
+  S.dice=[d1,d2];
+  const isDouble=(d1===d2);
+  renderDice(true); Sound.play('dice');
+  log(`${p.name} rolls ${d1} + ${d2} = ${d1+d2}.`);
+
+  if(isDouble){
+    p.doublesThisTurn=(p.doublesThisTurn||0)+1;
+    if(p.doublesThisTurn>=3){
+      log(`${p.name} rolls a third consecutive double — straight to Changi Prison, no move.`,'jail');
+      setOutcome(`Third double! Straight to Changi Prison`,'jail');
+      Sound.play('gavel');
+      p.pos=10; p.jailTurns=1;
+      if(p.stats) p.stats.jailTrips++;
+      renderBoardDynamic(); renderPlayers(); updateRoundInfo();
+      await sleep(750);
+      return false;
+    }
+    setOutcome(`Rolled ${d1} + ${d2} = ${d1+d2} · DOUBLES (${p.doublesThisTurn})`,'roll');
+    Sound.play('double');
+  } else {
+    setOutcome(`Rolled ${d1} + ${d2} = ${d1+d2}`,'roll');
+  }
+
+  await sleep(380);
+  await animateMove(p, d1+d2);
+  if(S.gameOver || !p.alive) return false;
+  await resolveLanding(p);
+  if(!p.alive) return false;
+  if(p.jailTurns>0 || p.skipTurns>0) return false;
+  return isDouble;
+}
+
+function passGo(p){
+  const tier=SES[p.ses];
+  p.cash+=tier.salary;
+  const gst=Math.round(tier.salary*0.09);
+  p.cash-=gst;
+  log(`${p.name} passes GO. Salary ${money(tier.salary)}, GST ${money(gst)}.`,'money');
+  setOutcome(`Passed GO · +${money(tier.salary-gst)} net`,'money');
+  if(tier.wealthTax>0){
+    const wt=Math.round(netWorth(p)*tier.wealthTax);
+    if(wt>0){
+      log(`${p.name} pays ${(tier.wealthTax*100).toFixed(1)}% wealth tax of ${money(wt)}.`,'class');
+      payBank(p,wt);
+    }
+  }
+}
+
+async function animateMove(p,steps){
+  for(let i=0;i<steps;i++){
+    p.pos=(p.pos+1)%40;
+    if(p.pos===0){ passGo(p); if(p.alive) Sound.play('coin'); }
+    else Sound.play('tick');
+    renderBoardDynamic(); renderPlayers(); updateRoundInfo();
+    if(!p.alive || S.gameOver) return;
+    await sleep(105);
+  }
+  await sleep(110);
+}
+
+async function offerProperty(p,sp){
+  if(sp.tier==='Landed' && !canBuyLanded(p)){
+    log(`${sp.name} is unowned, but landed property at your class tier is out of reach.`,'gate');
+    log(`${PRESTIGE_GATE} prestige or a higher tier would open the door.`,'snark');
+    setOutcome(`Landed property gated · needs ${PRESTIGE_GATE} prestige`,'gate');
+    Sound.play('gate');
+    await auction(sp,p);
+    return;
+  }
+  log(`${sp.name} is unowned — asking ${money(effectivePrice(sp,p))}${priceLabel(sp,p)}.`);
+  setOutcome(`Landed on ${sp.name} · asking ${money(effectivePrice(sp,p))}`,'card');
+  let bought=false;
+  if(p.isAI){
+    await sleep(700);
+    if(aiDecides(p,sp)) bought=purchase(p,sp);
+    else if(p.cash>=effectivePrice(sp,p)){
+      log(p.traits.chatty?`${p.name}: "Not worth it. Next time I come back."`:`${p.name} declines ${sp.name}.`,'snark');
+      setOutcome(`Declined ${sp.name}`,'snark');
+    }
+  } else {
+    S.pendingBuy=sp;
+    while(true){
+      const c=await ask(p,'buy');
+      if(c!=='buy'){ log(`${p.name} declines ${sp.name}.`); setOutcome(`Declined ${sp.name}`,'snark'); break; }
+      if(purchase(p,sp)){ bought=true; break; }
+    }
+    S.pendingBuy=null;
+  }
+  if(!bought && !S.gameOver) await auction(sp,p);
+}
+
+async function resolveLanding(p){
+  if(S.gameOver || !p.alive) return;
+  const sp=BOARD[p.pos];
+  log(`${p.name} lands on ${sp.name}.`);
+  if(p.traits && p.traits.chatty){
+    const gripes=[
+      'Taxi Uncle: "Last time this place was kampong."',
+      'Taxi Uncle: "ERP everywhere also. How to drive?"',
+      'Taxi Uncle: "I already tell you, buy earlier."',
+      'Taxi Uncle: "Now everybody also want to come here."'
+    ];
+    log(pick(gripes),'snark');
+  }
+  if(sp.type==='kopitiam'){
+    Sound.play('kopi');
+    if(p.pos===20){
+      const cost=SES[p.ses].rentPaid>1.2?8000:5000;
+      log(`${p.name} sits down at the kopitiam. A drink costs ${money(cost)}.`,'pay');
+      payBank(p,cost);
+      if(!p.alive) return;
+    }
+    drawCard(p,'kopitiam');
+    return;
+  }
+  if(sp.type==='gotojail'){
+    p.pos=10; p.jailTurns=1;
+    if(p.stats) p.stats.jailTrips++;
+    log(`${p.name} receives a CPIB invitation and goes to Changi Prison.`,'jail');
+    setOutcome(`Sent to Changi Prison`,'jail');
+    Sound.play('gavel');
+    renderBoardDynamic(); renderPlayers();
+    return;
+  }
+  if(sp.type==='tax'){
+    log(`${p.name} pays ${money(sp.amount)} to the board.`,'pay');
+    setOutcome(`Paid ${money(sp.amount)} in tax`,'pay');
+    Sound.play('pay'); payBank(p,sp.amount);
+    return;
+  }
+  if(sp.type==='chance'){ Sound.play('press'); drawCard(p,'press'); return; }
+  if(sp.type==='chest'){ Sound.play('town'); drawCard(p,'town'); return; }
+  if(['property','station','utility'].includes(sp.type)){
+    if(sp.owner===null){ await offerProperty(p,sp); return; }
+    if(sp.owner!==p.id){
+      const owner=S.players[sp.owner];
+      const rent=rentFor(sp,owner,p);
+      if(rent===0){
+        log(`${sp.name} is mortgaged. Rent is not collected.`);
+        setOutcome(`${sp.name} is mortgaged · no rent`,'snark');
+      } else {
+        const cooled=S.turnCount<S.coolingUntil;
+        log(`${p.name} pays rent ${money(rent)} to ${owner.name}${cooled?' (cooling measure)':''}.`,'pay');
+        setOutcome(`Paid ${money(rent)} rent to ${owner.name}${cooled?' ❄':''}`,'pay');
+        if(SES[p.ses].rentPaid>SES[owner.ses].rentPaid)
+          log(`Same unit, higher rent — ${SES[p.ses].name} pays a premium to ${SES[owner.ses].name}.`,'snark');
+        Sound.play('pay');
+        payPlayer(p,owner,rent);
+      }
+    } else {
+      log(`${p.name} already owns ${sp.name}.`);
+      setOutcome(`Landed on own ${sp.name}`,'');
+    }
+  }
+}
+
+/* ---------- STORY ---------- */
+function pn(name){ return `<span class="p-name">${esc(name)}</span>`; }
+function pm(n){ return `<span class="p-money">${money(n)}</span>`; }
+function sesFlavor(startSES,endSES,alwaysShow){
+  if(startSES===endSES){ return alwaysShow?`Their class tier held steady at ${SES[endSES].name}.`:''; }
+  const startName=SES[startSES].name;
+  const endName=SES[endSES].name;
+  const diff=startSES-endSES;
+  if(startSES===4 && endSES===1) return `They began in Precariat and ended in Good Class — the kind of leap the board insists is possible.`;
+  if(startSES===1 && endSES===4) return `They began in Good Class and ended in Precariat — the family money did not survive the game.`;
+  if(diff>0) return `They climbed ${diff} class tier${diff>1?'s':''}, from ${startName} to ${endName}.`;
+  return `They fell ${-diff} class tier${-diff>1?'s':''}, from ${startName} to ${endName}.`;
+}
+function generateStory(){
+  const humans=S.players.filter(p=>!p.isAI);
+  const alive=S.players.filter(p=>p.alive);
+  const winner=alive.length===1
+    ? alive[0]
+    : (S.players.length ? S.players.reduce((a,b)=>netWorth(a)>=netWorth(b)?a:b) : null);
+  if(!winner) return null;
+  const rounds=Math.max(1,S.rounds);
+  const abandoned=S.abandoned;
+  const paragraphs=[];
+
+  if(abandoned){
+    paragraphs.push(
+      `This game was abandoned before its natural end. The board has filed the paperwork. ` +
+      `Here is where things stood after ${rounds} round${rounds===1?'':'s'}.`
+    );
+  }
+
+  if(humans.length===0){
+    const w=winner;
+    const st=w.stats||newStats(w.ses);
+    if(!abandoned){
+      paragraphs.push(
+        `No humans played this game. ${S.players.length} AI opponents sat down, ` +
+        `and over ${rounds} round${rounds===1?'':'s'} they accumulated, mortgaged, ` +
+        `and queued at the kopitiam like everyone else.`
+      );
+    }
+    const parts=[];
+    parts.push(abandoned ? `${pn(w.name)} was ahead.` : `${pn(w.name)} won.`);
+    parts.push(`Starting in ${SES[st.startSES].name} with ${pm(st.startCash)}, they ended with ${pm(netWorth(w))}.`);
+    if(st.biggestPurchase) parts.push(`Their signature acquisition was ${st.biggestPurchase.name}, at ${pm(st.biggestPurchase.price)}.`);
+    else if(st.propertiesBought===0) parts.push(`They never bought a single property — they simply outlasted everyone.`);
+    const arc=sesFlavor(st.startSES,w.ses,false);
+    if(arc) parts.push(arc);
+    paragraphs.push(parts.join(' '));
+    if(st.rentReceived>100000){
+      const totalPaid=S.players.filter(p=>p!==w).reduce((a,p)=>a+((p.stats&&p.stats.rentPaid)||0),0);
+      paragraphs.push(`Over the game ${pn(w.name)} collected ${pm(st.rentReceived)} in rent. The other AI players paid out ${pm(totalPaid)} in return.`);
+    }
+    if(st.jailTrips>=2){
+      paragraphs.push(`${pn(w.name)} visited Changi Prison ${st.jailTrips} times along the way — an unusually high count for a leader.`);
+    }
+    const fallen=S.players.filter(p=>!p.alive && p!==w);
+    if(fallen.length===1){
+      paragraphs.push(`${pn(fallen[0].name)} was the only casualty — wiped out in round ${fallen[0].stats.bankruptRound||'?'}${fallen[0].stats.bankruptedBy?` by ${pn(fallen[0].stats.bankruptedBy)}`:''}.`);
+    } else if(fallen.length>1){
+      paragraphs.push(`${fallen.length} players fell along the way: ${fallen.map(p=>pn(p.name)).join(', ')}.`);
+    }
+    if(!abandoned) paragraphs.push(`In the end, the board was in surplus. It is always in surplus.`);
+    return {
+      emoji: abandoned?'📜':'🤖',
+      title: abandoned ? `${w.name} Was Ahead` : `${w.name}'s Empire`,
+      subtitle: `${abandoned?'An Abandoned Game':'An All-AI Game'} · ${rounds} Round${rounds===1?'':'s'}`,
+      paragraphs
+    };
+  }
+
+  if(!abandoned){
+    if(humans.length===1){
+      paragraphs.push(
+        `One human sat down against ${S.players.length-1} AI opponent${S.players.length-1===1?'':'s'}. ` +
+        `${rounds} round${rounds===1?'':'s'} later, this is what became of them.`
+      );
+    } else {
+      paragraphs.push(
+        `${humans.length} humans sat down to play. Over ${rounds} round${rounds===1?'':'s'} ` +
+        `they bought, mortgaged, queued at the kopitiam, and waited for the market to correct itself. ` +
+        `This is what became of them.`
+      );
+    }
+  }
+
+  const ordered=humans.slice().sort((a,b)=>{
+    if(a===winner) return -1;
+    if(b===winner) return 1;
+    if(a.alive!==b.alive) return a.alive?-1:1;
+    return netWorth(b)-netWorth(a);
+  });
+
+  for(const p of ordered){
+    const st=p.stats||newStats(p.ses);
+    const parts=[];
+    parts.push(`${pn(p.name)} started in ${SES[st.startSES].name} with ${pm(st.startCash)}.`);
+    const arc=sesFlavor(st.startSES,p.ses,true);
+    if(arc) parts.push(arc);
+    if(st.biggestPurchase) parts.push(`Their biggest move was ${st.biggestPurchase.name}, bought for ${pm(st.biggestPurchase.price)}.`);
+    else if(st.propertiesBought===0) parts.push(`They never bought a single property.`);
+    if(st.rentReceived>300000) parts.push(`They collected ${pm(st.rentReceived)} in rent across the game.`);
+    if(st.jailTrips>=2) parts.push(`They visited Changi Prison ${st.jailTrips} times.`);
+    if(!p.alive){
+      parts.push(`Their run ended in round ${st.bankruptRound||'?'} when the money ran out`+
+        (st.bankruptedBy?` — the last of their properties passed quietly to ${pn(st.bankruptedBy)}`:'')+`.`
+      );
+    } else if(p===winner){
+      parts.push(abandoned
+        ? `They were leading with ${pm(netWorth(p))} when the game ended.`
+        : `They won, ending with ${pm(netWorth(p))} and a seat on the right side of the wall.`
+      );
+    } else {
+      parts.push(`They finished with ${pm(netWorth(p))} — not quite enough.`);
+    }
+    paragraphs.push(parts.join(' '));
+  }
+
+  if(winner && !winner.isAI){
+    paragraphs.push(abandoned
+      ? `The board issued a statement: ${pn(winner.name)} would have been considered for promotion. The paperwork was not completed.`
+      : `The board issued a statement: ${pn(winner.name)} would be promoted to Senior Minister. The other players were unavailable for comment.`
+    );
+  } else if(winner){
+    paragraphs.push(abandoned
+      ? `The AI ${pn(winner.name)} was ahead when the humans walked away. The board congratulated itself on a successful partial simulation.`
+      : `The AI ${pn(winner.name)} won. The board congratulated itself on a successful simulation. The humans, as ever, remain residents.`
+    );
+  }
+
+  return {
+    emoji: abandoned?'📜':(winner&&!winner.isAI?'🏆':'🤖'),
+    title: abandoned
+      ? `${winner.name} Was Ahead`
+      : (winner.isAI ? `${winner.name}'s Quiet Victory` : `${winner.name}'s Ascent`),
+    subtitle: `${abandoned?'An Abandoned Game':'A Pappies Monopoly Story'} · ${rounds} Round${rounds===1?'':'s'}`,
+    paragraphs
+  };
+}
+
+function showGameOver(){
+  const story=generateStory();
+  const el=document.getElementById('gameOver');
+  if(story){
+    document.getElementById('goEmoji').textContent=story.emoji;
+    document.getElementById('goName').textContent=story.title;
+    document.getElementById('goSub').textContent=story.subtitle;
+    document.getElementById('goStory').innerHTML=story.paragraphs.map(p=>`<p>${p}</p>`).join('');
+  } else {
+    document.getElementById('goEmoji').textContent='🏆';
+    document.getElementById('goName').textContent='Game Over';
+    document.getElementById('goSub').textContent='';
+    document.getElementById('goStory').innerHTML='';
+  }
+  el.classList.add('show');
+  document.getElementById('goStory').scrollTop=0;
+}
+
+function abandonGame(){
+  if(!S.players.length){ resetToSetup(); return; }
+  if(S.gameOver && !S.abandoned) return;
+  S.abandoned=true;
+  S.gameOver=true;
+  S.phase='over';
+  S.gen=(S.gen|0)+1;
+  S.running=false;
+  waiter=null;
+  closeDrawers();
+  Sound.play('win');
+  showGameOver();
+}
+
+document.getElementById('rollBtn').onclick=()=>{
+  Sound.init();
+  if(S.gameOver || S.phase!=='roll' || !S.actor) return;
+  Sound.play('click'); resume('roll');
+};
+document.getElementById('buyBtn').onclick=()=>{
+  Sound.init();
+  if((S.phase!=='buy' && S.phase!=='auction') || !S.actor) return;
+  Sound.play('click'); resume('buy');
+};
+document.getElementById('passBtn').onclick=()=>{
+  Sound.init();
+  if((S.phase!=='buy' && S.phase!=='auction') || !S.actor) return;
+  Sound.play('click'); resume('pass');
+};
+document.getElementById('endBtn').onclick=()=>{
+  Sound.init();
+  if(S.phase!=='end' || !S.actor) return;
+  Sound.play('click'); resume('end');
+};
+
+document.getElementById('speedSel').onchange=e=>{ SPEED=parseFloat(e.target.value)||1; PREFS.speed=SPEED; savePrefs(); };
+
+let newGameTimer=null;
+document.getElementById('newGame').onclick=()=>{
+  const btn=document.getElementById('newGame');
+  if(!newGameTimer){
+    btn.textContent='Tap again to confirm';
+    newGameTimer=setTimeout(()=>{ btn.textContent='Restart'; newGameTimer=null; },3000);
+    return;
+  }
+  clearTimeout(newGameTimer);
+  newGameTimer=null;
+  btn.textContent='Restart';
+  closeDrawers();
+  abandonGame();
+};
+document.getElementById('goNew').onclick=()=>{
+  document.getElementById('gameOver').classList.remove('show');
+  S.abandoned=false;
+  resetToSetup();
+};
+
+function resetToSetup(){
+  S.gen=(S.gen|0)+1;
+  waiter=null; BAGS={};
+  S.actor=null; S.running=false; S.gameOver=false; S.abandoned=false;
+  S.phase='roll'; S.pendingBuy=null; S.players=[]; S.current=0;
+  S.outcome=null; pdPlayerId=null;
+  hideInspect();
+  renderOutcome();
+  document.getElementById('log').innerHTML='';
+  document.getElementById('game').classList.remove('visible');
+  document.getElementById('setup').style.display='';
+  document.getElementById('setupError').textContent='';
+  document.getElementById('gameOver').classList.remove('show');
+  closeDrawers();
+  Music.stop();
+  Sound.play('click');
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.target.closest && e.target.closest('.space')) return;
+  if(e.repeat||e.ctrlKey||e.metaKey||e.altKey) return;
+  if(!document.getElementById('game').classList.contains('visible')) return;
+  const t=e.target.tagName;
+  if(['SELECT','INPUT','TEXTAREA'].includes(t) || (e.key===' ' && t==='BUTTON')) return;
+  const k=e.key.toLowerCase();
+  const id=k===' '?(S.phase==='roll'?'rollBtn':S.phase==='end'?'endBtn':null)
+           :k==='b'?'buyBtn'
+           :k==='p'?'passBtn'
+           :k==='escape'?'__esc__'
+           :k==='l'?'__log__'
+           :k==='m'?'__menu__'
+           :k==='i'?'__manage__'
+           :null;
+  if(id==='__esc__'){ closeDrawers(); return; }
+  if(id==='__log__'){ openDrawer('logDrawer'); return; }
+  if(id==='__menu__'){ openDrawer('menuDrawer'); return; }
+  if(id==='__manage__'){ if(S.players[S.current]) openPlayerDrawer(S.current); return; }
+  const btn=id && document.getElementById(id);
+  if(btn && btn.offsetParent!==null && !btn.disabled){ e.preventDefault(); btn.click(); }
+});
+
+setMuted(!!PREFS.muted);
+// On phones the tilt squashes the far row into slivers, so default to flat unless the player chose otherwise.
+setTilt(PREFS.tilt!=null ? PREFS.tilt!==false : !window.matchMedia('(max-width:700px), (max-height:560px)').matches);
+if(PREFS.speed){ const sel=document.getElementById('speedSel'); sel.value=String(PREFS.speed); if(sel.value===String(PREFS.speed)) SPEED=PREFS.speed; }
+updateMusicUI();
+buildSetup();
+</script>
+<script>
+/* Games by FC: lets the whole arcade work offline after the first visit */
+if('serviceWorker' in navigator && /^https?:$/.test(location.protocol)){
+  addEventListener('load',function(){navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(function(){});});
+}
+</script>
+</body>
+</html>

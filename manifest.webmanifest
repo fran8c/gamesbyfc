@@ -1,0 +1,53 @@
+{
+  "name": "Games by FC",
+  "short_name": "Games by FC",
+  "description": "Free browser games by FC: Velocity, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole.",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#05060f",
+  "theme_color": "#05060f",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Velocity",
+      "url": "velocity/"
+    },
+    {
+      "name": "Time Hole",
+      "url": "time-hole/"
+    },
+    {
+      "name": "Pappies Monopoly",
+      "url": "pappies-monopoly/"
+    },
+    {
+      "name": "Shaman!",
+      "url": "shaman/"
+    },
+    {
+      "name": "Neon 3026",
+      "url": "neon-3026/"
+    }
+  ]
+}
