@@ -321,6 +321,17 @@ h1 .l2{background:linear-gradient(100deg,#7ef9ff 0%,#38bdf8 32%,#c084fc 58%,#ff3
   -webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
 .now-playing-pill.show{transform:translate(-50%,0);opacity:1}
 .now-playing-pill .np-txt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sound-invite{position:fixed;left:50%;bottom:calc(14px + var(--safe-b));z-index:31;display:flex;align-items:center;gap:4px;
+  transform:translate(-50%,140%);opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.2,.8,.2,1),opacity .4s;
+  padding:5px;border-radius:999px;background:rgba(10,16,32,.92);border:1px solid rgba(126,249,255,.35);
+  box-shadow:0 12px 40px rgba(0,0,0,.6),0 0 30px -6px rgba(255,62,200,.45);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.sound-invite.show{transform:translate(-50%,0);opacity:1;pointer-events:auto}
+.si-go{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;height:40px;padding:0 18px;border:0;border-radius:999px;cursor:pointer;
+  font:800 13px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#05061a;background:linear-gradient(135deg,#7ef9ff,#ff3ec8)}
+.si-go .eq i{animation:eq .9s ease-in-out infinite}
+.si-go .eq i:nth-child(2){animation-delay:-.3s}.si-go .eq i:nth-child(3){animation-delay:-.6s}
+.si-no{width:40px;height:40px;border:0;border-radius:50%;cursor:pointer;background:transparent;color:#8a9bbb;font-size:15px}
+.si-no:hover{color:#fff}
 .now-playing-pill b{color:#fff}
 .now-playing-pill button{flex:none;width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;color:#05061a;background:#7ef9ff;font-size:12px}
 .card.now-playing{outline:2px solid rgba(126,249,255,.75);outline-offset:4px;animation:npGlow 1.8s ease-in-out infinite}
@@ -386,6 +397,11 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
     </button>
     </div>
   </div>
+</div>
+
+<div class="sound-invite" id="soundInvite" role="region" aria-label="Theme song">
+  <button type="button" id="inviteGo" class="si-go"><span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>Tap for sound</button>
+  <button type="button" id="inviteNo" class="si-no" aria-label="No thanks, keep it quiet">✕</button>
 </div>
 
 <div class="now-playing-pill" id="nowPlaying" aria-live="polite">
@@ -1248,6 +1264,14 @@ var Theme = (function () {
   return {
     parts: PARTS,
     isPlaying: function () { return playing; },
+    /* true only if this browser already allows sound without a tap */
+    canAutoplay: function () {
+      try {
+        if (navigator.userActivation && navigator.userActivation.hasBeenActive) return true;
+        if (!setup()) return false;
+        return ac.state === 'running';
+      } catch (e) { return false; }
+    },
     onPart: function (fn) { onPart = fn; },
     start: function () {
       if (!setup()) return false;
@@ -1302,18 +1326,47 @@ var Theme = (function () {
   btn.addEventListener('click', function () { setOn(!Theme.isPlaying()); });
   $('#npStop').addEventListener('click', function () { setOn(false); });
 
-  // Browsers only allow sound after a tap, so if it was on last time,
-  // it comes back on the first tap anywhere (except when that tap opens a game).
-  var wanted = false;
-  try { wanted = localStorage.getItem(KEY) === '1'; } catch (e) {}
-  if (wanted) {
-    var resume = function (e) {
-      document.removeEventListener('pointerdown', resume, true);
-      if (e.target.closest && (e.target.closest('a') || e.target.closest('#themeBtn'))) return;
-      if (!Theme.isPlaying()) { Theme.start(); ui(true); }
-    };
-    document.addEventListener('pointerdown', resume, true);
+  /* Browsers block sound until the visitor taps, clicks or presses a key.
+     So: try to play straight away (some browsers allow it for returning visitors),
+     otherwise start on the first tap anywhere, and show a "Tap for sound" invite.
+     Taps on a game card are skipped, since those leave the page.
+     If someone stopped the song before, leave them in peace. */
+  var invite = $('#soundInvite');
+  var pref = null;
+  try { pref = localStorage.getItem(KEY); } catch (e) {}
+  var armed = pref !== '0';
+
+  function hideInvite() { invite.classList.remove('show'); }
+  function disarm() {
+    armed = false; hideInvite();
+    document.removeEventListener('click', onTap, true);
+    document.removeEventListener('touchstart', onTouchStart, true);
+    document.removeEventListener('touchend', onTouchEnd, true);
+    document.removeEventListener('keydown', onKey, true);
   }
+  function go() { if (!armed) return; disarm(); if (!Theme.isPlaying()) setOn(true); }
+  function skip(el) { return el && el.closest && (el.closest('a') || el.closest('button') || el.closest('#soundInvite')); }
+  function onTap(e) { if (!skip(e.target)) go(); }
+  var tx = 0, ty = 0;
+  function onTouchStart(e) { var t = e.touches[0]; tx = t.clientX; ty = t.clientY; }
+  function onTouchEnd(e) {
+    var t = e.changedTouches[0];
+    if (Math.abs(t.clientX - tx) > 10 || Math.abs(t.clientY - ty) > 10) return;   // that was a scroll
+    if (!skip(e.target)) go();
+  }
+  function onKey(e) { if (e.key === 'Tab' || e.key === 'Enter' || e.metaKey || e.ctrlKey || e.altKey) return; go(); }
+
+  if (armed) {
+    document.addEventListener('click', onTap, true);
+    document.addEventListener('touchstart', onTouchStart, { capture: true, passive: true });
+    document.addEventListener('touchend', onTouchEnd, true);
+    document.addEventListener('keydown', onKey, true);
+    $('#inviteGo').addEventListener('click', function () { go(); });
+    $('#inviteNo').addEventListener('click', function () { disarm(); try { localStorage.setItem(KEY, '0'); } catch (e) {} });
+    if (Theme.canAutoplay()) go();
+    else setTimeout(function () { if (armed && !Theme.isPlaying()) invite.classList.add('show'); }, 900);
+  }
+  btn.addEventListener('click', function () { if (armed) disarm(); }, true);
   // Pause when the page is hidden or when leaving for a game.
   var wasOn = false;
   document.addEventListener('visibilitychange', function () {
