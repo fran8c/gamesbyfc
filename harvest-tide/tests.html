@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harvest Tide — Tests</title>
+<style>
+  :root { --bg: #F4E3C1; --ink: #12202B; --ok: #2f7d32; --bad: #b3261e; --mute: #6b6f73; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+         font: 15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  #summary { font-weight: 600; margin: 8px 0 16px; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li { padding: 4px 0; border-bottom: 1px solid #0001; }
+  .pass::before { content: "✓ "; color: var(--ok); }
+  .fail::before { content: "✗ "; color: var(--bad); }
+  .skip::before { content: "– "; color: var(--mute); }
+  pre { white-space: pre-wrap; color: var(--bad); font-size: 12px; margin: 4px 0 0 18px; }
+</style>
+</head>
+<body>
+<h1>Harvest Tide — rules engine tests</h1>
+<div id="summary">Running…</div>
+<ul id="list"></ul>
+<script type="module">
+  import { runAll } from './tests/all.js';
+  const list = document.getElementById('list');
+  const res = await runAll(r => {
+    const li = document.createElement('li');
+    li.className = r.status;
+    li.textContent = r.name;
+    if (r.error) { const pre = document.createElement('pre'); pre.textContent = r.error; li.appendChild(pre); }
+    list.appendChild(li);
+  });
+  document.getElementById('summary').textContent =
+    `${res.passed} passed, ${res.failed} failed, ${res.skipped} skipped`;
+</script>
+</body>
+</html>
