@@ -1,4 +1,5 @@
-// Cannon (aim, fire rate, clip, reload, jam, bets) and bullets (movement, bounces, lock-on, hits). Spec 3.1–3.2.
+// Cannon (aim, fire rate, clip, reload, jam, cannon level) and bullets (movement, bounces, lock-on, hits).
+// Spec 3.1–3.2.
 import { emit } from './events.js';
 import { resolveNet } from './catch.js';
 import { bestTarget } from './powerups.js';
@@ -13,26 +14,31 @@ export function aimDir(cfg, x, y) {
   return { x: ux, y: uy };
 }
 
-export function modeCannon(S) { return S.mode === 'arcade' ? S.cfg.cannon.arcade : S.cfg.cannon.table; }
+export function modeCannon(S) { return S.mode === 'arcade' ? S.cfg.cannon.arcade : S.cfg.cannon.reef; }
 
 function fireRate(S) {
   if (S.mode === 'arcade' && S.combo.feverActive) return S.cfg.fever.fireRateTicks;
   return modeCannon(S).fireRateTicks;
 }
 
-/** Largest bet step that is ≤ both the chosen step and the bank. */
-export function effectiveBet(S) {
-  const steps = S.cfg.table.betSteps;
-  let i = S.betIndex;
-  while (i > 0 && steps[i] > S.bank) i--;
-  return steps[i];
+/** Highest cannon level ≤ the chosen one that the player can afford (min level 1). */
+export function effectiveLevel(S) {
+  const costs = S.cfg.reef.shotCost;
+  let lv = S.levelChosen;
+  while (lv > 1 && costs[lv - 1] > S.coins) lv--;
+  return lv;
 }
 
-export function changeBet(S, delta) {
-  const steps = S.cfg.table.betSteps;
-  S.betIndex = Math.max(0, Math.min(steps.length - 1, S.betIndex + delta));
-  S.bet = effectiveBet(S);
-  emit(S, 'bet:change', { bet: S.bet });
+function syncLevel(S) {
+  S.level = effectiveLevel(S);
+  S.cost = S.cfg.reef.shotCost[S.level - 1];
+}
+
+export function changeLevel(S, delta) {
+  const max = S.cfg.reef.shotCost.length;
+  S.levelChosen = Math.max(1, Math.min(max, S.levelChosen + delta));
+  syncLevel(S);
+  emit(S, 'level:change', { level: S.level, cost: S.cost });
 }
 
 /** Spec 3.12 step 4. */
@@ -41,26 +47,28 @@ export function tickCannon(S) {
   if (S.cooldown > 0) S.cooldown--;
   if (S.jamLeft > 0) S.jamLeft--;
   if (S.reloadLeft > 0 && --S.reloadLeft === 0) { S.ammo = a.clipSize; emit(S, 'reload:end', {}); }
-  if (S.mode === 'table') S.bet = effectiveBet(S);
+  if (S.mode === 'reef') syncLevel(S);
   if (!S.firing || S.cooldown > 0 || S.jamLeft > 0 || S.reloadLeft > 0) return;
   if (S.bullets.length >= modeCannon(S).maxBullets) return;
-  if (S.mode === 'table' && (S.bank < S.bet || S.bet <= 0)) return;
+  if (S.mode === 'reef' && S.coins < S.cost) return;
   const d = aimDir(S.cfg, S.aim.x, S.aim.y);
   const c = S.cfg.cannon;
   const b = { id: S.nextBullet++, x: c.pos.x + d.x * c.muzzlePx, y: c.pos.y + d.y * c.muzzlePx, dx: d.x, dy: d.y,
-              bounces: 0, life: S.cfg.bullet.lifeTicks, bet: 0 };
-  if (S.mode === 'table') { b.bet = S.bet; S.bank -= S.bet; S.wagered += S.bet; }
-  else {
+              bounces: 0, life: S.cfg.bullet.lifeTicks, cost: 0, lucky: false };
+  if (S.mode === 'reef') {
+    b.cost = S.cost; S.coins -= S.cost; S.spent += S.cost;
+    if (S.lucky.ready && !S.lucky.inFlight) { b.lucky = true; S.lucky.inFlight = true; }
+  } else {
     S.ammo--;
     if (S.ammo === 0) { S.reloadLeft = a.reloadTicks; emit(S, 'reload:start', { ticks: a.reloadTicks }); }
   }
   S.bullets.push(b);
   S.shots++;
   S.cooldown = fireRate(S);
-  emit(S, 'shot', { id: b.id, x: b.x, y: b.y, dx: d.x, dy: d.y, bet: b.bet });
+  emit(S, 'shot', { id: b.id, x: b.x, y: b.y, dx: d.x, dy: d.y, cost: b.cost, level: S.level, lucky: b.lucky });
 }
 
-/** Spec 3.12 step 6 (move, steer, bounce, hit) and the bullet half of step 8 (expiry, refunds). */
+/** Spec 3.12 step 6 (move, steer, bounce, hit) and the bullet half of step 8 (expiry, returns). */
 export function tickBullets(S) {
   const cfg = S.cfg, F = cfg.field, B = cfg.bullet;
   let target = null;
@@ -73,7 +81,7 @@ export function tickBullets(S) {
     if (target) {
       const tx = target.x - b.x, ty = target.y - b.y, tl = Math.sqrt(tx * tx + ty * ty);
       if (tl > 1) {
-        let nx = b.dx + tx / tl * cfg.powerups.lockonSteer, ny = b.dy + ty / tl * cfg.powerups.lockonSteer;
+        const nx = b.dx + tx / tl * cfg.powerups.lockonSteer, ny = b.dy + ty / tl * cfg.powerups.lockonSteer;
         const nl = Math.sqrt(nx * nx + ny * ny); b.dx = nx / nl; b.dy = ny / nl;
       }
     }
@@ -84,7 +92,6 @@ export function tickBullets(S) {
     if (b.y < F.y0) { b.y = 2 * F.y0 - b.y; b.dy = -b.dy; bounced = true; }
     if (bounced) { b.bounces++; emit(S, 'bullet:bounce', { id: b.id, x: b.x, y: b.y }); }
     b.life--;
-    // hit test: first fish (ascending uid) overlapping the bullet
     let hit = null;
     if (b.bounces <= B.maxBounces) {
       for (const f of S.fish) {
@@ -96,20 +103,22 @@ export function tickBullets(S) {
     if (hit) {
       b.dead = true;
       S.hits++;
-      const paid = resolveNet(S, b.x, b.y, b.bet);
-      if (S.mode === 'table' && !paid) refund(S, b, 'no_payer');
+      const landed = resolveNet(S, b.x, b.y, b);
+      if (S.mode === 'reef' && !landed) giveBack(S, b, 'no_payer');
       if (S.state === 'WHEEL') break;                // everything else waits for the wheel
     } else if (b.bounces > B.maxBounces || b.y > F.h + 20 || b.life <= 0) {
       b.dead = true;
       emit(S, 'bullet:expire', { id: b.id, x: b.x, y: b.y });
-      if (S.mode === 'table') refund(S, b, 'miss');
+      if (S.mode === 'reef') giveBack(S, b, 'miss');
     }
   }
   S.bullets = S.bullets.filter(b => !b.dead);
 }
 
-function refund(S, b, reason) {
-  if (!b.bet) return;
-  S.bank += b.bet; S.wagered -= b.bet;
-  emit(S, 'refund', { bet: b.bet, reason });
+/** Missed shots cost nothing in Treasure Reef. */
+function giveBack(S, b, reason) {
+  if (b.lucky) S.lucky.inFlight = false;
+  if (!b.cost) return;
+  S.coins += b.cost; S.spent -= b.cost;
+  emit(S, 'shot:return', { cost: b.cost, reason });
 }

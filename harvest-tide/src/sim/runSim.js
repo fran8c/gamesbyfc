@@ -4,19 +4,20 @@ import { createRng, streamSeed, fnv1a32 } from './rng.js';
 import { emit, flush } from './events.js';
 import { createCombo, tickCombo, multiplier } from './combo.js';
 import { createPower, usePower, tickPower } from './powerups.js';
-import { tickCannon, tickBullets, changeBet, effectiveBet } from './shots.js';
+import { tickCannon, tickBullets, changeLevel, effectiveLevel } from './shots.js';
 import { tickWheel } from './wheel.js';
-import { lightning } from './catch.js';
+import { lightning, createLucky, luckyNeed } from './catch.js';
 import { initialFill, tickWorld, removeExited } from './world.js';
 
 /**
- * @param {{config: object, seed: number, mode: 'arcade'|'table'}} opts
+ * @param {{config: object, seed: number, mode: 'arcade'|'reef'}} opts
  */
 export function createRun({ config, seed, mode = 'arcade' }) {
   const cfg = config;
+  const reef = mode === 'reef';
   const S = {
     cfg, mode, seed: seed >>> 0, tick: 0, worldTicks: 0,
-    remaining: mode === 'arcade' ? cfg.run.durationTicks : Infinity,
+    remaining: reef ? Infinity : cfg.run.durationTicks,
     state: 'PLAYING',
     rng: {
       spawn: createRng(streamSeed(seed, 'spawn')), paths: createRng(streamSeed(seed, 'paths')),
@@ -27,10 +28,11 @@ export function createRun({ config, seed, mode = 'arcade' }) {
     pointer: { activeId: null }, aim: { x: cfg.cannon.pos.x, y: 0 }, firing: false,
     fish: [], bullets: [], nextUid: 1, nextBullet: 1,
     cooldown: 0, jamLeft: 0, reloadLeft: 0, ammo: cfg.cannon.arcade.clipSize,
-    bank: mode === 'table' ? cfg.table.startBank : 0, peakBank: mode === 'table' ? cfg.table.startBank : 0,
-    betIndex: cfg.table.betSteps.indexOf(cfg.table.defaultBet), bet: cfg.table.defaultBet, wagered: 0,
+    coins: reef ? cfg.reef.startCoins : 0, peakCoins: reef ? cfg.reef.startCoins : 0, spent: 0,
+    levelChosen: cfg.reef.defaultLevel, level: cfg.reef.defaultLevel, cost: cfg.reef.shotCost[cfg.reef.defaultLevel - 1],
     score: 0, shots: 0, hits: 0, catches: {}, biggest: { kind: null, amount: 0, x: 0 },
-    combo: createCombo(), power: createPower(cfg, mode), wheel: null,
+    combo: createCombo(), power: createPower(cfg, mode), lucky: createLucky(),
+    wheel: null, wheelQueue: [],
     over: false, summary: null,
   };
   emit(S, 'run:start', { seed: S.seed, mode });
@@ -39,7 +41,7 @@ export function createRun({ config, seed, mode = 'arcade' }) {
 }
 
 /** Queue an input for the current tick.
- *  Pointer: type 'down'|'move'|'up' with x, y, id. Buttons: 'power' (x = index), 'bet' (x = +1/-1), 'quit'. */
+ *  Pointer: type 'down'|'move'|'up' with x, y, id. Buttons: 'power' (x = index), 'level' (x = +1/-1), 'quit'. */
 export function input(S, type, x = 0, y = 0, id = 0) {
   const e = { tick: S.tick, type, x, y, id };
   S.inputQueue.push(e);
@@ -63,8 +65,8 @@ function applyInputs(S) {
         if (id) usePower(S, id, lightning);
         break;
       }
-      case 'bet':
-        if (S.mode === 'table') changeBet(S, e.x > 0 ? 1 : -1); break;
+      case 'level':
+        if (S.mode === 'reef') changeLevel(S, e.x > 0 ? 1 : -1); break;
       case 'quit':
         endRun(S, 'quit'); break;
     }
@@ -77,8 +79,15 @@ function applyInputs(S) {
 
 export function endRun(S, reason) {
   if (S.over) return S.summary;
-  for (const b of S.bullets) if (b.bet) { S.bank += b.bet; S.wagered -= b.bet; }   // quit: unresolved bets back
+  for (const b of S.bullets) if (b.cost) { S.coins += b.cost; S.spent -= b.cost; }   // leaving: shots in flight cost nothing
   S.bullets = [];
+  // pending wheel spins are paid out at their average so nothing is lost by leaving
+  if (S.wheel) { S.wheelQueue.unshift(S.wheel); S.wheel = null; }
+  for (const w of S.wheelQueue) {
+    const amt = w.base * w.mult;
+    if (S.mode === 'arcade') S.score += amt; else { S.coins += amt; if (S.coins > S.peakCoins) S.peakCoins = S.coins; }
+  }
+  S.wheelQueue = [];
   S.state = 'RUN_OVER';
   S.over = true;
   const accuracy = S.shots ? S.hits / S.shots : 0;
@@ -90,9 +99,9 @@ export function endRun(S, reason) {
   S.summary = {
     mode: S.mode, seed: S.seed, reason,
     score: S.score, accuracyBonus: bonus, accuracy,
-    bank: S.bank, peakBank: S.peakBank, startBank: S.mode === 'table' ? S.cfg.table.startBank : 0, wagered: S.wagered,
+    coins: S.coins, peakCoins: S.peakCoins, startCoins: S.mode === 'reef' ? S.cfg.reef.startCoins : 0, spent: S.spent,
     shots: S.shots, hits: S.hits, catches: { ...S.catches }, biggest: { ...S.biggest },
-    bestMultiplier: S.combo.bestMultiplier, ticks: S.tick + 1,
+    bestMultiplier: S.combo.bestMultiplier, luckyCatches: S.lucky.count, ticks: S.tick + 1,
   };
   emit(S, 'run:end', { summary: S.summary });
   return S.summary;
@@ -104,8 +113,8 @@ function checkEnd(S) {
     S.remaining--;
     if (S.remaining === S.cfg.run.warningAtTicks) emit(S, 'timer:warning', {});
     if (S.remaining <= 0) endRun(S, 'timer');
-  } else if (S.state === 'PLAYING' && S.bullets.length === 0 && S.bank < S.cfg.table.betSteps[0]) {
-    endRun(S, 'broke');
+  } else if (S.state === 'PLAYING' && S.bullets.length === 0 && S.coins < S.cfg.reef.shotCost[0]) {
+    endRun(S, 'empty');
   }
 }
 
@@ -129,7 +138,7 @@ export function step(S) {
   return flush(S);                      // 11
 }
 
-export { multiplier, effectiveBet };
+export { multiplier, effectiveLevel, luckyNeed };
 
 export function hashEvents(events) { return fnv1a32(JSON.stringify(events)); }
 

@@ -7,6 +7,9 @@ import { createTitleScene } from './scenes/title.js';
 import { createGameScene } from './scenes/game.js';
 import { createResultsScene } from './scenes/results.js';
 import { T } from './view/theme.js';
+import { createAudio } from './platform/audio.js';
+import { loadArt } from './platform/images.js';
+import { prewarm } from './view/fishart.js';
 
 /** ?cfg.reel.releaseLoss=70 → { reel: { releaseLoss: 70 } } (dev tuning). */
 function overridesFromUrl(params) {
@@ -55,11 +58,25 @@ export async function boot(canvas) {
   const debug = params.has('debug');
   const seedParam = params.get('seed');
   const autoplay = params.get('autoplay');                  // dev: novice | mid | expert robot plays
-  const modeParam = params.get('mode');                     // dev: arcade | table
+  const modeParam = params.get('mode') === 'reef' ? 'reef' : null;   // dev: arcade | reef
 
+  const fsTarget = document.documentElement;
   const app = {
     config, display, save, insets: { top: 0, bottom: 0 }, scene: null, clock: null,
+    audio: createAudio(save.settings), overlays: [], overlay: null, lastRecord: null,
+    canFullscreen: !!(fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen),
+    isFullscreen: () => !!(document.fullscreenElement || document.webkitFullscreenElement),
+    toggleFullscreen() {
+      try {
+        if (app.isFullscreen()) { (document.exitFullscreen || document.webkitExitFullscreen).call(document); return; }
+        const r = (fsTarget.requestFullscreen || fsTarget.webkitRequestFullscreen).call(fsTarget);
+        if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => {}); } catch { /* */ } }).catch(() => {});
+      } catch { /* not allowed here */ }
+    },
+    open(scene) { app.overlays.push(scene); app.overlay = scene; },
+    close() { app.overlays.pop(); app.overlay = app.overlays[app.overlays.length - 1] || null; if (!app.overlay && app.clock) app.clock.resync(); },
     go(name, arg = {}) {
+      app.overlays.length = 0; app.overlay = null;
       if (name === 'title') app.scene = createTitleScene(app);
       else if (name === 'game') app.scene = createGameScene(app, {
         mode: arg.mode || modeParam || 'arcade', seed: seedParam ? Number(seedParam) >>> 0 : randomSeed(), autoplay,
@@ -76,11 +93,14 @@ export async function boot(canvas) {
 
   // Input: pointer events → logical coordinates → current screen.
   const send = (type, e) => {
-    if (!app.scene || !app.scene.pointer) return;
-    app.scene.pointer(type, display.toLogical(e.clientX, e.clientY), e.pointerId);
+    const target = app.overlay || app.scene;
+    if (!target || !target.pointer) return;
+    target.pointer(type, display.toLogical(e.clientX, e.clientY), e.pointerId);
   };
   canvas.addEventListener('pointerdown', e => {
     e.preventDefault();
+    app.audio.unlock();
+    app.audio.music(save.settings.music);
     try { canvas.setPointerCapture(e.pointerId); } catch { /* ignore */ }
     send('down', e);
   });
@@ -89,9 +109,10 @@ export async function boot(canvas) {
   canvas.addEventListener('pointercancel', e => send('up', e));
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
-  const blur = () => { if (app.scene && app.scene.blur) app.scene.blur(); };
-  document.addEventListener('visibilitychange', () => { if (document.hidden) blur(); });
+  const blur = () => { app.audio.suspend(); if (app.scene && app.scene.blur) app.scene.blur(); };
+  document.addEventListener('visibilitychange', () => { if (document.hidden) blur(); else app.audio.resume(); });
   window.addEventListener('blur', blur);
+  window.addEventListener('focus', () => app.audio.resume());
 
   let fps = 60;
   app.clock = createClock(
@@ -102,6 +123,7 @@ export async function boot(canvas) {
       const ctx = display.ctx;
       app.scene.frame(dt / 1000);
       app.scene.draw(ctx);
+      for (const o of app.overlays) { if (o === app.overlay && o.frame) o.frame(dt / 1000); o.draw(ctx); }
       if (debug && app.scene.S) {
         const S = app.scene.S;
         const line = `fps ${fps.toFixed(0)}  tick ${S.tick}  ${S.state}  fish ${S.fish.length}  bullets ${S.bullets.length}  combo ${S.combo.points}  seed ${S.seed}`;
@@ -113,6 +135,8 @@ export async function boot(canvas) {
 
   if (dev || debug) window.__harvesttide = app;           // dev hook for automated browser tests
   if (display.isPortraitTouch()) setTimeout(() => app.scene && app.scene.rotate && app.scene.rotate(), 0);
+  try { prewarm(); } catch (err) { console.warn('prewarm', err); }
+  loadArt(new URL('../', import.meta.url).href).then(keys => { if (keys.length) console.info('Custom art loaded:', keys.join(', ')); });
   app.go(autoplay || params.has('play') ? 'game' : 'title', {});
   app.clock.start();
   return app;

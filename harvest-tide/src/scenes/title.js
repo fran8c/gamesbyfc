@@ -1,40 +1,65 @@
-// Title: logo, mode select, bests. A robot Arcade game plays behind it.
-import { C, T, goldText, button, hit, frost } from '../view/theme.js';
+// Title: logo, two mode cards, bests, and an icon row. A robot Arcade game plays behind it.
+import { C, T, goldText, button, iconButton, hit, frost, fmt, drawCoin, starPath } from '../view/theme.js';
+import { drawCreature } from '../view/fishart.js';
 import { createGameScene } from './game.js';
+import { createHowtoScene } from './howto.js';
+import { createLeaderboardScene } from './leaderboard.js';
+import { createSettingsScene } from './settings.js';
 
 export function createTitleScene(app) {
-  let demo = createGameScene(app, { mode: 'arcade', seed: 20261108, autoplay: 'expert', attract: true });
-  let arcadeR = null, tableR = null, soundR = null, t = 0;
+  const newDemo = seed => createGameScene(app, { mode: 'arcade', seed, autoplay: 'expert', attract: true });
+  let demo = newDemo(20261108);
+  let arcadeR = null, reefR = null, icons = {}, t = 0;
   return {
     tick(n) {
+      if (app.overlay) return;
       demo.tick(n);
-      if (demo.S.over) demo = createGameScene(app, { mode: 'arcade', seed: (Math.random() * 2 ** 32) >>> 0, autoplay: 'expert', attract: true });
+      if (demo.S.over) demo = newDemo((Math.random() * 2 ** 32) >>> 0);
     },
-    frame(dt) { t += dt; demo.frame(dt); },
+    frame(dt) { t += dt; if (!app.overlay) demo.frame(dt); },
     draw(ctx) {
       demo.draw(ctx, { hud: false });
-      ctx.fillStyle = 'rgba(4,14,26,0.5)'; ctx.fillRect(0, 0, 1280, 720);
+      const g = ctx.createLinearGradient(0, 0, 0, 720);
+      g.addColorStop(0, 'rgba(4,14,26,0.55)'); g.addColorStop(0.5, 'rgba(4,14,26,0.25)'); g.addColorStop(1, 'rgba(4,14,26,0.7)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, 1280, 720);
+
+      // logo with a koi swimming past
       const bob = Math.sin(t * 1.8) * 5;
       ctx.save(); ctx.shadowColor = C.glow; ctx.shadowBlur = 40;
-      goldText(ctx, 'HARVEST TIDE', 640, 150 + bob, 108);
+      goldText(ctx, 'HARVEST TIDE', 640, 140 + bob, 112);
       ctx.restore();
-      T(ctx, 'Aim · Net · Chain · Spin', 640, 222, { size: 26, w: 800, align: 'center', fill: C.ice, sw: 6 });
-      const s = app.save.stats;
-      arcadeR = button(ctx, 'ARCADE', 250, 300, 360, 150, { primary: true, size: 46, sub: '60-second high score' });
-      tableR = button(ctx, 'FISH TABLE', 670, 300, 360, 150, { size: 46, sub: 'Bet coins · play till they run out' });
-      T(ctx, s.bestArcade ? `Best ${s.bestArcade.toLocaleString('en-US')}` : 'No score yet', 430, 486, { size: 22, w: 800, align: 'center', fill: C.gold, sw: 5 });
-      T(ctx, s.bestTablePeak ? `Best peak bank ${s.bestTablePeak.toLocaleString('en-US')}` : 'Start with 1,000 coins', 850, 486, { size: 22, w: 800, align: 'center', fill: C.gold, sw: 5 });
-      frost(ctx, 250, 530, 780, 92, 18, { alpha: 0.55 });
-      T(ctx, 'Touch to aim and fire · shots bounce off the walls · nets catch whole schools', 640, 566, { size: 19, w: 700, align: 'center', fill: C.white, sw: 4 });
-      T(ctx, 'Golden Koi spins the prize wheel · power-ups bottom right · no real money, ever', 640, 598, { size: 19, w: 700, align: 'center', fill: C.ice, sw: 4 });
+      drawCreature(ctx, 'golden_koi', 640 + Math.sin(t * 0.6) * 380, 60 + Math.cos(t * 1.2) * 8, { dir: Math.cos(t * 0.6) > 0 ? 1 : -1, t, scale: 0.8, alpha: 0.95 });
+      T(ctx, 'Aim · Net · Chain · Spin', 640, 204, { size: 26, w: 800, align: 'center', fill: C.ice, sw: 6 });
+
+      // mode cards
+      const s = app.save.stats, pulse = 1 + Math.sin(t * 3) * 0.015;
+      ctx.save(); ctx.translate(430, 345); ctx.scale(pulse, pulse); ctx.translate(-430, -345);
+      arcadeR = button(ctx, 'ARCADE', 240, 260, 380, 170, { primary: true, size: 50, sub: '60 seconds · chase a high score' });
+      ctx.restore();
+      reefR = button(ctx, 'TREASURE REEF', 660, 260, 380, 170, { size: 44, sub: 'Collect coins · no time limit', color: ['#5FF2D2', '#13A58C'] });
+      starPath(ctx, 300, 470, 13, 0.45); ctx.fillStyle = C.gold; ctx.fill();
+      T(ctx, s.bestArcade ? `Best ${fmt(s.bestArcade)}` : 'No score yet', 322, 478, { size: 22, w: 800, fill: C.gold, sw: 5 });
+      drawCoin(ctx, 720, 470, 13, t);
+      T(ctx, s.bestReefPeak ? `Most coins ${fmt(s.bestReefPeak)}` : 'Start with 1,000 coins', 742, 478, { size: 22, w: 800, fill: C.gold, sw: 5 });
+
+      // icon row
+      const row = [['help', 'How to play'], ['trophy', 'Scores'], ['gear', 'Settings']];
+      if (app.canFullscreen) row.push(['fullscreen', app.isFullscreen() ? 'Exit full' : 'Full screen']);
+      const start = 640 - (row.length * 96 - 16) / 2;
+      icons = {};
+      row.forEach(([icon, label], i) => { icons[icon] = iconButton(ctx, icon, start + i * 96, 520, 80, { label }); });
+
+      T(ctx, 'Just for fun — no real money, ever', 640, 650, { size: 17, w: 700, align: 'center', fill: C.ice, sw: 4 });
       T(ctx, 'A Game by FC', 640, 690, { size: 18, w: 800, align: 'center', fill: C.ice, sw: 4, a: 0.9 });
-      soundR = null;
     },
     pointer(type, p) {
       if (type !== 'up') return;
-      if (hit(arcadeR, p)) app.go('game', { mode: 'arcade' });
-      else if (hit(tableR, p)) app.go('game', { mode: 'table' });
-      void soundR;
+      if (hit(arcadeR, p)) { app.audio.play('click'); app.go('game', { mode: 'arcade' }); }
+      else if (hit(reefR, p)) { app.audio.play('click'); app.go('game', { mode: 'reef' }); }
+      else if (hit(icons.help, p)) { app.audio.play('click'); app.open(createHowtoScene(app, {})); }
+      else if (hit(icons.trophy, p)) { app.audio.play('click'); app.open(createLeaderboardScene(app, {})); }
+      else if (hit(icons.gear, p)) { app.audio.play('click'); app.open(createSettingsScene(app)); }
+      else if (hit(icons.fullscreen, p)) { app.audio.play('click'); app.toggleFullscreen(); }
     },
   };
 }

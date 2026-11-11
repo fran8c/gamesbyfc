@@ -79,7 +79,7 @@ function has(S, kind) { return S.fish.some(f => f.kind === kind); }
 function spawnWeights(S) {
   const w = {}, src = S.cfg.world.weights;
   for (const k in src) {
-    if (S.mode === 'table' && S.cfg.world.tableExclude.includes(k)) continue;
+    if (S.mode === 'reef' && S.cfg.world.reefExclude.includes(k)) continue;
     if (k === 'golden_koi' && S.fish.filter(f => f.kind === k).length >= S.cfg.world.koiMax) continue;
     w[k] = src[k];
   }
@@ -109,7 +109,7 @@ export function tickWorld(S) {
   if (S.mode === 'arcade' && S.remaining === w.bossArcadeAtRemainingTicks && !has(S, 'octopus_king')) {
     spawnGroup(S, 'octopus_king'); emit(S, 'boss:enter', {});
   }
-  if (S.mode === 'table' && S.worldTicks > 0 && S.worldTicks % w.bossTableEveryTicks === 0 && !has(S, 'octopus_king')) {
+  if (S.mode === 'reef' && S.worldTicks > 0 && S.worldTicks % w.bossReefEveryTicks === 0 && !has(S, 'octopus_king')) {
     spawnGroup(S, 'octopus_king'); emit(S, 'boss:enter', {});
   }
   // capsule

@@ -5,14 +5,19 @@ import { drawFishIcon } from './fishart.js';
 const COLS = ['#FF5E8A', '#3FE3FF', '#C6FF4A', '#FFC93C', '#9B6BFF', '#FF8A1F'];
 const SEG = (Math.PI * 2) / 12;
 
+/** Wheel angle at `progress` (0..1): five turns, then the chosen segment stops under the pointer. */
+export function wheelRotation(n, index, progress) {
+  const target = 5 * Math.PI * 2 + (n - index) * (Math.PI * 2 / n);
+  return easeOut(Math.min(1, progress)) * target;
+}
+
 /** @param w sim wheel state (S.wheel) or a finished copy; `progress` 0..1 */
 export function drawWheel(ctx, cfg, w, progress, t, { resultAge = -1 } = {}) {
   const segs = cfg.wheel.segments, n = segs.length;
   const wx = 640, wy = 330, r = 190;
   ctx.fillStyle = 'rgba(4,14,26,0.55)'; ctx.fillRect(0, 0, 1280, 720);
   // rotation: 5 full turns then stop with segment `index` under the top pointer
-  const target = 5 * Math.PI * 2 + (n - w.index) * (Math.PI * 2 / n);
-  const rot = easeOut(Math.min(1, progress)) * target;
+  const rot = wheelRotation(n, w.index, progress);
   ctx.save(); ctx.shadowColor = C.gold; ctx.shadowBlur = 40;
   ctx.beginPath(); ctx.arc(wx, wy, r + 18, 0, 7); ctx.fillStyle = C.gold; ctx.fill(); ctx.restore();
   ctx.beginPath(); ctx.arc(wx, wy, r + 18, 0, 7); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
@@ -40,10 +45,10 @@ export function drawWheel(ctx, cfg, w, progress, t, { resultAge = -1 } = {}) {
   ctx.fillStyle = C.coral; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
   if (resultAge >= 0) {
     const s = Math.min(1, resultAge / 0.15);
-    const label = w.index === cfg.wheel.powerSegment ? '×1 + POWER-UP' : '×' + w.mult;
+    const label = w.index === cfg.wheel.powerSegment ? `×${w.mult} + POWER-UP` : '×' + w.mult;
     goldText(ctx, label, wx, wy + r + 70, 64 * (0.6 + 0.4 * s));
   } else {
-    T(ctx, `${w.kind === 'golden_koi' ? 'GOLDEN KOI!' : 'BONUS!'}  ${w.base.toLocaleString('en-US')} × wheel`, wx, wy + r + 70,
+    T(ctx, `${w.lucky ? 'LUCKY SPIN!' : 'GOLDEN KOI!'}  ${w.base.toLocaleString('en-US')} × wheel`, wx, wy + r + 70,
       { size: 30, w: 900, align: 'center', sw: 7 });
   }
 }

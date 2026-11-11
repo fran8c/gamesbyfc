@@ -5,10 +5,10 @@ const SIM_FILES = ['rng.js', 'events.js', 'world.js', 'shots.js', 'catch.js', 'c
 
 test('default config loads clean in dev mode', () => eq(loadConfig({}, { dev: true }).problems.length, 0));
 
-test('dev: out-of-range RTP throws; prod clamps it', () => {
-  const e = throws(() => loadConfig({ table: { rtp: 1.5 } }, { dev: true }));
-  ok(String(e.message).includes('table.rtp'));
-  eq(loadConfig({ table: { rtp: 1.5 } }).config.table.rtp, 1.0);
+test('dev: out-of-range return rate throws; prod clamps it', () => {
+  const e = throws(() => loadConfig({ reef: { returnRate: 1.5 } }, { dev: true }));
+  ok(String(e.message).includes('reef.returnRate'));
+  eq(loadConfig({ reef: { returnRate: 1.5 } }).config.reef.returnRate, 1.1);
 });
 
 const BANNED = [/Math\.random/, /\bDate\b/, /performance\./, /Math\.(sin|cos|tan|atan2?|pow|exp|log\w*|hypot|cbrt|asin|acos)\b/,

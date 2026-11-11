@@ -2,7 +2,7 @@
 import { emit } from './events.js';
 
 export function createPower(cfg, mode) {
-  const n = mode === 'arcade' ? cfg.powerups.startArcade : cfg.powerups.startTable;
+  const n = mode === 'arcade' ? cfg.powerups.startArcade : cfg.powerups.startReef;
   const uses = {};
   for (const id of cfg.powerups.ids) uses[id] = n;
   return { uses, freezeLeft: 0, lockonLeft: 0, lockTarget: null };
@@ -19,7 +19,7 @@ export function grantRandomPower(S) {
 
 /** Highest-value live fish on screen (for lock-on). */
 export function bestTarget(S) {
-  const cfg = S.cfg, val = f => (S.mode === 'arcade' ? cfg.fish[f.kind].points : cfg.fish[f.kind].pay);
+  const cfg = S.cfg, val = f => (S.mode === 'arcade' ? cfg.fish[f.kind].points : cfg.fish[f.kind].reward);
   let best = null;
   for (const f of S.fish) {
     if (!f.alive || val(f) <= 0) continue;

@@ -3,13 +3,17 @@
 A glowing, landscape fish-shooter for the browser. Two modes:
 
 - **Arcade** — 60-second high score. Fish have health bars; shots are free with reloads; chain catches for a multiplier and Harvest Fever.
-- **Fish Table** — bet coins per shot and play until they run out. Every netted fish has a catch chance; the table pays back 97% of bets on average. No real money, ever.
+- **Treasure Reef** — no time limit. Each shot costs a few coins (pick your cannon level with − and +); missed shots cost nothing. Catches return about 105% of what you spend over time. Coins are just for fun: no real money, ever.
 
-Both: bouncing shots, nets that catch whole schools, the Golden Koi prize wheel, power-ups (Freeze, Lock-on, Zap), big-win celebrations, and the Octopus King boss.
+Both: bouncing shots, nets that catch whole schools, a lucky meter, the Golden Koi prize wheel, power-ups (Freeze, Lock-on, Zap), big-win celebrations, the Octopus King boss, sound and music, tips, How to play, settings and a local leaderboard.
 
-Spec: `docs/harvest-tide-spec.md` (v0.3.1). If code and spec disagree, the spec wins.
+Spec: `docs/harvest-tide-spec.md` (v0.4). If code and spec disagree, the spec wins.
 
-Status: **S1 (rules) + S2 (look) done** — fully playable in both modes. Still to come: sound, settings screen, leaderboard screen, first-time tips (S4), playtest (S5).
+Status: **v0.4** — fully playable in both modes with sound, menus and tips. Next: playtest with real people.
+
+## Your own art
+
+Drop PNG files into `assets/` with the names in `assets/ART-PROMPTS.md` and the game uses them instead of its drawings. That file has ready-to-paste prompts for an AI image tool. Open `design/creatures.html` (through the server) to check them side by side.
 
 ## Playing it
 
@@ -25,7 +29,7 @@ Best on a phone held sideways, or a desktop browser.
 | Add | What it does |
 |-----|--------------|
 | `?autoplay=expert` | A robot plays Arcade (`novice`, `mid`, `expert`) |
-| `?autoplay=mid&mode=table` | A robot plays the Fish Table |
+| `?autoplay=mid&mode=reef` | A robot plays Treasure Reef |
 | `?seed=42` | Same fish every time |
 | `?debug` | Game numbers at the bottom of the screen |
 | `?debug&warp=1800` | Jump 30 seconds in |
@@ -36,13 +40,14 @@ Best on a phone held sideways, or a desktop browser.
 |--------|--------------|
 | `src/config/` | Every game number (`tuning.js`) and config checks |
 | `src/sim/` | The rules. No graphics, no clock, no `Math.random`, no trigonometry — same seed + same taps = same game, in any browser |
-| `src/scenes/` | Title (mode select), Game (with pause), Results |
-| `src/view/` | Drawing: sea, fish, HUD, prize wheel, effects |
-| `src/platform/` | Screen fitting, 60 Hz clock, saving |
+| `src/scenes/` | Title, Game (with pause), Results, How to play, Settings, Leaderboard |
+| `src/view/` | Drawing: sea, fish, cannon, HUD, prize wheel, effects, tips |
+| `src/platform/` | Screen fitting, 60 Hz clock, saving, sound, loading your images |
 | `src/dev/` | Robot player (tests, balance runs, title-screen demo) |
-| `tests/` | 38 tests; open `tests.html` on the server, or run `node tests/run.mjs` |
-| `tools/` | `balance-check.mjs` — plays hundreds of robot games and prints score bands and Table payback |
-| `design/` | The original style mock-up |
+| `tests/` | 47 tests; open `tests.html` on the server, or run `node tests/run.mjs` |
+| `tools/` | `balance-check.mjs` — plays hundreds of robot games and prints Arcade score bands and Treasure Reef payback |
+| `assets/` | Your optional images + `ART-PROMPTS.md` |
+| `design/` | `creatures.html` — every creature side by side |
 | `docs/` | Spec |
 
 A Game by FC.

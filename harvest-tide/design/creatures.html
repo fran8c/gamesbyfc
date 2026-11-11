@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><title>Creature sheet</title><!-- Open through the web server, like the game. Shows your assets/ images if present. -->
+<style>body{margin:0;background:#0B4F7A}</style>
+<canvas id="c" width="1600" height="900"></canvas>
+<script type="module">
+import { drawCreature, SIZES } from '../src/view/fishart.js';
+import { loadArt } from '../src/platform/images.js';
+const found = await loadArt('../');
+const c = document.getElementById('c'), g = c.getContext('2d');
+const g2 = g.createLinearGradient(0,0,0,900); g2.addColorStop(0,'#1A86B8'); g2.addColorStop(1,'#06223F'); g.fillStyle=g2; g.fillRect(0,0,1600,900);
+const kinds = Object.keys(SIZES);
+const pos = { sardine:[120,110], clownfish:[300,110], snapper:[500,110], puffer:[720,110], lionfish:[950,120], golden_koi:[1250,110],
+  turtle:[180,360], manta:[520,360], jellyfish:[800,360], capsule:[980,360], octopus_king:[1300,430] };
+for (const k of kinds) {
+  const [x,y] = pos[k]; const s = k==='octopus_king'?1.4: k==='manta'||k==='turtle'?1.6:2.2;
+  drawCreature(g, k, x, y, { t: 0.15, scale: s });
+  g.fillStyle='#fff'; g.font='700 18px system-ui'; g.textAlign='center'; g.fillText(k, x, y + SIZES[k][1]*s*0.8 + 30);
+}
+// second row: animation frames of sardine and manta
+for (let i=0;i<6;i++){ drawCreature(g,'clownfish',120+i*110,720,{t:i/6/2.6,scale:2}); drawCreature(g,'manta',800+i*130,760,{t:i/6/0.7,scale:0.7}); }
+g.fillStyle='#fff'; g.font='700 20px system-ui'; g.textAlign='left';
+g.fillText(found.length ? 'Your images in use: ' + found.join(', ') : 'No images in assets/ yet — showing the built-in drawings', 20, 880);
+document.title='ready';
+</script>

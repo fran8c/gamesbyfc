@@ -10,10 +10,10 @@ export const BOT_PROFILES = {
   expert: { retarget: [15, 30], noise: 15, lead: 1.0, pause: 0.03, powerAt: 0.006, pick: 'value' },
 };
 
-export function createBot(seed, profile = 'expert', { bet = null } = {}) {
+export function createBot(seed, profile = 'expert', { level = null } = {}) {
   const P = BOT_PROFILES[profile];
   const rng = createRng((seed ^ 0xB07B07) >>> 0);
-  let target = null, until = 0, resting = 0, down = false, betDone = bet === null;
+  let target = null, until = 0, resting = 0, down = false, levelDone = level === null;
 
   function pick(S) {
     const cfg = S.cfg, c = cfg.cannon.pos;
@@ -23,8 +23,8 @@ export function createBot(seed, profile = 'expert', { bet = null } = {}) {
       live.sort((a, b) => ((a.x - c.x) ** 2 + (a.y - c.y) ** 2) - ((b.x - c.x) ** 2 + (b.y - c.y) ** 2));
       return live[rng.intRange(0, Math.min(3, live.length - 1))];
     }
-    // value per remaining hit (Arcade) or pay (Table), with a little randomness
-    const score = f => (S.mode === 'arcade' ? cfg.fish[f.kind].points / f.hp : cfg.fish[f.kind].pay) * (0.6 + rng.next() * 0.8);
+    // value per remaining hit (Arcade) or reward (Reef), with a little randomness
+    const score = f => (S.mode === 'arcade' ? cfg.fish[f.kind].points / f.hp : cfg.fish[f.kind].reward) * (0.6 + rng.next() * 0.8);
     live.sort((a, b) => score(b) - score(a));
     return live[0];
   }
@@ -32,13 +32,12 @@ export function createBot(seed, profile = 'expert', { bet = null } = {}) {
   return {
     act(S) {
       if (S.over) return;
-      if (!betDone && S.mode === 'table') {                  // walk the bet to the requested step
-        const want = S.cfg.table.betSteps.indexOf(bet);
-        if (S.betIndex < want) input(S, 'bet', 1); else if (S.betIndex > want) input(S, 'bet', -1); else betDone = true;
+      if (!levelDone && S.mode === 'reef') {                 // walk the cannon level to the requested one
+        if (S.levelChosen < level) input(S, 'level', 1); else if (S.levelChosen > level) input(S, 'level', -1); else levelDone = true;
         return;
       }
       if (S.state !== 'PLAYING') return;
-      if (S.mode === 'arcade' || rng.next() < 1) {
+      {
         if (rng.next() < P.powerAt) {
           const ids = S.cfg.powerups.ids;
           const i = rng.intRange(0, ids.length - 1);

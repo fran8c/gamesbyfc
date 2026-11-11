@@ -36,8 +36,8 @@ test('aim is clamped to 8° above horizontal', () => {
   close(up.x, 0, 1e-9); close(up.y, -1, 1e-9);
 });
 
-test('max bullets on screen stops firing (Table 8)', () => {
-  const S = makeSim({ mode: 'table' });
+test('max bullets on screen stops firing (Reef 8)', () => {
+  const S = makeSim({ mode: 'reef' });
   input(S, 'down', 640, 0);
   run(S, 200);
   ok(S.bullets.length <= 8);
@@ -93,10 +93,10 @@ test('TS-06 turtle needs 15 hits; health shown after the first', () => {
   eq(find(evs, 'catch').kind, 'turtle');
 });
 
-// ---------- Table ----------
-test('TS-07 Table payout rule returns the RTP (4,000,000 seeded nets)', () => {
+// ---------- Treasure Reef ----------
+test('TS-07 Reef catch rule returns the base return rate (4,000,000 seeded nets)', () => {
   const rng = createRng(4242);
-  const kinds = Object.keys(C.fish).filter(k => C.fish[k].pay > 0);
+  const kinds = Object.keys(C.fish).filter(k => C.fish[k].reward > 0);
   const segs = C.wheel.segments;
   let paid = 0, bet = 0;
   for (let i = 0; i < 4e6; i++) {
@@ -104,66 +104,82 @@ test('TS-07 Table payout rule returns the RTP (4,000,000 seeded nets)', () => {
     bet += 1;
     for (let j = 0; j < k; j++) {
       const kind = kinds[Math.floor(rng.next() * kinds.length)];
-      if (rng.next() < catchChance(C, kind, k)) paid += C.fish[kind].pay * (C.fish[kind].wheel ? segs[Math.floor(rng.next() * segs.length)] : 1);
+      if (rng.next() < catchChance(C, kind, k)) paid += C.fish[kind].reward * (C.fish[kind].wheel ? segs[Math.floor(rng.next() * segs.length)] : 1);
     }
   }
-  close(paid / bet, C.table.rtp, 0.015, 'payback');   // ±1.5%: big fish make single runs noisy
+  close(paid / bet, C.reef.returnRate, 0.015, 'payback');   // ±1.5%: big fish make single runs noisy
 });
 
-test('wheel EV is 46/12', () => close(wheelEV(C), 46 / 12, 1e-12));
+test('wheel EV is 68/12', () => close(wheelEV(C), 68 / 12, 1e-12));
 
-test('TS-08 Table miss refunds the bet', () => {
-  const S = makeSim({ mode: 'table' });
+test('TS-08 Reef miss costs nothing (shot cost returned)', () => {
+  const S = makeSim({ mode: 'reef' });
   shootAt(S, 640, 100);
-  eq(S.bank, 990);
+  eq(S.coins, 995);
   const evs = run(S, 200);
-  ok(has(evs, 'refund'));
-  eq(S.bank, 1000);
+  ok(has(evs, 'shot:return'));
+  eq(S.coins, 1000);
 });
 
-test('Table net with only a capsule refunds the bet and grants a power-up', () => {
-  const S = makeSim({ mode: 'table' });
+test('Reef net with only a capsule returns the shot cost and grants a power-up', () => {
+  const S = makeSim({ mode: 'reef' });
   placeFish(S, 'capsule', 640, 300);
   const before = Object.values(S.power.uses).reduce((a, b) => a + b, 0);
   shootAt(S, 640, 300);
   const evs = run(S, 60);
-  ok(has(evs, 'refund')); eq(S.bank, 1000);
+  ok(has(evs, 'shot:return')); eq(S.coins, 1000);
   eq(Object.values(S.power.uses).reduce((a, b) => a + b, 0), before + 1);
 });
 
-test('TS-09 bank 3 with bet 10 → bet drops to 2', () => {
-  const S = makeSim({ mode: 'table' });
-  S.bank = 3;
+test('TS-09 3 coins at cannon level 3 → effective level 2 (2 coins per shot)', () => {
+  const S = makeSim({ mode: 'reef' });
+  S.coins = 3;
   step(S);
-  eq(S.bet, 2);
+  eq(S.level, 2); eq(S.cost, 2);
 });
 
-test('Table hit with no catch keeps the bet (no refund)', () => {
-  const S = makeSim({ mode: 'table', over: { table: { rtp: 0.9 } } });
+test('cannon level − / + changes the shot cost (1, 2, 5, 10, 20, 50, 100)', () => {
+  const S = makeSim({ mode: 'reef' });
+  eq(S.cost, 5);
+  input(S, 'level', 1); step(S); eq(S.cost, 10);
+  for (let i = 0; i < 9; i++) { input(S, 'level', 1); step(S); }
+  eq(S.level, 7); eq(S.cost, 100);
+  for (let i = 0; i < 9; i++) { input(S, 'level', -1); step(S); }
+  eq(S.level, 1); eq(S.cost, 1);
+});
+
+test('Reef hit with no catch keeps the shot cost', () => {
+  const S = makeSim({ mode: 'reef' });
   placeFish(S, 'octopus_king', 640, 300);      // p ≈ 0.009: almost never caught
   S.rng.catch.next = () => 0.99;               // force a miss
   shootAt(S, 640, 300);
   const evs = run(S, 60);
-  ok(has(evs, 'net')); ok(!has(evs, 'refund'));
-  eq(S.bank, 990);
+  ok(has(evs, 'net')); ok(!has(evs, 'shot:return'));
+  eq(S.coins, 995);
 });
 
-test('Table session ends when the bank is below the smallest bet and no bullets fly', () => {
-  const S = makeSim({ mode: 'table' });
-  S.bank = 0;
+test('Reef session ends when coins drop below the cheapest shot and no shots are in flight', () => {
+  const S = makeSim({ mode: 'reef' });
+  S.coins = 0;
   const evs = run(S, 2);
-  eq(find(evs, 'run:end').summary.reason, 'broke');
+  eq(find(evs, 'run:end').summary.reason, 'empty');
 });
 
-test('TS-16 bank 0 with a bullet in flight → ends only after it resolves (refund)', () => {
-  const S = makeSim({ mode: 'table' });
-  S.bank = 10;
+test('Reef session has no time limit', () => {
+  const S = makeSim({ mode: 'reef' });
+  run(S, 20000);
+  ok(!S.over);
+});
+
+test('TS-16 0 coins with a shot in flight → session continues until it resolves (cost returned)', () => {
+  const S = makeSim({ mode: 'reef' });
+  S.coins = 5;
   shootAt(S, 640, 100);
-  eq(S.bank, 0);
+  eq(S.coins, 0);
   ok(!S.over);
   run(S, 300);
-  ok(!S.over, 'refund kept it alive');
-  eq(S.bank, 10);
+  ok(!S.over, 'returned cost kept it going');
+  eq(S.coins, 5);
 });
 
 // ---------- combo, Fever ----------
@@ -213,8 +229,8 @@ test('TS-13 jellyfish netted → jam 36 ticks, combo 0', () => {
   eq(S.shots, shotsBefore, 'no shots while jammed');
 });
 
-test('jellyfish never spawns in Table mode', () => {
-  const S = makeSim({ mode: 'table', fish: true, seed: 3 });
+test('jellyfish never spawns in Treasure Reef', () => {
+  const S = makeSim({ mode: 'reef', fish: true, seed: 3 });
   run(S, 3600);
   ok(!S.fish.some(f => f.kind === 'jellyfish'));
 });
@@ -235,6 +251,7 @@ test('TS-10 Golden Koi caught → wheel 150 ticks; Arcade timer pauses; result a
   eq(we.mult, ws.mult);
   eq(S.remaining, rem, 'timer paused');
   eq(S.score, 300 * ws.mult);
+  eq(S.wheel, null);
 });
 
 test('wheel result is deterministic for a seed', () => {
@@ -281,9 +298,9 @@ test('lock-on bends bullets toward the best fish', () => {
   ok(net && net.uids.includes(m.uid), 'homed onto the manta');
 });
 
-test('power-up uses: Arcade 2, Table 1; empty button does nothing', () => {
+test('power-up uses: Arcade 2, Reef 1; empty button does nothing', () => {
   eq(makeSim().power.uses.freeze, 2);
-  const T = makeSim({ mode: 'table' });
+  const T = makeSim({ mode: 'reef' });
   eq(T.power.uses.freeze, 1);
   input(T, 'power', 0); step(T); input(T, 'power', 0);
   const evs = run(T, 1);
@@ -306,6 +323,85 @@ test('big win tiers (Arcade 150 / 500 / 1,500)', () => {
   shootAt(S, 640, 300);
   const evs = run(S, 60);
   eq(find(evs, 'bigwin').tier, 3);
+});
+
+// ---------- lucky meter ----------
+test('Reef lucky meter: fills with landed shots; next landed shot is a guaranteed catch ≥ 30× average cost', () => {
+  const S = makeSim({ mode: 'reef', over: { lucky: { reefShots: 3 } } });
+  const t = placeFish(S, 'octopus_king', 640, 260);
+  S.rng.catch.next = () => 0.999999;             // normal rolls never catch
+  for (let i = 0; i < 3; i++) { shootAt(S, 640, 260); run(S, 40); }
+  ok(S.lucky.ready, 'meter full after 3 landed shots');
+  eq(S.lucky.avgCost, 5);
+  const coins = S.coins;
+  shootAt(S, 640, 260);
+  const evs = run(S, 40);
+  ok(has(evs, 'lucky:catch'));
+  ok(!t.alive, 'boss caught');
+  eq(S.coins, coins - 5 + 100 * 5);             // boss reward (100×) beats the 30× minimum
+  eq(S.lucky.ready, false); eq(S.lucky.fill, 0);
+});
+
+test('Reef lucky catch on a small fish pays the 30× minimum', () => {
+  const S = makeSim({ mode: 'reef', over: { lucky: { reefShots: 1 } } });
+  placeFish(S, 'sardine', 640, 260);
+  S.rng.catch.next = () => 0.999999;
+  shootAt(S, 640, 260); run(S, 40);
+  placeFish(S, 'sardine', 640, 260);
+  const coins = S.coins;
+  shootAt(S, 640, 260);
+  const evs = run(S, 40);
+  eq(find(evs, 'lucky:catch').amount, 150);
+  eq(S.coins, coins - 5 + 150);
+  eq(find(evs, 'bigwin').tier, 2);
+});
+
+test('Reef lucky reward uses the average cost that filled the meter (raising the level just before does not pay more)', () => {
+  const S = makeSim({ mode: 'reef', over: { lucky: { reefShots: 2 } } });
+  placeFish(S, 'turtle', 640, 260);
+  S.rng.catch.next = () => 0.999999;
+  input(S, 'level', -1); input(S, 'level', -1); step(S);   // level 1: 1 coin
+  for (let i = 0; i < 2; i++) { shootAt(S, 640, 260); run(S, 40); }
+  for (let i = 0; i < 6; i++) { input(S, 'level', 1); step(S); }              // level 7: 100 coins
+  shootAt(S, 640, 260);
+  const evs = run(S, 40);
+  eq(find(evs, 'lucky:catch').amount, 30 * 1);
+});
+
+test('Reef lucky shot that misses keeps the meter ready', () => {
+  const S = makeSim({ mode: 'reef', over: { lucky: { reefShots: 1 } } });
+  placeFish(S, 'turtle', 640, 260);
+  S.rng.catch.next = () => 0.999999;
+  shootAt(S, 640, 260); run(S, 40);
+  ok(S.lucky.ready);
+  shootAt(S, 100, 100); run(S, 200);                // nothing there
+  ok(S.lucky.ready, 'still ready'); eq(S.lucky.inFlight, false);
+});
+
+test('Arcade lucky meter: after enough hits, the next catch spins the wheel worth ≥ 200 × multiplier', () => {
+  const S = makeSim({ over: { lucky: { arcadeHits: 2 } } });
+  placeFish(S, 'turtle', 640, 260);
+  shootAt(S, 640, 260); run(S, 40);
+  shootAt(S, 640, 260); run(S, 40);
+  ok(S.lucky.ready);
+  placeFish(S, 'sardine', 300, 200);
+  shootAt(S, 300, 200);
+  const { events } = runUntil(S, evs => has(evs, 'wheel:start'), 100);
+  const ws = find(events, 'wheel:start');
+  ok(ws.lucky); eq(ws.base, 200);
+  run(S, 160);
+  eq(S.score, 200 * ws.mult);
+});
+
+test('two wheel spins in one tick play one after the other', () => {
+  const S = makeSim({ over: { lucky: { arcadeHits: 1 } } });
+  placeFish(S, 'turtle', 640, 260); shootAt(S, 640, 260); run(S, 40);
+  ok(S.lucky.ready);
+  placeFish(S, 'golden_koi', 640, 260).hp = 1;
+  shootAt(S, 640, 260);
+  const evs = run(S, 400);
+  eq(count(evs, 'wheel:start'), 2);
+  eq(count(evs, 'wheel:end'), 2);
 });
 
 void cfgWith;
