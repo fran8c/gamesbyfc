@@ -137,7 +137,7 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
         case 'reload:start': sfx('reload'); break;
         case 'timer:warning': caption('10 seconds left!', C.gold); break;
         case 'goal:new': tips.want('goal', V.t); caption(`New goal: catch ${e.need} ${fishPlural(e.kind, e.need)}`, C.gold); break;
-        case 'goal:done': callout(fx, 'GOAL!', C.gold, `+${fmt(e.amount)} points`); app.audio.play('luckyReady'); break;
+        case 'goal:done': callout(fx, 'GOAL!', C.gold, `+${fmt(e.amount)} points`); sfx('luckyReady'); break;
         case 'frenzy:start': tips.want('frenzy', V.t); callout(fx, 'FRENZY!', C.lime, 'Fish rush across'); break;
         case 'sprint:start': caption('FINAL SPRINT! Every catch scores ×1.5', C.coral); callout(fx, 'FINAL SPRINT', C.coral, '×1.5 points'); break;
         case 'lucky:ready':

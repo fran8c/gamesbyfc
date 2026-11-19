@@ -22,11 +22,11 @@ export function createResultsScene(app, { summary, game }) {
   }
   const saved = writeSave(app.save);
   let age = 0, retryR = null, boardR = null, menuR = null, shareR = null, cheered = false;
-  let restartIn = arcade ? 6 : null, copied = 0;   // Arcade: auto play again after a countdown, cancelled by any tap
+  let restartIn = arcade && summary.reason === 'timer' ? 6 : null, copied = 0;   // after a timed Arcade run: auto play again, cancelled by any tap
   const cancelRestart = () => { restartIn = null; };
   const share = () => {
     const text = `I scored ${fmt(summary.score)} in Harvest Tide. Can you beat me?`;
-    try { navigator.clipboard.writeText(text).then(() => { copied = 2; }).catch(() => { copied = 2; }); } catch { copied = 2; }
+    try { navigator.clipboard.writeText(text).then(() => { copied = 2; }).catch(() => {}); } catch { /* clipboard not allowed here */ }
   };
 
   const title = arcade ? (summary.reason === 'quit' ? 'RUN ENDED' : "TIME'S UP!")
