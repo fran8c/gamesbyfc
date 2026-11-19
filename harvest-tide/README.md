@@ -2,10 +2,10 @@
 
 A glowing, landscape fish-shooter for the browser. Two modes:
 
-- **Arcade** — 60-second high score. Fish have health bars; shots are free with reloads; chain catches for a multiplier and Harvest Fever.
-- **Treasure Reef** — no time limit. Each shot costs a few coins (pick your cannon level with − and +); missed shots cost nothing. Catches return about 105% of what you spend over time. Coins are just for fun: no real money, ever.
+- **Arcade** — 60-second high score. Fish start slow and speed up through the minute. The last 10 seconds score ×1.5. Big fish have health bars; chain catches for a multiplier and Harvest Fever.
+- **Treasure Reef** — still in the code but hidden from the menus (paused, see spec D27).
 
-Both: bouncing shots, nets that catch whole schools, a lucky meter, the Golden Koi prize wheel, power-ups (Freeze, Lock-on, Zap), big-win celebrations, the Octopus King boss, sound and music, tips, How to play, settings and a local leaderboard.
+Bouncing shots, nets that catch whole schools, a lucky meter, the Golden Koi prize wheel, power-ups (Freeze, Lock-on, Zap), big-win celebrations, the Octopus King boss, sound and music, tips, How to play, settings and a local leaderboard.
 
 Spec: `docs/harvest-tide-spec.md` (v0.4). If code and spec disagree, the spec wins.
 

@@ -4,6 +4,8 @@ import { C, T, frost } from './theme.js';
 
 export const TIPS = {
   aim:        { text: 'Touch and hold to fire. Shots bounce off the walls!', x: 640, y: 470 },
+  goal:       { text: 'Goal! Catch the fish at the top for a bonus.', x: 640, y: 150 },
+  frenzy:     { text: 'Frenzy! A fast school is coming. Sweep it with a shot.', x: 640, y: 470 },
   reefLevel:  { text: 'Use − and + to change cannon level. Higher levels cost more per shot and win more.', x: 640, y: 548, arrow: 'down' },
   reefMiss:   { text: 'Missed shots cost nothing — you only pay when you hit.', x: 640, y: 470 },
   power:      { text: 'Power-ups! Freeze stops fish, Lock-on aims for you, Zap hits the 6 best fish.', x: 1046, y: 548, arrow: 'down', w: 520 },

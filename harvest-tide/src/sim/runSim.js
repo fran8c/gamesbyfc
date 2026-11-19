@@ -32,7 +32,7 @@ export function createRun({ config, seed, mode = 'arcade' }) {
     levelChosen: cfg.reef.defaultLevel, level: cfg.reef.defaultLevel, cost: cfg.reef.shotCost[cfg.reef.defaultLevel - 1],
     score: 0, shots: 0, hits: 0, catches: {}, biggest: { kind: null, amount: 0, x: 0 },
     combo: createCombo(), power: createPower(cfg, mode), lucky: createLucky(),
-    wheel: null, wheelQueue: [],
+    wheel: null, wheelQueue: [], goal: null,
     over: false, summary: null,
   };
   emit(S, 'run:start', { seed: S.seed, mode });

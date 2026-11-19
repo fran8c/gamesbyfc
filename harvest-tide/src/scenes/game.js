@@ -5,7 +5,7 @@ import { createBot } from '../dev/bot.js';
 import { C, T, hit, frost, button, fmt } from '../view/theme.js';
 import { createSea } from '../view/sea.js';
 import { drawCreature, drawHitFlash } from '../view/fishart.js';
-import { drawHud, drawCaption, drawValueTags, BTN, fishName, POWER_NAMES } from '../view/hud.js';
+import { drawHud, drawCaption, drawValueTags, BTN, fishName, fishPlural, POWER_NAMES } from '../view/hud.js';
 import { drawCannon, drawAimGuide, drawBullets } from '../view/cannon.js';
 import { drawWheel, wheelRotation } from '../view/wheel.js';
 import { createTips } from '../view/tips.js';
@@ -122,6 +122,10 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
           break;
         case 'reload:start': sfx('reload'); break;
         case 'timer:warning': caption('10 seconds left!', C.gold); break;
+        case 'goal:new': tips.want('goal', V.t); caption(`New goal: catch ${e.need} ${fishPlural(e.kind, e.need)}`, C.gold); break;
+        case 'goal:done': callout(fx, 'GOAL!', C.gold, `+${fmt(e.amount)} points`); app.audio.play('luckyReady'); break;
+        case 'frenzy:start': tips.want('frenzy', V.t); callout(fx, 'FRENZY!', C.lime, 'Fish rush across'); break;
+        case 'sprint:start': caption('FINAL SPRINT! Every catch scores ×1.5', C.coral); callout(fx, 'FINAL SPRINT', C.coral, '×1.5 points'); break;
         case 'lucky:ready':
           callout(fx, 'LUCKY!', C.gold, mode === 'reef' ? 'Next hit is a sure big catch' : 'Next catch spins the wheel');
           sfx('luckyReady'); buzz([20, 20, 20, 20]);

@@ -9,7 +9,7 @@ import { createSettingsScene } from './settings.js';
 export function createTitleScene(app) {
   const newDemo = seed => createGameScene(app, { mode: 'arcade', seed, autoplay: 'expert', attract: true });
   let demo = newDemo(20261108);
-  let arcadeR = null, reefR = null, icons = {}, t = 0;
+  let arcadeR = null, icons = {}, t = 0;
   return {
     tick(n) {
       if (app.overlay) return;
@@ -33,14 +33,11 @@ export function createTitleScene(app) {
 
       // mode cards
       const s = app.save.stats, pulse = 1 + Math.sin(t * 3) * 0.015;
-      ctx.save(); ctx.translate(430, 345); ctx.scale(pulse, pulse); ctx.translate(-430, -345);
-      arcadeR = button(ctx, 'ARCADE', 240, 260, 380, 170, { primary: true, size: 50, sub: '60 seconds · chase a high score' });
+      ctx.save(); ctx.translate(640, 345); ctx.scale(pulse, pulse); ctx.translate(-640, -345);
+      arcadeR = button(ctx, 'PLAY', 450, 260, 380, 170, { primary: true, size: 58, sub: '60 seconds · chase a high score' });
       ctx.restore();
-      reefR = button(ctx, 'TREASURE REEF', 660, 260, 380, 170, { size: 44, sub: 'Collect coins · no time limit', color: ['#5FF2D2', '#13A58C'] });
-      starPath(ctx, 300, 470, 13, 0.45); ctx.fillStyle = C.gold; ctx.fill();
-      T(ctx, s.bestArcade ? `Best ${fmt(s.bestArcade)}` : 'No score yet', 322, 478, { size: 22, w: 800, fill: C.gold, sw: 5 });
-      drawCoin(ctx, 720, 470, 13, t);
-      T(ctx, s.bestReefPeak ? `Most coins ${fmt(s.bestReefPeak)}` : 'Start with 1,000 coins', 742, 478, { size: 22, w: 800, fill: C.gold, sw: 5 });
+      starPath(ctx, 640, 470, 13, 0.45); ctx.fillStyle = C.gold; ctx.fill();
+      T(ctx, s.bestArcade ? `Best ${fmt(s.bestArcade)}` : 'No score yet', 662, 478, { size: 22, w: 800, fill: C.gold, sw: 5 });
 
       // icon row
       const row = [['help', 'How to play'], ['trophy', 'Scores'], ['gear', 'Settings']];
@@ -55,7 +52,6 @@ export function createTitleScene(app) {
     pointer(type, p) {
       if (type !== 'up') return;
       if (hit(arcadeR, p)) { app.audio.play('click'); app.go('game', { mode: 'arcade' }); }
-      else if (hit(reefR, p)) { app.audio.play('click'); app.go('game', { mode: 'reef' }); }
       else if (hit(icons.help, p)) { app.audio.play('click'); app.open(createHowtoScene(app, {})); }
       else if (hit(icons.trophy, p)) { app.audio.play('click'); app.open(createLeaderboardScene(app, {})); }
       else if (hit(icons.gear, p)) { app.audio.play('click'); app.open(createSettingsScene(app)); }

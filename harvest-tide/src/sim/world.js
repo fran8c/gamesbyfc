@@ -19,8 +19,16 @@ function pathLength(p0, p1, p2) {
   return len;
 }
 
+/** Arcade speed multiplier: ramps from arcadeSpeed.start (0:00) to .end (1:00). Reef stays at 1. */
+export function speedMult(S) {
+  if (S.mode !== 'arcade') return 1;
+  const r = S.cfg.world.arcadeSpeed;
+  const e = Math.min(1, Math.max(0, 1 - S.remaining / S.cfg.run.durationTicks));
+  return r.start + (r.end - r.start) * e;
+}
+
 /** A new path crossing the screen. Boss paths cross the middle slowly. */
-function makePath(S, kind) {
+function makePath(S, kind, speedFactor = 1) {
   const w = S.cfg.world, f = S.cfg.fish[kind], rng = S.rng.paths, W = S.cfg.field.w;
   const margin = f.size[0] / 2 + 40;
   const fromLeft = rng.next() < 0.5;
@@ -34,7 +42,7 @@ function makePath(S, kind) {
     p1 = { x: rng.intRange(w.ctrlXMin, w.ctrlXMax), y: rng.intRange(w.pathYMin - 40, w.pathYMax + 40) };
     p2 = { x: fromLeft ? W + margin : -margin, y: rng.intRange(w.pathYMin, w.pathYMax) };
   }
-  const pxPerTick = f.speed / S.cfg.tickRateHz;
+  const pxPerTick = f.speed * speedMult(S) * speedFactor / S.cfg.tickRateHz;
   const ticks = Math.max(60, Math.ceil(pathLength(p0, p1, p2) / pxPerTick));
   return { p0, p1, p2, ticks };
 }
@@ -57,10 +65,10 @@ function placeFish(fish) {
 }
 
 /** Spawn one group of `kind`. `startFrac` > 0 places it part-way along its path (initial fill). */
-export function spawnGroup(S, kind, startFrac = 0) {
+export function spawnGroup(S, kind, startFrac = 0, opts = {}) {
   const f = S.cfg.fish[kind], rng = S.rng.spawn;
-  const n = rng.intRange(f.group[0], f.group[1]);
-  const path = makePath(S, kind);
+  const n = opts.count || rng.intRange(f.group[0], f.group[1]);
+  const path = makePath(S, kind, opts.speed || 1);
   const age = Math.floor(path.ticks * startFrac);
   const spread = S.cfg.world.schoolSpreadPx;
   const made = [];
@@ -106,6 +114,20 @@ export function tickWorld(S) {
     spawnGroup(S, weightedPick(S.rng.spawn, spawnWeights(S)));
   }
   // boss
+  if (S.mode === 'arcade' && S.remaining === S.cfg.run.sprintTicks) emit(S, 'sprint:start', {});
+  if (S.mode === 'arcade' && !frozen) {
+    const g = S.cfg.goals, idx = Math.floor(S.worldTicks / g.everyTicks);
+    if (S.worldTicks % g.everyTicks === 0 && (!S.goal || S.goal.index !== idx)) {
+      const e = g.list[idx % g.list.length];
+      S.goal = { index: idx, kind: e.kind, need: e.need, have: 0, done: false };
+      emit(S, 'goal:new', { kind: e.kind, need: e.need });
+    }
+    const fr = S.cfg.world.frenzy;
+    if (S.worldTicks > 0 && S.worldTicks % fr.everyTicks === 0) {
+      spawnGroup(S, 'sardine', 0, { count: fr.count, speed: fr.speed });
+      emit(S, 'frenzy:start', {});
+    }
+  }
   if (S.mode === 'arcade' && S.remaining === w.bossArcadeAtRemainingTicks && !has(S, 'octopus_king')) {
     spawnGroup(S, 'octopus_king'); emit(S, 'boss:enter', {});
   }

@@ -27,6 +27,7 @@
 | D23 | **More big wins, same feel:** fish mix shifted toward big fish (`world.weights`), wheel has a ×20 segment, big-win tiers lowered for the Reef (10× / 30× / 80× shot cost). |
 | D24 | **Lucky meter in both modes.** Reef: 150 landed shots fill it; the next shot that lands is a sure catch of the most valuable fish in the net, worth at least 30× the average shot cost that filled it (a lucky shot that misses keeps the meter ready). Arcade: 120 hits fill it; the next catch spins the prize wheel with a base of at least 200 points. A lucky Golden Koi spins twice. |
 | D25 | **UI/UX:** bigger touch targets, −/+ cannon-level buttons, lucky meter panel, value tags on big fish, first-time tips, how-to-play (6 pages), settings, local leaderboard, fullscreen, synthesized sound and music, richer code-drawn art. |
+| D27 | **Arcade only (2026-11-19).** Treasure Reef is hidden from the title, leaderboard and How to play (its code and tests stay). Pacing: fish speed ramps `world.arcadeSpeed` 0.85 → 1.20 over 60 s. Final sprint: the last `run.sprintTicks` (600) score ×`run.sprintMult` (1.5). Robot bands after this change: novice median 14,562, mid 22,121, expert 24,282 (was 12.7k / 19.4k / 21.9k). |
 | D26 | **Art slots:** any PNG dropped into `assets/` with the right name replaces the drawn art (fish, cannons, coin, power-up icons, background). Prompts in `assets/ART-PROMPTS.md`. |
 
 **Measured (robot, 200 sessions each, `node tools/balance-check.mjs 200`):**

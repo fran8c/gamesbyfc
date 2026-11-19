@@ -15,6 +15,11 @@ export const BTN = {
 const NAMES = { sardine: 'Sardine', clownfish: 'Clownfish', snapper: 'Snapper', puffer: 'Pufferfish', lionfish: 'Lionfish',
   turtle: 'Sea Turtle', manta: 'Manta Ray', golden_koi: 'Golden Koi', octopus_king: 'Octopus King', jellyfish: 'Jellyfish', capsule: 'Power Pearl' };
 export const fishName = k => NAMES[k] || k;
+/** Plural name for goals, e.g. 'turtles', 'pufferfish', 'manta rays'. */
+export function fishPlural(k, n) {
+  const s = fishName(k).toLowerCase();
+  return n === 1 || s.endsWith('fish') ? s : s + 's';
+}
 export const POWER_NAMES = { freeze: 'Freeze', lockon: 'Lock-on', lightning: 'Zap' };
 const POWER_COLORS = ['#8FEAFF', '#FF7A7A', '#FFE15A'];
 
@@ -50,6 +55,25 @@ function scorePanel(ctx, S, V) {
   T(ctx, S.mode === 'reef' ? 'COINS' : 'SCORE', 156, 32, { size: 14, w: 900, fill: C.ice, stroke: null });
   goldText(ctx, fmt(V.shownScore), 156, 58, 34, 'left');
   if (V.best) T(ctx, `${S.mode === 'reef' ? 'PEAK' : 'BEST'} ${fmt(V.best)}`, 104, 104, { size: 16, w: 800, fill: C.ice, sw: 4 });
+  // live progress toward your best score (Arcade)
+  if (S.mode === 'arcade' && V.best) {
+    const beat = S.score > V.best, frac = Math.min(1, S.score / V.best);
+    roundRect(ctx, 96, 112, 300, 10, 5); ctx.fillStyle = 'rgba(6,20,36,0.8)'; ctx.fill();
+    if (frac > 0) { roundRect(ctx, 96, 112, Math.max(10, 300 * frac), 10, 5); ctx.fillStyle = beat ? C.coral : C.lime; ctx.fill(); }
+    if (beat) T(ctx, 'NEW BEST!', 396, 104, { size: 15, w: 900, align: 'right', fill: C.coral, sw: 4 });
+  }
+}
+
+/** Arcade goal pill at the top centre: the fish to catch and progress. */
+function goalPill(ctx, S, V) {
+  const g = S.goal;
+  if (!g) return;
+  frost(ctx, 460, 90, 360, 40, 16, { glow: g.done, glowColor: C.gold, border: g.done ? C.gold : 'rgba(191,239,255,0.85)' });
+  drawFishIcon(ctx, g.kind, 486, 110, 30, V.t);
+  const label = g.done ? 'GOAL DONE!' : `Catch ${g.need} ${fishPlural(g.kind, g.need)}`;
+  T(ctx, label, 512, 117, { size: 17, w: 900, fill: g.done ? C.gold : C.white, stroke: null });
+  const shown = g.done ? g.need : g.have;
+  T(ctx, `${shown}/${g.need}  +${fmt(S.cfg.goals.reward)}`, 808, 117, { size: 16, w: 900, align: 'right', fill: C.gold, stroke: null });
 }
 
 function luckyPanel(ctx, S, V, x, y, w) {
@@ -74,6 +98,7 @@ export function drawHud(ctx, S, V) {
   drawIcon(ctx, 'pause', BTN.pause.x + 34, BTN.pause.y + 34, 22, C.ice);
   scorePanel(ctx, S, V);
   if (S.mode === 'arcade') {
+    goalPill(ctx, S, V);
     const m = multiplier(S);
     frost(ctx, 460, 12, 360, 68, 18, { glow: S.combo.feverActive, glowColor: C.lime });
     const pop = 1 + V.comboPop * 0.35;

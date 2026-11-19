@@ -65,12 +65,17 @@ function kill(S, f) {
  * Arcade: points × multiplier, then a combo gain. A ready lucky meter turns this catch into a wheel spin.
  * Reef: `amount` coins (default cost × reward). Golden Koi spins the wheel.
  */
+/** Arcade final sprint: points ×sprintMult during the last sprintTicks. */
+export function sprintMult(S) {
+  return S.mode === 'arcade' && S.remaining <= S.cfg.run.sprintTicks ? S.cfg.run.sprintMult : 1;
+}
+
 function onCaught(S, f, { cost = 0, amount = null, lucky = false } = {}) {
   const cfg = S.cfg, def = cfg.fish[f.kind];
   kill(S, f);
   if (def.capsule) { emit(S, 'catch', { uid: f.uid, kind: f.kind, x: f.x, y: f.y, dir: f.dirX, amount: 0 }); grantRandomPower(S); return; }
   if (S.mode === 'arcade') {
-    const m = multiplier(S);
+    const m = multiplier(S) * sprintMult(S);
     let amt = Math.floor(def.points * m);
     const luckyNow = S.lucky.ready;
     if (luckyNow) {
@@ -85,6 +90,13 @@ function onCaught(S, f, { cost = 0, amount = null, lucky = false } = {}) {
     } else if (def.wheel || luckyNow) startWheel(S, { kind: f.kind, base: amt, cost: 0, x: f.x, y: f.y, lucky: luckyNow });
     else credit(S, f.kind, amt, { x: f.x, y: f.y });
     comboGain(S);
+    const g = S.goal;
+    if (g && !g.done && f.kind === g.kind && ++g.have >= g.need) {
+      g.done = true;
+      const bonus = cfg.goals.reward;
+      credit(S, f.kind, bonus, { x: f.x, y: f.y });
+      emit(S, 'goal:done', { kind: f.kind, amount: bonus });
+    }
     return;
   }
   const amt = amount !== null ? amount : cost * def.reward;

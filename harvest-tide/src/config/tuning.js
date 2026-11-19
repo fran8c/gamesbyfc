@@ -10,7 +10,7 @@ function deepFreeze(o) {
 export const DEFAULT_CONFIG = deepFreeze({
   schemaVersion: 2,
   tickRateHz: 60,
-  run:    { durationTicks: 3600, warningAtTicks: 600 },
+  run:    { durationTicks: 3600, warningAtTicks: 600, sprintTicks: 600, sprintMult: 1.5 },   // Arcade: last 10 s score ×1.5
   field:  { w: 1280, h: 720, x0: 24, x1: 1256, y0: 24 },        // bullets bounce off x0, x1, y0; leave past h
   cannon: { pos: { x: 640, y: 676 }, muzzlePx: 70,
             minDir: { x: 0.990268, y: -0.139173 },            // 8° above horizontal (cos, -sin)
@@ -39,7 +39,11 @@ export const DEFAULT_CONFIG = deepFreeze({
     reefExclude: ['jellyfish'],
     koiMax: 1,
     pathYMin: 100, pathYMax: 540, ctrlXMin: 256, ctrlXMax: 1024, schoolSpreadPx: 34,
-    bossArcadeAtRemainingTicks: 1800, bossReefEveryTicks: 5400, capsuleEveryTicks: 900,
+    bossArcadeAtRemainingTicks: 2400, bossReefEveryTicks: 5400, capsuleEveryTicks: 900,   // Arcade boss: 40 s left (was 30 s)
+    // Arcade frenzy: every 15 s a fast school of sardines crosses the screen
+    frenzy: { everyTicks: 900, count: 9, speed: 1.7 },
+    // Arcade pacing: fish speed ramps from start to end over the 60 s (calm opening, busy finish)
+    arcadeSpeed: { start: 0.85, end: 1.2 },
   },
   combo:  { chainTicks: 120, pointsPerTier: 4, multiplierPerTier: 0.5, multiplierCap: 5.0 },
   fever:  { triggerMultiplier: 3.0, durationTicks: 360, fireRateTicks: 7, targetMult: 1.5 },
@@ -57,6 +61,10 @@ export const DEFAULT_CONFIG = deepFreeze({
   // ≥ reefMinMult × the average shot cost that filled it. Arcade: next catch spins the prize wheel.
   lucky:  { reefShots: 150, reefMinMult: 30, arcadeHits: 120, arcadeBase: 200 },
   score:  { accuracyBonusPct: 0.10, accuracyThreshold: 0.5 },
+  // Arcade goals: a new goal every 15 s; catching `need` of `kind` pays `reward` points
+  goals:  { everyTicks: 900, reward: 300, list: [
+    { kind: 'turtle', need: 2 }, { kind: 'lionfish', need: 3 }, { kind: 'snapper', need: 4 },
+    { kind: 'puffer', need: 3 }, { kind: 'manta', need: 1 } ] },
   bigwin: { arcade: [150, 500, 1500], reef: [10, 30, 80] },   // Nice, BIG, MEGA (Reef: coins ÷ shot cost)
 });
 

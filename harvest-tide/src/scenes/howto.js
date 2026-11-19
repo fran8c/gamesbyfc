@@ -76,7 +76,7 @@ const PAGES = [
           T(ctx, `${f[1]} × shot`, x + 144, y + 98, { size: 17, w: 800, fill: C.gold, stroke: null });
         } else T(ctx, k === 'jellyfish' ? 'Avoid! Stings' : 'Free power-up', x + 120, y + 74, { size: 17, w: 800, fill: k === 'jellyfish' ? C.coral : C.glow, stroke: null, maxW: 125 });
       });
-      T(ctx, 'Arcade: big fish take several hits (watch the health bar). Treasure Reef: a catch pays its number × your shot cost.', 640, 606,
+      T(ctx, 'Big fish take several hits — watch the health bar. Bigger fish score more.', 640, 606,
         { size: 18, w: 700, align: 'center', fill: C.ice, stroke: null, maxW: 880 });
       void mode;
     },
@@ -119,8 +119,7 @@ const PAGES = [
       ctx.restore();
       ctx.beginPath(); ctx.arc(cx, cy, 34, 0, TAU); ctx.fillStyle = C.gold; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = C.ink; ctx.stroke();
       drawFishIcon(ctx, 'golden_koi', cx, cy, 52, t);
-      bullets(ctx, ['Every shot that lands fills the lucky meter.', 'Treasure Reef: when it is full, your next hit is a sure catch worth at least 30 shots.',
-        'Arcade: when it is full, your next catch spins the prize wheel.', 'A Golden Koi always spins the wheel: ×2 up to ×20.', '★ on the wheel also gives a free power-up.']);
+      bullets(ctx, ['Every shot that lands fills the lucky meter.', 'When the meter is full, your next catch spins the prize wheel.', 'A Golden Koi always spins the wheel: ×2 up to ×20.', '★ on the wheel also gives a free power-up.']);
     },
   },
   {
@@ -138,22 +137,22 @@ const PAGES = [
         T(ctx, text, 280, y + 86, { size: 22, w: 700, stroke: null, maxW: 840 });
       });
       drawCreature(ctx, 'capsule', 200, 600, { t, scale: 1.2 });
-      T(ctx, 'Hit a glowing Power Pearl for an extra use. Arcade starts with 2 of each, Treasure Reef with 1.', 240, 608, { size: 20, w: 700, fill: C.ice, stroke: null, maxW: 900 });
+      T(ctx, 'Hit a glowing Power Pearl for an extra use. You start with 2 of each.', 240, 608, { size: 20, w: 700, fill: C.ice, stroke: null, maxW: 900 });
     },
   },
   {
-    title: 'Treasure Reef',
+    title: 'The last 10 seconds',
     draw(ctx, t) {
       illoBox(ctx);
-      for (let i = 0; i < 12; i++) drawCoin(ctx, 290 + (i % 4) * 46 + (Math.floor(i / 4) % 2) * 23, 330 - Math.floor(i / 4) * 34, 20, 0);
-      frost(ctx, 170, 420, 90, 80, 20); T(ctx, '−', 215, 470, { size: 50, w: 900, align: 'center', base: 'middle' });
-      frost(ctx, 460, 420, 90, 80, 20); T(ctx, '+', 505, 470, { size: 50, w: 900, align: 'center', base: 'middle' });
-      ctx.beginPath(); ctx.arc(360, 460, 46, 0, TAU); ctx.fillStyle = '#FFD54A'; ctx.fill(); ctx.lineWidth = 4; ctx.strokeStyle = C.ink; ctx.stroke();
-      T(ctx, String(1 + Math.floor(t) % 7), 360, 462, { size: 40, w: 900, align: 'center', base: 'middle', sw: 6 });
-      T(ctx, 'cannon level', 360, 540, { size: 20, w: 800, align: 'center', fill: C.ice, sw: 4 });
-      bullets(ctx, ['Start with 1,000 coins and play as long as you like.', 'Each shot costs coins: 1 to 100 depending on cannon level.',
-        'Missed shots cost nothing. Higher levels win more per catch.', 'The reef is generous: over time catches return about 105% of what you spend — but luck swings both ways.',
-        'Coins are just for fun — they can never be bought or cashed out.'], 660, 222);
+      // a clock ring that shrinks: 60 s, then the sprint starts at 10 s
+      const cx = 360, cy = 380, r = 110, left = (t * 0.2) % 1;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, TAU); ctx.lineWidth = 16; ctx.strokeStyle = 'rgba(191,239,255,0.25)'; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx, cy, r, -Math.PI / 2, -Math.PI / 2 + TAU * (1 - left)); ctx.lineWidth = 16;
+      ctx.strokeStyle = left > 0.83 ? C.coral : C.glow; ctx.lineCap = 'round'; ctx.stroke(); ctx.lineCap = 'butt';
+      goldText(ctx, left > 0.83 ? '×1.5' : '×1', cx, cy + 14, 52);
+      T(ctx, left > 0.83 ? 'FINAL SPRINT' : 'Warm-up', cx, cy + 150, { size: 22, w: 900, align: 'center', fill: C.ice, sw: 4 });
+      bullets(ctx, ['Fish start slow and get faster as the minute goes on.', 'In the final 10 seconds every point you score is worth ×1.5.',
+        'A "10 seconds left!" warning tells you when the sprint starts.', 'Accuracy at the end adds a bonus to your score.'], 660, 230);
     },
   },
 ];
