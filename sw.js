@@ -4,14 +4,15 @@
    Everything else (icons, fonts): use the saved copy, refresh in the background.
    When you add a game, add its folder to PAGES and bump VERSION. */
 
-var VERSION = 'gbfc-v2';
+var VERSION = 'gbfc-v3';
 var PAGES = [
   './',
   './velocity/',
   './pappies-monopoly/',
   './shaman/',
   './neon-3026/',
-  './time-hole/'
+  './time-hole/',
+  './harvest-tide/'
 ];
 var ASSETS = [
   './manifest.webmanifest',
@@ -63,7 +64,19 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Everything else: cached copy, refreshed in the background
+  // Game code (scripts, styles, data) on this site: also network first,
+  // so a game made of many files (like Harvest Tide) never mixes old and new parts.
+  if (url.origin === self.location.origin && /\.(m?js|css|json|webmanifest)$/.test(url.pathname)) {
+    e.respondWith(
+      fetch(req).then(function (res) {
+        if (res && res.ok) { var copy = res.clone(); caches.open(VERSION).then(function (c) { c.put(req, copy); }); }
+        return res;
+      }).catch(function () { return caches.match(req); })
+    );
+    return;
+  }
+
+  // Everything else (images, fonts): cached copy, refreshed in the background
   e.respondWith(
     caches.match(req).then(function (hit) {
       var net = fetch(req).then(function (res) {

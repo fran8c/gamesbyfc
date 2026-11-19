@@ -10,7 +10,7 @@ import { writeSave } from '../platform/storage.js';
 export function createTitleScene(app) {
   const newDemo = seed => createGameScene(app, { mode: 'arcade', seed, autoplay: 'expert', attract: true });
   let demo = newDemo(20261108);
-  let arcadeR = null, icons = {}, t = 0, musicR = null, sfxR = null;
+  let arcadeR = null, icons = {}, t = 0, musicR = null, sfxR = null, backR = null;
   return {
     tick(n) {
       if (app.overlay) return;
@@ -38,6 +38,8 @@ export function createTitleScene(app) {
         frost(ctx, 470 + i * 110, 222, 100, 30, 12, { glow: on, glowColor: C.gold, alpha: on ? 0.95 : 0.45 });
         T(ctx, label, 520 + i * 110, 243, { size: 16, w: 900, align: 'center', fill: on ? C.gold : C.ice, stroke: null });
       });
+      // back to the Games by FC arcade
+      backR = button(ctx, '\u2190 All games', 30, 22, 150, 40, { size: 15 });
       // quick sound toggles (same settings as the Settings screen)
       const s0 = app.save.settings;
       musicR = button(ctx, s0.music ? 'Music on' : 'Music off', 1020, 22, 110, 40, { size: 15 });
@@ -63,7 +65,8 @@ export function createTitleScene(app) {
     },
     pointer(type, p) {
       if (type !== 'up') return;
-      if (hit(arcadeR, p)) { app.audio.play('click'); app.go('game', { mode: 'arcade' }); }
+      if (hit(backR, p)) { app.audio.play('click'); location.href = '../index.html'; }
+      else if (hit(arcadeR, p)) { app.audio.play('click'); app.go('game', { mode: 'arcade' }); }
       else if (hit(musicR, p)) { const s = app.save.settings; s.music = !s.music; writeSave(app.save); app.audio.apply(); app.audio.music(s.music); app.audio.play('click'); }
       else if (hit(sfxR, p)) { const s = app.save.settings; s.sfx = !s.sfx; writeSave(app.save); app.audio.apply(); app.audio.play('click'); }
       else if (hit(icons.help, p)) { app.audio.play('click'); app.open(createHowtoScene(app, {})); }

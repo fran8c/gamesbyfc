@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Games by FC — The Arcade</title>
-<meta name="description" content="Free browser games by FC. Velocity, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole. No download, no sign-up. Play on your phone or computer.">
+<meta name="description" content="Free browser games by FC. Velocity, Harvest Tide, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole. No download, no sign-up. Play on your phone or computer.">
 <meta name="theme-color" content="#05060f">
 <meta name="color-scheme" content="dark">
 
@@ -12,7 +12,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Games by FC">
 <meta property="og:title" content="Games by FC — The Arcade">
-<meta property="og:description" content="Satire, strategy, hustle, neon and time travel. Free games that run in your browser.">
+<meta property="og:description" content="Satire, strategy, hustle, neon, time travel and the deep sea. Free games that run in your browser.">
 <meta property="og:url" content="https://fran8c.github.io/gamesbyfc/">
 <meta property="og:image" content="https://fran8c.github.io/gamesbyfc/og.png">
 <meta property="og:image:width" content="1200">
@@ -272,6 +272,26 @@ h1 .l2{background:linear-gradient(100deg,#7ef9ff 0%,#38bdf8 32%,#c084fc 58%,#ff3
 @media (hover:hover){.card--neon:hover{transform:translateY(-5px);border-color:rgba(255,62,200,.65);box-shadow:0 34px 64px -26px rgba(0,0,0,.98),0 0 44px -8px rgba(255,62,200,.4)}
   .card--neon:hover .cta{border-color:#7ef9ff;box-shadow:0 0 24px -4px rgba(0,240,255,.55)}}
 
+/* ---------- HARVEST TIDE ---------- */
+.card--harvest{
+  background:
+    radial-gradient(120% 90% at 50% -10%,rgba(63,227,255,.18),transparent 58%),
+    radial-gradient(90% 70% at 100% 110%,rgba(255,201,60,.12),transparent 60%),
+    linear-gradient(180deg,#0B4F7A 0%,#06223F 70%);
+  border:1px solid rgba(63,227,255,.32);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 26px 50px -26px rgba(0,0,0,.95);
+  --fade:#072845;--chip-fg:#d6f6ff;--chip-bg:rgba(63,227,255,.1);--chip-bd:rgba(63,227,255,.32);--save:#FFC93C}
+.card--harvest .badge{background:#FFC93C;color:#081521;border-color:#FFC93C}
+.card--harvest .tag{color:#3FE3FF;background:rgba(63,227,255,.1);border:1px solid rgba(63,227,255,.34)}
+.card--harvest .title{letter-spacing:.04em}
+.card--harvest .title .h1,.card--harvest .title .h2{background:linear-gradient(180deg,#FFF3B0 0%,#FFC93C 55%,#F29A00 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 0 #081521) drop-shadow(0 0 14px rgba(255,201,60,.45))}
+.card--harvest .subtitle{color:#BFEFFF}
+.card--harvest .desc{color:#b9d6ea}
+.card--harvest .meta{color:#7fb6d4}
+.card--harvest .cta{color:#081521;background:linear-gradient(180deg,#FFE58A,#F29A00);border:2px solid #081521;box-shadow:0 6px 0 -1px rgba(0,0,0,.35),0 0 24px -6px rgba(255,201,60,.6)}
+@media (hover:hover){.card--harvest:hover{transform:translateY(-5px);border-color:rgba(63,227,255,.65);box-shadow:0 34px 64px -26px rgba(0,0,0,.98),0 0 44px -8px rgba(63,227,255,.45)}
+  .card--harvest:hover .cta{filter:brightness(1.07)}}
+
 /* ---------- TIME HOLE ---------- */
 .card--timehole{
   background:
@@ -413,7 +433,7 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
   <header class="hero">
     <div class="kicker"><span class="dot"></span>Free · No download · No sign-up</div>
     <h1><span class="l1">GAMES</span><span class="l2">BY FC</span></h1>
-    <p class="lede">Small games that run in your browser. Satire, strategy, hustle, neon and time travel. Pick a cabinet and play — the buttons still work.</p>
+    <p class="lede">Small games that run in your browser. Satire, strategy, hustle, neon, time travel and the deep sea. Pick a cabinet and play — the buttons still work.</p>
     <ul class="facts-row">
       <li id="gameCount">Games</li>
       <li>Phone or computer</li>
@@ -443,6 +463,7 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
       <li><a href="shaman/">SHAMAN! A Tiny Beginning</a></li>
       <li><a href="neon-3026/">Neon 3026</a></li>
       <li><a href="time-hole/">Time Hole</a></li>
+      <li><a href="harvest-tide/">Harvest Tide</a></li>
     </ul>
   </noscript>
 
@@ -494,6 +515,16 @@ var GAMES = [
     cta: 'Start the hustle', meta: 'Issue #1'
   },
   {
+    id: 'harvest', name: 'Harvest Tide', href: 'harvest-tide/', theme: 'harvest', preview: 'harvest',
+    badge: 'New',
+    tag: 'Arcade · Fish shooter',
+    titleHTML: '<span class="h1">HARVEST</span> <span class="h2">TIDE</span>', title: 'Harvest Tide',
+    sub: 'Aim · Net · Chain · Spin',
+    desc: 'Sixty seconds on a glowing reef. Bounce shots, net whole schools and chain catches into Harvest Fever. Spin the Golden Koi wheel and take on the Octopus King.',
+    facts: ['Solo', 'Tap to shoot', 'Phone: hold sideways', '60-second rounds'],
+    cta: 'Cast off', meta: 'Score attack'
+  },
+  {
     id: 'pappies', name: 'Pappies Monopoly', href: 'pappies-monopoly/', theme: 'pappies', preview: 'pappies',
     tag: 'Satire · Board game',
     titleHTML: '<span class="a">PAPPIES</span> <span class="b">MONOPOLY</span>', title: 'Pappies Monopoly',
@@ -521,7 +552,6 @@ var GAMES = [
   },
   {
     id: 'timehole', name: 'Time Hole', href: 'time-hole/', theme: 'timehole', preview: 'timehole',
-    badge: 'New',
     tag: 'Arcade · 3D shooter',
     titleHTML: '<span class="t1">TIME</span> <span class="t2">HOLE</span>', title: 'Time Hole',
     sub: "A chrono traveller's run",
@@ -540,6 +570,8 @@ var COMING_SOON = {
 
 /* Newest first. */
 var NEWS = [
+  { date: '2026-11-19', html: '<b>Harvest Tide is here.</b> A 60-second fish shooter on a glowing reef. Net whole schools, spin the Golden Koi wheel, beat your best. Hold your phone sideways.' },
+  { date: '2026-11-19', html: '<b>The theme song grows.</b> “Insert Coin” has a sixth part — a reef calypso for Harvest Tide.' },
   { date: '2026-10-31', html: '<b>Time Hole is here.</b> A 3D run down a wormhole where your ammo is your life. Try the tutorial first.' },
   { date: '2026-10-31', html: '<b>A theme song.</b> Tap <b>Theme</b> at the top for “Insert Coin” — one tune played in the style of each game.' },
   { date: '2026-10-31', html: '<b>New arcade hall.</b> Gameplay previews, how each game plays at a glance, and your saved progress right on the cards.' },
@@ -592,6 +624,11 @@ var PROGRESS = {
     if (r && r.played) return { line: 'Victories ' + (r.wins || 0) + ' of ' + r.played };
     return null;
   },
+  harvest: function () {
+    var sv = readJSON('harvesttide:save'), st = sv && sv.stats;
+    if (st && st.bestArcade > 0) return { line: 'Your best · ' + fmt(st.bestArcade) + (st.runsArcade ? ' · ' + st.runsArcade + ' runs' : ''), resume: 'Best ' + fmt(st.bestArcade) };
+    return null;
+  },
   timehole: function () {
     var best = readNum('timehole_best');
     if (best > 0) return { line: 'Your best · ' + fmt(best), resume: 'Best ' + fmt(best) };
@@ -604,7 +641,7 @@ var PROGRESS = {
   }
 };
 
-var RESUME_DOT = { velocity: '#fbbf24', pappies: '#ec4899', shaman: '#7fe0ff', neon: '#ff3ec8', timehole: '#3dffa8' };
+var RESUME_DOT = { velocity: '#fbbf24', pappies: '#ec4899', shaman: '#7fe0ff', neon: '#ff3ec8', timehole: '#3dffa8', harvest: '#FFC93C' };
 
 /* ---------- build cards ---------- */
 function cardHTML(g) {
@@ -958,6 +995,149 @@ var PREVIEWS = {
     c.fillText('SCORE ' + String(s.score).padStart(6, '0'), 12, 12);
   },
 
+  /* Harvest Tide: glowing reef, a cannon nets passing fish */
+  harvest: function (c, w, h, t, s, dt) {
+    var u = Math.max(.8, h / 230);
+    var PAL = [['#C6FF4A', '#5f8a12'], ['#FF5E8A', '#8a1f3d'], ['#9B6BFF', '#43237f'], ['#3FE3FF', '#0f6d84'], ['#FF9F43', '#8a4a10']];
+    if (!s.init) {
+      s.init = 1; s.fish = []; s.bub = []; s.shot = null; s.net = null; s.pops = []; s.coins = []; s.sp = 0; s.cd = 1.2; s.score = 14260; s.aim = -Math.PI / 2; s.combo = 0;
+      for (var i = 0; i < 28; i++) s.bub.push({ x: Math.random(), y: Math.random(), r: rnd(1, 3.2), v: rnd(.04, .12) });
+      for (i = 0; i < 7; i++) spawn(rnd(.1, .9));
+    }
+    function spawn(x0) {
+      var dir = Math.random() < .5 ? 1 : -1, roll = Math.random();
+      var kind = roll < .08 ? 'koi' : roll < .22 ? 'big' : 'small';
+      var n = kind === 'small' ? 1 + (Math.random() * 4 | 0) : 1, y = rnd(.16, .62), col = PAL[Math.random() * PAL.length | 0];
+      for (var j = 0; j < n; j++) s.fish.push({
+        x: x0 != null ? x0 + j * .03 * -dir : (dir > 0 ? -.08 - j * .04 : 1.08 + j * .04), y: y + rnd(-.04, .04), dir: dir, kind: kind,
+        sz: kind === 'big' ? 22 : kind === 'koi' ? 15 : rnd(7, 10), sp: kind === 'big' ? .035 : rnd(.05, .09), ph: rnd(0, TAU), col: kind === 'koi' ? ['#FFC93C', '#a86a00'] : kind === 'big' ? ['#3FE3FF', '#0f6d84'] : col, hp: kind === 'big' ? 1 : 0
+      });
+    }
+    // water
+    var g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#0f6a9c'); g.addColorStop(.45, '#0B4F7A'); g.addColorStop(1, '#06223F');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.save(); c.globalCompositeOperation = 'lighter';
+    for (var r = 0; r < 6; r++) {           // light rays
+      var rx = (r / 6 + Math.sin(t * .2 + r) * .03) * w + w * .08, a = .05 + .03 * Math.sin(t * .7 + r * 2);
+      var rg = c.createLinearGradient(0, 0, 0, h * .9); rg.addColorStop(0, 'rgba(191,239,255,' + a + ')'); rg.addColorStop(1, 'rgba(191,239,255,0)');
+      c.fillStyle = rg; c.beginPath(); c.moveTo(rx - 10 * u, 0); c.lineTo(rx + 16 * u, 0); c.lineTo(rx + 70 * u, h * .9); c.lineTo(rx + 10 * u, h * .9); c.closePath(); c.fill();
+    }
+    c.restore();
+    // reef silhouette
+    c.fillStyle = '#05192e';
+    c.beginPath(); c.moveTo(0, h);
+    for (var x = 0; x <= w + 10; x += 10) c.lineTo(x, h * .86 - Math.abs(Math.sin(x * .021) * 16 + Math.sin(x * .053) * 9) * u);
+    c.lineTo(w, h); c.closePath(); c.fill();
+    c.save(); c.globalCompositeOperation = 'lighter';
+    [[.12, '#FF5E8A'], [.3, '#9B6BFF'], [.72, '#C6FF4A'], [.9, '#FF5E8A']].forEach(function (k, i) {
+      var cx = k[0] * w, cy = h * .9; c.strokeStyle = k[1]; c.globalAlpha = .35 + .15 * Math.sin(t * 2 + i); c.lineWidth = 2.2 * u; c.lineCap = 'round';
+      for (var b = -2; b <= 2; b++) { c.beginPath(); c.moveTo(cx, cy); c.quadraticCurveTo(cx + b * 5 * u, cy - 14 * u, cx + b * 8 * u + Math.sin(t * 1.4 + b) * 2 * u, cy - 24 * u); c.stroke(); }
+    });
+    c.globalAlpha = 1;
+    // bubbles
+    s.bub.forEach(function (b) {
+      b.y -= b.v * dt; b.x += Math.sin(t * 2 + b.r * 9) * .0006; if (b.y < -.02) { b.y = 1.02; b.x = Math.random(); }
+      c.strokeStyle = 'rgba(191,239,255,.45)'; c.lineWidth = 1; c.beginPath(); c.arc(b.x * w, b.y * h, b.r * u, 0, TAU); c.stroke();
+    });
+    c.restore();
+
+    // fish
+    s.sp -= dt; if (s.sp <= 0) { s.sp = rnd(.7, 1.4); spawn(); }
+    s.fish.forEach(function (f) {
+      f.x += f.dir * f.sp * dt; var fx = f.x * w, fy = (f.y + Math.sin(t * 2.2 + f.ph) * .012) * h, z = f.sz * u, sw = Math.sin(t * 9 + f.ph) * .3;
+      f.px = fx; f.py = fy;
+      if (f.dead) return;
+      c.save(); c.translate(fx, fy); c.scale(f.dir, 1);
+      c.shadowColor = f.col[0]; c.shadowBlur = f.kind === 'small' ? 8 : 18;
+      c.fillStyle = f.col[0];
+      c.beginPath(); c.moveTo(-z * .9, 0); c.lineTo(-z * 1.6, -z * (.55 + sw)); c.lineTo(-z * 1.6, z * (.55 - sw)); c.closePath(); c.fill();
+      var bg2 = c.createLinearGradient(0, -z * .6, 0, z * .6); bg2.addColorStop(0, f.col[0]); bg2.addColorStop(1, f.col[1]);
+      c.fillStyle = bg2; c.beginPath(); c.ellipse(0, 0, z, z * .58, 0, 0, TAU); c.fill();
+      c.shadowBlur = 0;
+      c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.ellipse(z * .1, -z * .22, z * .55, z * .16, 0, 0, TAU); c.fill();
+      c.fillStyle = '#fff'; c.beginPath(); c.arc(z * .55, -z * .12, z * .17, 0, TAU); c.fill();
+      c.fillStyle = '#081521'; c.beginPath(); c.arc(z * .6, -z * .12, z * .09, 0, TAU); c.fill();
+      c.restore();
+      if (f.kind === 'big') {          // health bar
+        c.fillStyle = 'rgba(8,21,33,.8)'; c.fillRect(fx - z, fy - z * .95, z * 2, 4 * u);
+        c.fillStyle = '#C6FF4A'; c.fillRect(fx - z, fy - z * .95, z * 2 * f.hp, 4 * u);
+      }
+    });
+
+    // cannon picks a target and fires
+    var bx = w / 2, by = h * .8;
+    s.cd -= dt;
+    if (!s.shot && !s.net && s.cd <= 0) {
+      var best = null;
+      s.fish.forEach(function (f) { if (!f.dead && f.x > .12 && f.x < .88 && (!best || (f.kind !== 'small') > (best.kind !== 'small') || Math.random() < .3)) best = f; });
+      if (best) { var lead = best.dir * best.sp * .55; s.shot = { x: bx, y: by - 26 * u, tx: (best.x + lead) * w, ty: best.py, f: best }; }
+      s.cd = rnd(.5, .9);
+    }
+    if (s.shot) {
+      var sh = s.shot, dx = sh.tx - sh.x, dy = sh.ty - sh.y, d = Math.hypot(dx, dy), stp = 520 * u * dt;
+      s.aim += (Math.atan2(dy, dx) - s.aim) * .3;
+      if (d <= stp) { s.net = { x: sh.tx, y: sh.ty, t: 0 }; s.shot = null; }
+      else { sh.x += dx / d * stp; sh.y += dy / d * stp; }
+      if (s.shot) {
+        c.save(); c.globalCompositeOperation = 'lighter';
+        var sg = c.createRadialGradient(sh.x, sh.y, 0, sh.x, sh.y, 12 * u); sg.addColorStop(0, 'rgba(255,243,176,1)'); sg.addColorStop(1, 'rgba(255,201,60,0)');
+        c.fillStyle = sg; c.beginPath(); c.arc(sh.x, sh.y, 12 * u, 0, TAU); c.fill(); c.restore();
+      }
+    }
+    if (s.net) {
+      var nt = s.net; nt.t += dt; var R = Math.min(1, nt.t / .18) * 34 * u, fade = nt.t < .45 ? 1 : Math.max(0, 1 - (nt.t - .45) / .3);
+      if (!nt.done && nt.t > .12) {
+        nt.done = 1; var got = 0, pts = 0;
+        s.fish.forEach(function (f) {
+          if (f.dead || Math.hypot(f.px - nt.x, f.py - nt.y) > R + f.sz * u * .6) return;
+          if (f.kind === 'big' && f.hp > .4) { f.hp -= .45; return; }
+          f.dead = 1; got++; pts += f.kind === 'koi' ? 500 : f.kind === 'big' ? 300 : 40;
+          for (var q = 0; q < 6; q++) s.coins.push({ x: f.px, y: f.py, vx: rnd(-90, 90) * u, vy: rnd(-160, -60) * u, l: rnd(.6, 1) });
+        });
+        if (got) { s.combo = got > 1 ? s.combo + got : 0; s.score += pts; s.pops.push({ x: nt.x, y: nt.y - 20 * u, t: t, v: '+' + pts, big: got > 1 || pts >= 300 }); }
+      }
+      c.save(); c.globalAlpha = fade; c.strokeStyle = '#BFEFFF'; c.lineWidth = 1.2; c.shadowColor = '#3FE3FF'; c.shadowBlur = 10;
+      c.beginPath(); c.arc(nt.x, nt.y, R, 0, TAU); c.stroke();
+      c.beginPath(); c.arc(nt.x, nt.y, R, 0, TAU); c.clip();
+      for (var gx = -R; gx <= R; gx += 7 * u) { c.beginPath(); c.moveTo(nt.x + gx, nt.y - R); c.lineTo(nt.x + gx + R * .3, nt.y + R); c.stroke(); c.beginPath(); c.moveTo(nt.x - R, nt.y + gx); c.lineTo(nt.x + R, nt.y + gx - R * .3); c.stroke(); }
+      c.restore();
+      if (nt.t > .8) s.net = null;
+    }
+    // cannon
+    c.save(); c.translate(bx, by); c.rotate(s.aim + Math.PI / 2);
+    var cg = c.createLinearGradient(-7 * u, 0, 7 * u, 0); cg.addColorStop(0, '#a86a00'); cg.addColorStop(.5, '#FFE58A'); cg.addColorStop(1, '#a86a00');
+    c.fillStyle = cg; c.strokeStyle = '#081521'; c.lineWidth = 2;
+    c.beginPath(); c.moveTo(-6 * u, 0); c.lineTo(-5 * u, -28 * u); c.lineTo(5 * u, -28 * u); c.lineTo(6 * u, 0); c.closePath(); c.fill(); c.stroke();
+    c.restore();
+    c.fillStyle = '#F29A00'; c.strokeStyle = '#081521'; c.lineWidth = 2.5;
+    c.beginPath(); c.arc(bx, by + 4 * u, 15 * u, Math.PI, 0); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#3FE3FF'; c.beginPath(); c.arc(bx, by - 2 * u, 3.5 * u, 0, TAU); c.fill();
+    // coins + score pops
+    s.coins.forEach(function (k) {
+      k.vy += 320 * u * dt; k.x += k.vx * dt; k.y += k.vy * dt; k.l -= dt;
+      c.globalAlpha = Math.max(0, Math.min(1, k.l * 2)); c.fillStyle = '#FFC93C'; c.strokeStyle = '#a86a00'; c.lineWidth = 1;
+      c.beginPath(); c.ellipse(k.x, k.y, 3.6 * u * Math.abs(Math.cos(t * 10 + k.vx)), 3.6 * u, 0, 0, TAU); c.fill(); c.stroke();
+    });
+    c.globalAlpha = 1;
+    s.pops = s.pops.filter(function (p) { return t - p.t < 1.1; });
+    s.pops.forEach(function (p) {
+      var a = (t - p.t) / 1.1; c.save(); c.globalAlpha = 1 - a * a;
+      c.font = '900 ' + Math.round((p.big ? 20 : 14) * u) + 'px system-ui, sans-serif'; c.textAlign = 'center';
+      c.lineWidth = 4; c.strokeStyle = '#081521'; c.strokeText(p.v, p.x, p.y - a * 24 * u); c.fillStyle = p.big ? '#FFC93C' : '#fff'; c.fillText(p.v, p.x, p.y - a * 24 * u);
+      c.restore();
+    });
+    s.fish = s.fish.filter(function (f) { return !f.dead && f.x > -.2 && f.x < 1.2; });
+    s.coins = s.coins.filter(function (k) { return k.l > 0; });
+    // HUD
+    c.textBaseline = 'top'; c.lineWidth = 4; c.strokeStyle = '#081521';
+    c.font = '900 ' + Math.round(13 * u) + 'px system-ui, sans-serif'; c.textAlign = 'center';
+    c.strokeText(s.score.toLocaleString('en-US'), w / 2, 10); c.fillStyle = '#FFC93C'; c.fillText(s.score.toLocaleString('en-US'), w / 2, 10);
+    var left = 60 - Math.floor(t % 60), tl = '0:' + String(left === 60 ? 0 : left).padStart(2, '0');
+    if (left === 60) tl = '1:00';
+    c.textAlign = 'right'; c.strokeText(tl, w - 12, 10); c.fillStyle = left <= 10 ? '#FF5E8A' : '#BFEFFF'; c.fillText(tl, w - 12, 10);
+    if (s.combo > 1) { c.font = '800 ' + Math.round(10 * u) + 'px system-ui, sans-serif'; c.textAlign = 'center'; c.fillStyle = '#C6FF4A'; c.fillText('CHAIN ×' + s.combo, w / 2, 12 + 16 * u); }
+  },
+
   /* Time Hole: falling down the wormhole, shooting what comes at you */
   timehole: function (c, w, h, t, s, dt) {
     if (!s.init) { s.init = 1; s.st = []; s.tg = []; s.sh = []; s.p = []; s.spawn = 0; s.fire = 0; s.score = 8340;
@@ -1109,7 +1289,8 @@ var Theme = (function () {
     { id: 'pappies',  name: 'Pappies Monopoly' },
     { id: 'shaman',   name: 'Shaman!' },
     { id: 'neon',     name: 'Neon 3026' },
-    { id: 'timehole', name: 'Time Hole' }
+    { id: 'timehole', name: 'Time Hole' },
+    { id: 'harvest',  name: 'Harvest Tide' }
   ];
   // Am  F  C  G
   var ROOT = [45, 41, 48, 43];
@@ -1198,7 +1379,7 @@ var Theme = (function () {
     var root = ROOT[ch], tri = TRIAD[ch], half = Math.floor((ls % 64) / 32), hs = ls % 32;
     var id = PARTS[part].id, last = bar === BARS - 1;
 
-    if (ls === 0 && id !== 'timehole') crash(t);
+    if (ls === 0 && id !== 'timehole' && id !== 'harvest') crash(t);
     if (last && pos === 0 && id !== 'pappies') whoosh(t, STEP * 16);
 
     // the hook: bars 3-8 of each part (bars 1-2 are the groove settling in)
@@ -1240,7 +1421,7 @@ var Theme = (function () {
       tone(mtof(tri[[0, 1, 2, 1][pos % 4]] + 12), t, STEP * 0.85, 'square', 0.022, { echo: 0.15, lp: 3500 });
       if (lead) { var lf = mtof(lead[1]); tone(lf, t, STEP * lead[2] * 0.95, 'square', 0.05, { echo: 0.3 }); tone(lf, t, STEP * lead[2] * 0.95, 'sawtooth', 0.02, { detune: 9, echo: 0.2, lp: 3000 }); }
     }
-    else {                                         // time hole: spacey, half time
+    else if (id === 'timehole') {                  // time hole: spacey, half time
       if (pos === 0 || (pos === 10 && bar % 2)) kick(t, 0.55);
       if (pos === 8) snare(t, 0.2, { echo: 0.5 });
       if (pos % 4 === 2) hat(t, 0.025);
@@ -1248,6 +1429,26 @@ var Theme = (function () {
       if (pos === 0) tri.forEach(function (n, j) { tone(mtof(n), t, STEP * 16, 'sawtooth', 0.016, { atk: 0.5, hold: 0.6, lp: 300 + bar * 180, lpTo: 900 + bar * 260, detune: j * 6 - 6 }); });
       if (pos % 2 === 0) tone(mtof(tri[(pos / 2 + bar) % 3] + 24), t, STEP * 1.2, 'triangle', 0.02, { echo: 0.5 });
       if (lead) { tone(mtof(lead[1]), t, STEP * lead[2] * 1.3, 'sine', 0.08, { echo: 0.45, atk: 0.02 }); tone(mtof(lead[1] + 12), t, STEP * lead[2], 'triangle', 0.015, { echo: 0.4 }); }
+    }
+    else {                                         // harvest tide: reef calypso, marimba and steel drum
+      var swg = (pos % 4 === 2) ? STEP * 0.22 : 0;
+      if (pos === 0 || pos === 8 || (pos === 11 && bar % 2)) kick(t, 0.32);
+      if (pos === 4 || pos === 12) rim(t);
+      shaker(t + swg, pos % 2 ? 0.035 : 0.02);
+      if (pos === 0 || pos === 6 || pos === 10) tone(mtof(root + (pos === 6 ? 12 : pos === 10 ? 7 : 0)), t, STEP * 2.2, 'triangle', 0.16, { lp: 900 });
+      if (pos % 2 === 0) {                         // marimba: short wooden notes
+        var mn = tri[[0, 1, 2, 1, 2, 0, 1, 2][pos / 2]] + 12;
+        tone(mtof(mn), t + swg, 0.26, 'sine', 0.05, { echo: 0.22 });
+        tone(mtof(mn) * 4, t + swg, 0.05, 'sine', 0.012);
+      }
+      if (pos === 0) tri.forEach(function (n) { tone(mtof(n), t, STEP * 15, 'triangle', 0.014, { atk: 0.6, hold: 0.6, lp: 650 }); });
+      if (pos === 15 && Math.random() < 0.6) tone(rnd(500, 800), t, 0.12, 'sine', 0.025, { slide: 1700, echo: 0.3 });   // bubble
+      if (lead) {                                  // steel drum
+        var sf = mtof(lead[1]), sd = Math.min(0.9, STEP * lead[2] * 1.1), lt2 = t + (lead[0] % 4 === 2 ? STEP * 0.22 : 0);
+        tone(sf, lt2, sd, 'sine', 0.07, { echo: 0.3 });
+        tone(sf * 2, lt2, sd * 0.55, 'sine', 0.025, { echo: 0.2 });
+        tone(sf * 3.01, lt2, sd * 0.3, 'sine', 0.012);
+      }
     }
 
     if (ls === 0 && onPart) {
