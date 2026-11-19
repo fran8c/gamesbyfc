@@ -21,7 +21,13 @@ export function createResultsScene(app, { summary, game }) {
     if (rank) app.lastRecord = { mode: summary.mode, at: app.save.localRuns[summary.mode][rank - 1].at };
   }
   const saved = writeSave(app.save);
-  let age = 0, retryR = null, boardR = null, menuR = null, cheered = false;
+  let age = 0, retryR = null, boardR = null, menuR = null, shareR = null, cheered = false;
+  let restartIn = arcade ? 6 : null, copied = 0;   // Arcade: auto play again after a countdown, cancelled by any tap
+  const cancelRestart = () => { restartIn = null; };
+  const share = () => {
+    const text = `I scored ${fmt(summary.score)} in Harvest Tide. Can you beat me?`;
+    try { navigator.clipboard.writeText(text).then(() => { copied = 2; }).catch(() => { copied = 2; }); } catch { copied = 2; }
+  };
 
   const title = arcade ? (summary.reason === 'quit' ? 'RUN ENDED' : "TIME'S UP!")
     : summary.reason === 'empty' ? 'OUT OF COINS' : 'YOU LEFT THE REEF';
@@ -30,7 +36,13 @@ export function createResultsScene(app, { summary, game }) {
   return {
     tick() {},
     frame(dt) {
+      if (app.overlay) return;
       age += dt;
+      if (copied > 0) copied -= dt;
+      if (restartIn !== null && age >= 1) {
+        restartIn -= dt;
+        if (restartIn <= 0) { restartIn = null; app.go('game', { mode: summary.mode }); return; }
+      }
       if (!cheered && age > 0.9) { cheered = true; if (isBest || (rank && rank <= 3)) app.audio.play('big'); }
     },
     draw(ctx) {
@@ -44,7 +56,9 @@ export function createResultsScene(app, { summary, game }) {
       const badge = isBest ? 'NEW BEST!' : rank && rank <= 10 ? `#${rank} on your leaderboard` : prev ? `Best ${fmt(prev)}` : '';
       T(ctx, badge, 640, 256, { size: 24, w: 900, align: 'center', fill: isBest ? C.coral : rank && rank <= 10 ? C.gold : C.ice, sw: 5 });
 
-      let y = 300;
+      const b0 = summary.biggest;
+      if (arcade && b0.kind) T(ctx, `Best catch: ${fishName(b0.kind)} for ${fmt(b0.amount)} points`, 640, 284, { size: 20, w: 800, align: 'center', fill: C.gold, sw: 4 });
+      let y = 306;
       const row = (label, v) => {
         T(ctx, label, 300, y, { size: 22, w: 700, fill: C.ice, stroke: null });
         T(ctx, v, 980, y, { size: 22, w: 900, align: 'right', stroke: null });
@@ -52,7 +66,6 @@ export function createResultsScene(app, { summary, game }) {
       };
       const b = summary.biggest;
       if (arcade) {
-        row('Biggest catch', b.kind ? `${fishName(b.kind)}  ${fmt(b.amount)}` : '—');
         row('Best combo', '×' + summary.bestMultiplier.toFixed(1));
         row('Accuracy', `${Math.round(summary.accuracy * 100)}%` + (summary.accuracyBonus ? `  (+${fmt(summary.accuracyBonus)} bonus)` : ''));
       } else {
@@ -70,13 +83,17 @@ export function createResultsScene(app, { summary, game }) {
       });
       if (!saved) T(ctx, "Progress can't be saved on this device", 640, 560, { size: 16, w: 700, align: 'center', fill: C.coral, stroke: null });
       const ready = age >= 1;
-      retryR = button(ctx, arcade ? 'PLAY AGAIN' : 'NEW VISIT', 270, 580, 300, 76, { primary: true, disabled: !ready, size: 30 });
-      boardR = button(ctx, 'SCORES', 590, 580, 210, 76, { size: 26, disabled: !ready });
-      menuR = button(ctx, 'MENU', 820, 580, 190, 76, { size: 26, disabled: !ready });
+      const again = restartIn !== null ? `PLAY AGAIN (${Math.ceil(restartIn)})` : arcade ? 'PLAY AGAIN' : 'NEW VISIT';
+      retryR = button(ctx, again, 262, 580, 250, 76, { primary: true, disabled: !ready, size: 24 });
+      shareR = button(ctx, copied > 0 ? 'COPIED!' : 'SHARE', 528, 580, 150, 76, { size: 22, disabled: !ready });
+      boardR = button(ctx, 'SCORES', 694, 580, 150, 76, { size: 22, disabled: !ready });
+      menuR = button(ctx, 'MENU', 858, 580, 150, 76, { size: 22, disabled: !ready });
     },
     pointer(type, p) {
       if (type !== 'up' || age < 1) return;
+      cancelRestart();
       if (hit(retryR, p)) { app.audio.play('click'); app.go('game', { mode: summary.mode }); }
+      else if (hit(shareR, p)) { app.audio.play('click'); share(); }
       else if (hit(boardR, p)) { app.audio.play('click'); app.open(createLeaderboardScene(app, { mode: summary.mode })); }
       else if (hit(menuR, p)) { app.audio.play('click'); app.go('title'); }
     },

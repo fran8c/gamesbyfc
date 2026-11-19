@@ -5,11 +5,12 @@ import { createGameScene } from './game.js';
 import { createHowtoScene } from './howto.js';
 import { createLeaderboardScene } from './leaderboard.js';
 import { createSettingsScene } from './settings.js';
+import { writeSave } from '../platform/storage.js';
 
 export function createTitleScene(app) {
   const newDemo = seed => createGameScene(app, { mode: 'arcade', seed, autoplay: 'expert', attract: true });
   let demo = newDemo(20261108);
-  let arcadeR = null, icons = {}, t = 0;
+  let arcadeR = null, icons = {}, t = 0, musicR = null, sfxR = null;
   return {
     tick(n) {
       if (app.overlay) return;
@@ -30,6 +31,17 @@ export function createTitleScene(app) {
       ctx.restore();
       drawCreature(ctx, 'golden_koi', 640 + Math.sin(t * 0.6) * 380, 60 + Math.cos(t * 1.2) * 8, { dir: Math.cos(t * 0.6) > 0 ? 1 : -1, t, scale: 0.8, alpha: 0.95 });
       T(ctx, 'Aim · Net · Chain · Spin', 640, 204, { size: 26, w: 800, align: 'center', fill: C.ice, sw: 6 });
+      // how it works: three steps that light up in turn
+      const step = Math.floor(t / 1.2) % 3;
+      ['1 Aim', '2 Fire', '3 Catch!'].forEach((label, i) => {
+        const on = i === step;
+        frost(ctx, 470 + i * 110, 222, 100, 30, 12, { glow: on, glowColor: C.gold, alpha: on ? 0.95 : 0.45 });
+        T(ctx, label, 520 + i * 110, 243, { size: 16, w: 900, align: 'center', fill: on ? C.gold : C.ice, stroke: null });
+      });
+      // quick sound toggles (same settings as the Settings screen)
+      const s0 = app.save.settings;
+      musicR = button(ctx, s0.music ? 'Music on' : 'Music off', 1020, 22, 110, 40, { size: 15 });
+      sfxR = button(ctx, s0.sfx ? 'Sound on' : 'Sound off', 1140, 22, 110, 40, { size: 15 });
 
       // mode cards
       const s = app.save.stats, pulse = 1 + Math.sin(t * 3) * 0.015;
@@ -52,6 +64,8 @@ export function createTitleScene(app) {
     pointer(type, p) {
       if (type !== 'up') return;
       if (hit(arcadeR, p)) { app.audio.play('click'); app.go('game', { mode: 'arcade' }); }
+      else if (hit(musicR, p)) { const s = app.save.settings; s.music = !s.music; writeSave(app.save); app.audio.apply(); app.audio.music(s.music); app.audio.play('click'); }
+      else if (hit(sfxR, p)) { const s = app.save.settings; s.sfx = !s.sfx; writeSave(app.save); app.audio.apply(); app.audio.play('click'); }
       else if (hit(icons.help, p)) { app.audio.play('click'); app.open(createHowtoScene(app, {})); }
       else if (hit(icons.trophy, p)) { app.audio.play('click'); app.open(createLeaderboardScene(app, {})); }
       else if (hit(icons.gear, p)) { app.audio.play('click'); app.open(createSettingsScene(app)); }

@@ -50,7 +50,7 @@ function makePath(S, kind, speedFactor = 1) {
 function makeFish(S, kind, path, off, age) {
   const f = S.cfg.fish[kind];
   const fish = {
-    uid: S.nextUid++, kind, hp: f.hp, maxHp: f.hp, r: f.r, path, off, age,
+    uid: S.nextUid++, kind, hp: f.hp, maxHp: f.hp, r: f.r, path, off, age, zig: f.zig || 0,
     x: 0, y: 0, dirX: path.p2.x > path.p0.x ? 1 : -1, hitTick: -1, alive: true,
   };
   placeFish(fish);
@@ -61,7 +61,10 @@ function makeFish(S, kind, path, off, age) {
 function placeFish(fish) {
   const t = Math.min(1, fish.age / fish.path.ticks);
   const p = bezier(fish.path.p0, fish.path.p1, fish.path.p2, t);
-  fish.x = p.x + fish.off.x; fish.y = p.y + fish.off.y;
+  // zigzag fish dart up and down in a triangle wave (integer maths, no trig)
+  let dy = 0;
+  if (fish.zig) { const k = fish.age % 48; dy = ((k < 24 ? k : 48 - k) / 24 * 2 - 1) * fish.zig; }
+  fish.x = p.x + fish.off.x; fish.y = p.y + fish.off.y + dy;
 }
 
 /** Spawn one group of `kind`. `startFrac` > 0 places it part-way along its path (initial fill). */
@@ -115,6 +118,8 @@ export function tickWorld(S) {
   }
   // boss
   if (S.mode === 'arcade' && S.remaining === S.cfg.run.sprintTicks) emit(S, 'sprint:start', {});
+  if (S.mode === 'arcade' && S.remaining === S.cfg.run.tideFromRemaining) emit(S, 'tide:start', {});
+  if (S.mode === 'arcade' && S.remaining === S.cfg.run.tideFromRemaining - S.cfg.run.tideTicks) emit(S, 'tide:end', {});
   if (S.mode === 'arcade' && !frozen) {
     const g = S.cfg.goals, idx = Math.floor(S.worldTicks / g.everyTicks);
     if (S.worldTicks % g.everyTicks === 0 && (!S.goal || S.goal.index !== idx)) {

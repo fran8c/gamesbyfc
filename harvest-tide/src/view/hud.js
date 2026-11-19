@@ -64,6 +64,13 @@ function scorePanel(ctx, S, V) {
   }
 }
 
+/** Arcade: a bar that fills by catches; full = a free random power-up. Sits above the power buttons. */
+function powerMeter(ctx, S) {
+  const frac = S.powerMeter / S.cfg.powerups.meterCatches;
+  roundRect(ctx, 940, 592, 280, 8, 4); ctx.fillStyle = 'rgba(6,20,36,0.8)'; ctx.fill();
+  if (frac > 0) { roundRect(ctx, 940, 592, Math.max(8, 280 * frac), 8, 4); ctx.fillStyle = C.glow; ctx.fill(); }
+}
+
 /** Arcade goal pill at the top centre: the fish to catch and progress. */
 function goalPill(ctx, S, V) {
   const g = S.goal;
@@ -98,9 +105,11 @@ export function drawHud(ctx, S, V) {
   drawIcon(ctx, 'pause', BTN.pause.x + 34, BTN.pause.y + 34, 22, C.ice);
   scorePanel(ctx, S, V);
   if (S.mode === 'arcade') {
+    powerMeter(ctx, S);
     goalPill(ctx, S, V);
     const m = multiplier(S);
-    frost(ctx, 460, 12, 360, 68, 18, { glow: S.combo.feverActive, glowColor: C.lime });
+    const hot = m >= 2.5 || S.combo.feverActive;
+    frost(ctx, 460, 12, 360, 68, 18, { glow: hot, glowColor: S.combo.feverActive ? C.lime : C.gold });
     const pop = 1 + V.comboPop * 0.35;
     ctx.save(); ctx.translate(524, 46); ctx.scale(pop, pop); goldText(ctx, 'x' + m.toFixed(1), 0, 0, 40); ctx.restore();
     T(ctx, S.combo.points ? `COMBO ${S.combo.points}` : 'COMBO', 592, 34, { size: 14, w: 900, fill: C.ice, stroke: null });

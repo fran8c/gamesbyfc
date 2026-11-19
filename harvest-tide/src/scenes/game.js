@@ -27,6 +27,7 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
   const V = {
     t: 0, shownScore: mode === 'reef' ? S.coins : 0, comboPop: 0, recoil: 0, caption: null, legend: null,
     seen: new Set(), wheelEndAt: -1, wheelCopy: null, lastSeg: -1, lastSecond: 99, tipPower: false,
+    flee: new Map(), hitstop: 0,
     best: mode === 'arcade' ? app.save.stats.bestArcade : app.save.stats.bestReefPeak,
   };
   const fx = createFx();
@@ -44,8 +45,20 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
     for (const e of evs) {
       switch (e.type) {
         case 'shot': V.recoil = 1; sfx('shot', { level: mode === 'reef' ? e.level : 3, lucky: e.lucky }); break;
-        case 'net': addNet(fx, e.x, e.y, e.r, e.lucky); sfx('net'); break;
-        case 'fish:hit': sfx('hit'); break;
+        case 'net': {
+          addNet(fx, e.x, e.y, e.r, e.lucky); sfx('net');
+          const caught = new Set(e.uids);
+          for (const f of S.fish) {
+            if (!f.alive || caught.has(f.uid)) continue;
+            const dx = f.x - e.x, dy = f.y - e.y, d = Math.hypot(dx, dy) || 1;
+            if (d < e.r + 70) V.flee.set(f.uid, { dx: dx / d * 18, dy: dy / d * 18, age: 0 });
+          }
+          break;
+        }
+        case 'fish:hit': sfx('hit'); if (!reduced) shake(fx, 2.5); break;
+        case 'tide:start': caption('GOLDEN TIDE! Points ×2 for 10 seconds', C.gold); callout(fx, 'GOLDEN TIDE', C.gold, 'points ×2'); sfx('luckyReady'); break;
+        case 'tide:end': caption('Golden tide over', C.ice); break;
+        case 'power:earned': caption('Power-up earned — 30 catches!', C.glow); break;
         case 'fish:spawn':
           if (!attract && !V.seen.has(e.kind)) {
             V.seen.add(e.kind);
@@ -70,6 +83,7 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
         }
         case 'bigwin':
           if (e.tier >= 2) {
+            if (!reduced) V.hitstop = e.tier === 3 ? 0.18 : 0.1;   // a short freeze so big catches land
             banner(fx, e.tier, e.amount, (e.lucky ? 'Lucky ' : '') + fishName(e.kind), mode === 'reef');
             if (!reduced) { flash(fx, C.gold, e.tier === 3 ? 0.45 : 0.25); burst(fx, 640, 300, e.tier === 3 ? 50 : 26, C.gold, 460); shake(fx, e.tier === 3 ? 14 : 7); }
             coinFlight(fx, 640, 310, reduced ? 2 : e.tier === 3 ? 40 : 18, scoreAnchor);
@@ -156,7 +170,7 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
   const scene = {
     S, mode, fx,
     tick(n) {
-      if (paused || S.over || app.overlay) return;
+      if (paused || S.over || app.overlay || V.hitstop > 0) return;
       for (let i = 0; i < n && !S.over; i++) {
         if (bot) bot.act(S);
         const evs = step(S);
@@ -169,6 +183,9 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
       }
     },
     frame(dt) {
+      // fish that were near a net dart away, and fade
+      for (const [uid, fl] of V.flee) { fl.age += dt; if (fl.age > 0.35) V.flee.delete(uid); }
+      V.hitstop = Math.max(0, V.hitstop - dt);
       if (paused) {
         if (paused.countdown !== null) {
           const before = Math.ceil(paused.countdown);
@@ -209,6 +226,8 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
       const order = S.fish.filter(f => f.alive).sort((a, b) => b.r - a.r || a.uid - b.uid);
       for (const f of order) {
         const o = { dir: f.dirX, t: still ? 0 : V.t, seed: f.uid, tilt: fishTilt(f), puff: f.kind === 'puffer' && f.hp < f.maxHp };
+        const fl = V.flee.get(f.uid), k = fl ? 1 - fl.age / 0.35 : 0;
+        ctx.save(); if (fl) ctx.translate(fl.dx * k, fl.dy * k);
         drawCreature(ctx, f.kind, f.x, f.y, o);
         if (f.hitTick >= 0 && S.tick - f.hitTick < 6) drawHitFlash(ctx, f.kind, f.x, f.y, o, 1 - (S.tick - f.hitTick) / 6);
         if (freeze) { ctx.beginPath(); ctx.arc(f.x, f.y, f.r * 1.15, 0, TAU); ctx.fillStyle = 'rgba(200,240,255,0.22)'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(230,250,255,0.7)'; ctx.stroke(); }
@@ -224,6 +243,7 @@ export function createGameScene(app, { mode = 'arcade', seed, autoplay = null, a
           for (let i = 0; i < 4; i++) { ctx.rotate(Math.PI / 2); ctx.beginPath(); ctx.moveTo(r - 9, 0); ctx.lineTo(r + 9, 0); ctx.stroke(); }
           ctx.restore();
         }
+        ctx.restore();
       }
       if (set.showValues && hud) drawValueTags(ctx, S);
       drawFxWorld(ctx, fx, V.t);

@@ -10,7 +10,8 @@ function deepFreeze(o) {
 export const DEFAULT_CONFIG = deepFreeze({
   schemaVersion: 2,
   tickRateHz: 60,
-  run:    { durationTicks: 3600, warningAtTicks: 600, sprintTicks: 600, sprintMult: 1.5 },   // Arcade: last 10 s score ×1.5
+  run:    { durationTicks: 3600, warningAtTicks: 600, sprintTicks: 600, sprintMult: 1.5,   // Arcade: last 10 s score ×1.5
+            tideFromRemaining: 1800, tideTicks: 600, tideMult: 2 },                           // Arcade: golden tide, 30 s→20 s left, points ×2
   field:  { w: 1280, h: 720, x0: 24, x1: 1256, y0: 24 },        // bullets bounce off x0, x1, y0; leave past h
   cannon: { pos: { x: 640, y: 676 }, muzzlePx: 70,
             minDir: { x: 0.990268, y: -0.139173 },            // 8° above horizontal (cos, -sin)
@@ -20,8 +21,8 @@ export const DEFAULT_CONFIG = deepFreeze({
   net:    { radiusPx: 44, maxFish: 5, feverRadiusMult: 1.4 },
   // points = Arcade score; reward = Treasure Reef coins, as a multiple of the shot cost
   fish: {
-    sardine:      { hp: 1,  points: 10,   reward: 2,   speed: 150, r: 12, group: [5, 8], size: [44, 18] },
-    clownfish:    { hp: 2,  points: 20,   reward: 3,   speed: 125, r: 15, group: [3, 5], size: [46, 30] },
+    sardine:      { hp: 1,  points: 10,   reward: 2,   speed: 150, r: 12, group: [5, 8], size: [44, 18], zig: 10 },
+    clownfish:    { hp: 2,  points: 20,   reward: 3,   speed: 125, r: 15, group: [3, 5], size: [46, 30], zig: 14 },
     snapper:      { hp: 3,  points: 30,   reward: 5,   speed: 105, r: 18, group: [2, 3], size: [64, 32] },
     puffer:       { hp: 5,  points: 50,   reward: 8,   speed: 70,  r: 22, group: [1, 1], size: [52, 52] },
     lionfish:     { hp: 8,  points: 80,   reward: 12,  speed: 85,  r: 24, group: [1, 1], size: [84, 50] },
@@ -52,7 +53,8 @@ export const DEFAULT_CONFIG = deepFreeze({
   powerups: { ids: ['freeze', 'lockon', 'lightning'],
               freezeTicks: 240, lockonTicks: 360, lockonSteer: 0.18,
               lightningTargets: 6, lightningDamage: 6,
-              startArcade: 2, startReef: 1, max: 3 },
+              startArcade: 2, startReef: 1, max: 3,
+              meterCatches: 30 },                 // Arcade: every 30 catches earns a random power-up
   // Treasure Reef. Cannon level n costs shotCost[n-1] coins per shot.
   // returnRate = base share of each landed shot's cost returned on average; the lucky meter adds the rest
   // (total measured ≈ 105% for a typical player, see spec Section 9).

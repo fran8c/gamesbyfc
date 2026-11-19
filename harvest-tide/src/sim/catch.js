@@ -70,12 +70,18 @@ export function sprintMult(S) {
   return S.mode === 'arcade' && S.remaining <= S.cfg.run.sprintTicks ? S.cfg.run.sprintMult : 1;
 }
 
+/** Arcade golden tide: points ×tideMult while the tide is on. */
+export function tideMult(S) {
+  const r = S.cfg.run;
+  return S.mode === 'arcade' && S.remaining <= r.tideFromRemaining && S.remaining > r.tideFromRemaining - r.tideTicks ? r.tideMult : 1;
+}
+
 function onCaught(S, f, { cost = 0, amount = null, lucky = false } = {}) {
   const cfg = S.cfg, def = cfg.fish[f.kind];
   kill(S, f);
   if (def.capsule) { emit(S, 'catch', { uid: f.uid, kind: f.kind, x: f.x, y: f.y, dir: f.dirX, amount: 0 }); grantRandomPower(S); return; }
   if (S.mode === 'arcade') {
-    const m = multiplier(S) * sprintMult(S);
+    const m = multiplier(S) * sprintMult(S) * tideMult(S);
     let amt = Math.floor(def.points * m);
     const luckyNow = S.lucky.ready;
     if (luckyNow) {
@@ -90,6 +96,11 @@ function onCaught(S, f, { cost = 0, amount = null, lucky = false } = {}) {
     } else if (def.wheel || luckyNow) startWheel(S, { kind: f.kind, base: amt, cost: 0, x: f.x, y: f.y, lucky: luckyNow });
     else credit(S, f.kind, amt, { x: f.x, y: f.y });
     comboGain(S);
+    if (++S.powerMeter >= S.cfg.powerups.meterCatches) {
+      S.powerMeter = 0;
+      grantRandomPower(S);
+      emit(S, 'power:earned', {});
+    }
     const g = S.goal;
     if (g && !g.done && f.kind === g.kind && ++g.have >= g.need) {
       g.done = true;
