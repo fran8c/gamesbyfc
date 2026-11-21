@@ -6,6 +6,9 @@
   <meta name="theme-color" content="#1d2b4f">
   <meta name="description" content="SkyDuel: a free arcade air-racer. A Game by FC.">
   <title>SkyDuel</title>
+  <!-- Games by FC: install, offline, back to arcade -->
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%231d2b4f%22%2F%3E%3Ccircle%20cx%3D%2232%22%20cy%3D%2232%22%20r%3D%2221%22%20fill%3D%22none%22%20stroke%3D%22%233fe3b4%22%20stroke-width%3D%224%22%2F%3E%3Cpath%20d%3D%22M32%2014%20L38%2034%20L52%2040%20L38%2041%20L35%2050%20L32%2046%20L29%2050%20L26%2041%20L12%2040%20L26%2034%20Z%22%20fill%3D%22%23fff%22%2F%3E%3Cpath%20d%3D%22M32%2014%20L35%2026%20L29%2026%20Z%22%20fill%3D%22%232a8cff%22%2F%3E%3C%2Fsvg%3E" type="image/svg+xml">
   <style>
 :root {
@@ -36,6 +39,17 @@ button:focus-visible { outline: 3px solid var(--mint); outline-offset: 3px; }
 svg { display: block; }
 
 #gl { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100dvh; display: block; }
+
+/* ---------- Games by FC: back to the arcade ---------- */
+.fc-back {
+  position: absolute; z-index: 5; top: max(12px, var(--safe-t)); left: max(14px, var(--safe-l));
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px; border-radius: 999px;
+  border: 2px solid rgba(255, 255, 255, 0.35); background: rgba(18, 26, 50, 0.55); color: var(--ink);
+  font: 800 14px/1 var(--font); letter-spacing: 0.02em; text-decoration: none;
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); touch-action: manipulation;
+}
+.fc-back:hover { background: rgba(255, 255, 255, 0.16); }
+#s-home .fc-back { top: max(8px, var(--safe-t)); padding: 0 12px; min-height: 34px; font-size: 13px; }
 
 /* ---------- Screens ---------- */
 .screen, .overlay {
@@ -573,6 +587,7 @@ body.touch .chips-row { bottom: auto; top: calc(max(10px, var(--safe-t)) + 104px
 
   <!-- Title -->
   <section id="s-start" class="screen" hidden aria-label="Title">
+    <a class="fc-back" href="../index.html">← All games</a>
     <div class="title-card">
       <svg class="title-plane" viewBox="0 0 200 60" aria-hidden="true">
         <defs><linearGradient id="trail" x1="0" x2="1"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".85"/></linearGradient></defs>
@@ -593,6 +608,7 @@ body.touch .chips-row { bottom: auto; top: calc(max(10px, var(--safe-t)) + 104px
 
   <!-- Home -->
   <section id="s-home" class="screen" hidden aria-label="Home">
+    <a class="fc-back" href="../index.html">← All games</a>
     <div class="panel home">
       <div class="home-left">
         <div class="eyebrow">Track</div>
@@ -6398,6 +6414,12 @@ boot();
 return { VERSION };
 })();
 })();
+</script>
+<script>
+/* Games by FC: lets the whole arcade work offline after the first visit */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  addEventListener('load', function () { navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(function () {}); });
+}
 </script>
 </body>
 </html>

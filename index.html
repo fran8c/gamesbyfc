@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Games by FC — The Arcade</title>
-<meta name="description" content="Free browser games by FC. Velocity, Harvest Tide, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole. No download, no sign-up. Play on your phone or computer.">
+<meta name="description" content="Free browser games by FC. Velocity, SkyDuel, Harvest Tide, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole. No download, no sign-up. Play on your phone or computer.">
 <meta name="theme-color" content="#05060f">
 <meta name="color-scheme" content="dark">
 
@@ -272,6 +272,26 @@ h1 .l2{background:linear-gradient(100deg,#7ef9ff 0%,#38bdf8 32%,#c084fc 58%,#ff3
 @media (hover:hover){.card--neon:hover{transform:translateY(-5px);border-color:rgba(255,62,200,.65);box-shadow:0 34px 64px -26px rgba(0,0,0,.98),0 0 44px -8px rgba(255,62,200,.4)}
   .card--neon:hover .cta{border-color:#7ef9ff;box-shadow:0 0 24px -4px rgba(0,240,255,.55)}}
 
+/* ---------- SKYDUEL ---------- */
+.card--skyduel{
+  background:
+    radial-gradient(120% 90% at 80% -10%,rgba(255,179,71,.24),transparent 58%),
+    radial-gradient(90% 80% at 0% 110%,rgba(42,140,255,.2),transparent 60%),
+    linear-gradient(180deg,#22325c 0%,#141d38 100%);
+  border:1px solid rgba(255,179,71,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 26px 50px -26px rgba(0,0,0,.95);
+  --fade:#172243;--chip-fg:#fdf7ef;--chip-bg:rgba(255,255,255,.08);--chip-bd:rgba(255,255,255,.24);--save:#3fe3b4}
+.card--skyduel .badge{background:#3fe3b4;color:#0c1a2e;border-color:#3fe3b4}
+.card--skyduel .tag{color:#ffd166;background:rgba(255,179,71,.12);border:1px solid rgba(255,179,71,.36)}
+.card--skyduel .title{font-style:italic;letter-spacing:-.02em;font-size:clamp(30px,3.8vw,38px);text-shadow:0 4px 0 rgba(0,0,0,.25),0 8px 30px rgba(255,140,60,.35)}
+.card--skyduel .title .s1{color:#fdf7ef}
+.card--skyduel .title .s2{color:#ffb347}
+.card--skyduel .subtitle{color:#c9d3ee}
+.card--skyduel .desc{color:#c4cde6}
+.card--skyduel .meta{color:#9aa8cf}
+.card--skyduel .cta{color:#2b1606;background:linear-gradient(180deg,#ffd166,#ff9a3c);border-radius:999px;box-shadow:0 5px 0 #c4661c,0 10px 24px -8px rgba(255,140,60,.55)}
+@media (hover:hover){.card--skyduel:hover{transform:translateY(-5px);border-color:rgba(255,179,71,.7);box-shadow:0 34px 64px -26px rgba(0,0,0,.98),0 0 44px -8px rgba(255,179,71,.45)}
+  .card--skyduel:hover .cta{filter:brightness(1.06)}}
+
 /* ---------- HARVEST TIDE ---------- */
 .card--harvest{
   background:
@@ -433,7 +453,7 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
   <header class="hero">
     <div class="kicker"><span class="dot"></span>Free · No download · No sign-up</div>
     <h1><span class="l1">GAMES</span><span class="l2">BY FC</span></h1>
-    <p class="lede">Feel-good games for your spare five minutes. Grow a tiny tribe, net a golden koi, light up the sky or make your first million. Pick a cabinet — there's always another round.</p>
+    <p class="lede">Feel-good games for your spare five minutes. Grow a tiny tribe, net a golden koi, race through the clouds or make your first million. Pick a cabinet — there's always another round.</p>
     <ul class="facts-row">
       <li id="gameCount">Games</li>
       <li>Phone or computer</li>
@@ -464,6 +484,7 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
       <li><a href="neon-3026/">Neon 3026</a></li>
       <li><a href="time-hole/">Time Hole</a></li>
       <li><a href="harvest-tide/">Harvest Tide</a></li>
+      <li><a href="skyduel/">SkyDuel</a></li>
     </ul>
   </noscript>
 
@@ -515,8 +536,17 @@ var GAMES = [
     cta: 'Start the hustle', meta: 'Issue #1'
   },
   {
-    id: 'harvest', name: 'Harvest Tide', href: 'harvest-tide/', theme: 'harvest', preview: 'harvest',
+    id: 'skyduel', name: 'SkyDuel', href: 'skyduel/', theme: 'skyduel', preview: 'skyduel',
     badge: 'New',
+    tag: 'Arcade · Air racer',
+    titleHTML: '<span class="s1">Sky</span><span class="s2">Duel</span>', title: 'SkyDuel',
+    sub: 'Race the rings',
+    desc: 'Thread glowing rings across Canyon Run, Cloud City and Neon City. Drift, draft and boost past the pack, win the Gold Cup and paint your plane your way.',
+    facts: ['Solo vs AI rivals', 'Race, Cup + Time Trial', 'Phone: hold sideways', 'Garage & paint shop'],
+    cta: 'Take off', meta: '3 tracks'
+  },
+  {
+    id: 'harvest', name: 'Harvest Tide', href: 'harvest-tide/', theme: 'harvest', preview: 'harvest',
     tag: 'Arcade · Fish shooter',
     titleHTML: '<span class="h1">HARVEST</span> <span class="h2">TIDE</span>', title: 'Harvest Tide',
     sub: 'Aim · Net · Chain · Spin',
@@ -570,6 +600,8 @@ var COMING_SOON = {
 
 /* Newest first. */
 var NEWS = [
+  { date: '2026-11-21', html: '<b>SkyDuel takes off.</b> A 3D air race through glowing rings on three tracks. Win the cups, beat your best time and paint your plane in the Garage. Hold your phone sideways.' },
+  { date: '2026-11-21', html: '<b>Seven parts now.</b> “Insert Coin” adds a fast racing part for SkyDuel.' },
   { date: '2026-11-20', html: '<b>Harvest Tide update.</b> Rounds now last two minutes, with a Golden Tide halfway through (points ×2), Frenzy schools and new goals to chase.' },
   { date: '2026-11-19', html: '<b>Harvest Tide is here.</b> A fish shooter on a glowing reef. Net whole schools, spin the Golden Koi wheel, beat your best. Hold your phone sideways.' },
   { date: '2026-11-19', html: '<b>The theme song grows.</b> “Insert Coin” has a sixth part — a reef calypso for Harvest Tide.' },
@@ -625,6 +657,14 @@ var PROGRESS = {
     if (r && r.played) return { line: 'Victories ' + (r.wins || 0) + ' of ' + r.played };
     return null;
   },
+  skyduel: function () {
+    var p = readJSON('skyduel.profile.v1');
+    if (!p || !p.races) return null;
+    var lvl = 1 + Math.floor((p.xp || 0) / 300), best = null;
+    Object.keys(p.best || {}).forEach(function (k) { var b = p.best[k]; if (b && b.time && (best === null || b.time < best)) best = b.time; });
+    var bt = best === null ? '' : ' · best ' + Math.floor(best / 60) + ':' + (best % 60 < 10 ? '0' : '') + (best % 60).toFixed(1);
+    return { line: 'Level ' + lvl + ' · ' + (p.wins || 0) + (p.wins === 1 ? ' win' : ' wins') + bt, resume: 'Level ' + lvl };
+  },
   harvest: function () {
     var sv = readJSON('harvesttide:save'), st = sv && sv.stats;
     if (st && st.bestArcade > 0) return { line: 'Your best · ' + fmt(st.bestArcade) + (st.runsArcade ? ' · ' + st.runsArcade + ' runs' : ''), resume: 'Best ' + fmt(st.bestArcade) };
@@ -642,7 +682,7 @@ var PROGRESS = {
   }
 };
 
-var RESUME_DOT = { velocity: '#fbbf24', pappies: '#ec4899', shaman: '#7fe0ff', neon: '#ff3ec8', timehole: '#3dffa8', harvest: '#FFC93C' };
+var RESUME_DOT = { velocity: '#fbbf24', pappies: '#ec4899', shaman: '#7fe0ff', neon: '#ff3ec8', timehole: '#3dffa8', harvest: '#FFC93C', skyduel: '#ffb347' };
 
 /* ---------- build cards ---------- */
 function cardHTML(g) {
@@ -996,6 +1036,98 @@ var PREVIEWS = {
     c.fillText('SCORE ' + String(s.score).padStart(6, '0'), 12, 12);
   },
 
+  /* SkyDuel: chase cam through rings over a sunset canyon */
+  skyduel: function (c, w, h, t, s, dt) {
+    var u = Math.max(.8, h / 230), hz = h * .46, cx = w / 2;
+    if (!s.init) {
+      s.init = 1; s.rings = []; s.puffs = []; s.sp = 0; s.place = 2; s.lapT = 0; s.pops = [];
+      s.mesa = []; for (var i = 0; i < 14; i++) s.mesa.push({ x: Math.random(), w: rnd(.06, .16), hh: rnd(.05, .16), far: Math.random() < .5 });
+      for (i = 0; i < 4; i++) s.rings.push({ z: .2 + i * .22, ox: rnd(-.5, .5), oy: rnd(-.25, .15), hit: 0 });
+    }
+    // sky
+    var g = c.createLinearGradient(0, 0, 0, hz); g.addColorStop(0, '#24356a'); g.addColorStop(.55, '#a05a8a'); g.addColorStop(1, '#ffb066');
+    c.fillStyle = g; c.fillRect(0, 0, w, hz + 1);
+    var sun = c.createRadialGradient(cx * 1.25, hz * .92, 4, cx * 1.25, hz * .92, h * .35); sun.addColorStop(0, 'rgba(255,230,160,1)'); sun.addColorStop(.18, 'rgba(255,190,110,.9)'); sun.addColorStop(1, 'rgba(255,150,90,0)');
+    c.fillStyle = sun; c.fillRect(0, 0, w, hz + 2);
+    // clouds
+    c.fillStyle = 'rgba(255,235,220,.22)';
+    for (var k = 0; k < 4; k++) { var cx2 = ((k * .31 + t * .012) % 1.2 - .1) * w, cy2 = hz * (.25 + k * .13); c.beginPath(); c.ellipse(cx2, cy2, 46 * u, 7 * u, 0, 0, TAU); c.ellipse(cx2 + 30 * u, cy2 - 4 * u, 30 * u, 6 * u, 0, 0, TAU); c.fill(); }
+    // mesas on the horizon (two layers, slow parallax)
+    var bank = Math.sin(t * .8) * .14;
+    c.save(); c.translate(cx, hz); c.rotate(-bank * .5); c.translate(-cx, -hz);
+    [true, false].forEach(function (far) {
+      c.fillStyle = far ? '#7a4a6e' : '#4e2f52';
+      s.mesa.forEach(function (m) {
+        if (m.far !== far) return;
+        var mx = ((m.x + t * (far ? .01 : .025)) % 1.3 - .15) * w, mw = m.w * w, mh = m.hh * h * (far ? .7 : 1);
+        c.beginPath(); c.moveTo(mx - mw * .6, hz + 2); c.lineTo(mx - mw * .45, hz - mh); c.lineTo(mx + mw * .45, hz - mh); c.lineTo(mx + mw * .6, hz + 2); c.fill();
+      });
+    });
+    // ground with speed lines
+    var gg = c.createLinearGradient(0, hz, 0, h * 1.2); gg.addColorStop(0, '#c26a4a'); gg.addColorStop(1, '#3a1f3a');
+    c.fillStyle = gg; c.fillRect(-w, hz, w * 3, h);
+    c.strokeStyle = 'rgba(255,214,170,.22)'; c.lineWidth = 1;
+    for (var r = 0; r < 12; r++) { var zz = ((r / 12) + t * .9) % 1, yy = hz + Math.pow(zz, 2.2) * (h - hz) * 1.2; c.beginPath(); c.moveTo(-w, yy); c.lineTo(w * 2, yy); c.stroke(); }
+    for (var v = -6; v <= 6; v++) { c.beginPath(); c.moveTo(cx + v * 8 * u, hz); c.lineTo(cx + v * 120 * u, h * 1.3); c.stroke(); }
+    c.restore();
+
+    // where the plane is
+    var px = cx + Math.sin(t * .8) * w * .2, py = h * .7 + Math.sin(t * 1.3) * h * .04;
+    // rings come toward you
+    s.rings.forEach(function (ri) {
+      ri.z -= dt * .32;
+      if (ri.z < .04) { ri.z += .88; ri.ox = rnd(-.5, .5); ri.oy = rnd(-.25, .15); ri.hit = 0; }
+    });
+    s.rings.slice().sort(function (a, b) { return b.z - a.z; }).forEach(function (ri) {
+      var p = 1 / (ri.z * 3.2 + .12), R = 22 * u * p * .55;
+      var rx = cx + ri.ox * w * .55 * (1 - ri.z * .6) * (p * .25), ry = hz + (h * .22 + ri.oy * h) * (p * .22);
+      rx += (cx - px) * -.15 * (1 - ri.z);
+      if (!ri.hit && ri.z < .12) { ri.hit = 1; s.pops.push({ t: t, x: px, y: py - 30 * u, v: Math.random() < .3 ? 'DRAFT +2' : 'RING +3' }); }
+      var a = Math.min(1, (1 - ri.z) * 1.6);
+      c.save(); c.globalCompositeOperation = 'lighter';
+      c.strokeStyle = 'rgba(63,227,180,' + (a * .35) + ')'; c.lineWidth = Math.max(3, 10 * u * p * .3); c.beginPath(); c.ellipse(rx, ry, R, R * 1.05, 0, 0, TAU); c.stroke();
+      c.strokeStyle = 'rgba(190,255,232,' + a + ')'; c.lineWidth = Math.max(1.4, 3.5 * u * p * .3); c.beginPath(); c.ellipse(rx, ry, R, R * 1.05, 0, 0, TAU); c.stroke();
+      c.restore();
+    });
+    // rival ahead
+    var rvx = cx + Math.sin(t * .8 - 1.1) * w * .17, rvy = hz + h * .14 + Math.sin(t * 1.1) * 4 * u;
+    plane(rvx, rvy, .45, Math.cos(t * .8 - 1.1) * .4, '#ff5d5d', '#7a1f2a');
+    // vapor trail + boost
+    s.puffs.push({ x: px - 14 * u, y: py + 4 * u, l: .5 }, { x: px + 14 * u, y: py + 4 * u, l: .5 });
+    s.puffs.forEach(function (q) { q.y += 90 * u * dt; q.l -= dt; c.fillStyle = 'rgba(255,255,255,' + Math.max(0, q.l) * .7 + ')'; c.beginPath(); c.arc(q.x, q.y, 2.4 * u * (1.4 - q.l), 0, TAU); c.fill(); });
+    s.puffs = s.puffs.filter(function (q) { return q.l > 0; });
+    plane(px, py, 1, Math.cos(t * .8) * .55, '#f4f4fa', '#2a8cff');
+    function plane(x, y, sc, roll, body, accent) {
+      c.save(); c.translate(x, y); c.rotate(-roll * .6); c.scale(sc * u, sc * u);
+      c.fillStyle = 'rgba(0,0,0,.18)'; c.beginPath(); c.ellipse(0, 26, 22, 4, 0, 0, TAU); c.fill();
+      c.fillStyle = body; c.strokeStyle = '#1d2b4f'; c.lineWidth = 1.6;
+      c.beginPath(); c.moveTo(-34, 4); c.lineTo(0, -4); c.lineTo(34, 4); c.lineTo(0, 9); c.closePath(); c.fill(); c.stroke();   // wings
+      c.beginPath(); c.moveTo(-12, -10); c.lineTo(0, -14); c.lineTo(12, -10); c.lineTo(0, -6); c.closePath(); c.fill(); c.stroke(); // tail
+      c.fillStyle = accent; c.beginPath(); c.moveTo(0, -24); c.lineTo(3, -8); c.lineTo(-3, -8); c.closePath(); c.fill();          // fin
+      c.fillStyle = body; c.beginPath(); c.ellipse(0, 0, 6, 10, 0, 0, TAU); c.fill(); c.stroke();                                  // body
+      c.fillStyle = '#ffb347'; c.globalCompositeOperation = 'lighter'; c.beginPath(); c.arc(0, 10, 3 + Math.random() * 1.5, 0, TAU); c.fill();
+      c.restore();
+    }
+    // pops
+    s.pops = s.pops.filter(function (q) { return t - q.t < 1; });
+    s.pops.forEach(function (q) {
+      var a = (t - q.t); c.save(); c.globalAlpha = 1 - a; c.font = '900 italic ' + Math.round(13 * u) + 'px system-ui, sans-serif'; c.textAlign = 'center';
+      c.lineWidth = 4; c.strokeStyle = '#1d2b4f'; c.strokeText(q.v, q.x, q.y - a * 20 * u); c.fillStyle = '#3fe3b4'; c.fillText(q.v, q.x, q.y - a * 20 * u); c.restore();
+    });
+    // HUD
+    c.textBaseline = 'top'; c.lineWidth = 4; c.strokeStyle = 'rgba(29,43,79,.9)';
+    c.font = '900 italic ' + Math.round(15 * u) + 'px system-ui, sans-serif'; c.textAlign = 'center';
+    var place = (Math.floor(t / 6) % 3) === 2 ? '1st' : '2nd';
+    c.strokeText(place, cx, 10); c.fillStyle = place === '1st' ? '#ffd166' : '#fdf7ef'; c.fillText(place, cx, 10);
+    c.font = '800 ' + Math.round(10 * u) + 'px system-ui, sans-serif'; c.textAlign = 'right';
+    var lt = 30 + (t % 40), lap = 'LAP 2/2  ' + Math.floor(lt / 60) + ':' + (lt % 60 < 10 ? '0' : '') + (lt % 60).toFixed(1);
+    c.strokeText(lap, w - 12, 12); c.fillStyle = '#fdf7ef'; c.fillText(lap, w - 12, 12);
+    // boost bar
+    var bw = 70 * u, bv = .55 + .4 * Math.sin(t * .9);
+    c.fillStyle = 'rgba(18,26,50,.7)'; c.fillRect(w - 12 - bw, 14 + 14 * u, bw, 5 * u);
+    c.fillStyle = '#ffb347'; c.fillRect(w - 12 - bw, 14 + 14 * u, bw * bv, 5 * u);
+  },
+
   /* Harvest Tide: glowing reef, a cannon nets passing fish */
   harvest: function (c, w, h, t, s, dt) {
     var u = Math.max(.8, h / 230);
@@ -1290,7 +1422,8 @@ var Theme = (function () {
     { id: 'shaman',   name: 'Shaman!' },
     { id: 'neon',     name: 'Neon 3026' },
     { id: 'timehole', name: 'Time Hole' },
-    { id: 'harvest',  name: 'Harvest Tide' }
+    { id: 'harvest',  name: 'Harvest Tide' },
+    { id: 'skyduel',  name: 'SkyDuel' }
   ];
   // Am  F  C  G
   var ROOT = [45, 41, 48, 43];
@@ -1429,6 +1562,20 @@ var Theme = (function () {
       if (pos === 0) tri.forEach(function (n, j) { tone(mtof(n), t, STEP * 16, 'sawtooth', 0.016, { atk: 0.5, hold: 0.6, lp: 300 + bar * 180, lpTo: 900 + bar * 260, detune: j * 6 - 6 }); });
       if (pos % 2 === 0) tone(mtof(tri[(pos / 2 + bar) % 3] + 24), t, STEP * 1.2, 'triangle', 0.02, { echo: 0.5 });
       if (lead) { tone(mtof(lead[1]), t, STEP * lead[2] * 1.3, 'sine', 0.08, { echo: 0.45, atk: 0.02 }); tone(mtof(lead[1] + 12), t, STEP * lead[2], 'triangle', 0.015, { echo: 0.4 }); }
+    }
+    else if (id === 'skyduel') {                   // skyduel: fast racing drive, sixteenths and a soaring lead
+      if (pos % 4 === 0) kick(t, 0.55);
+      if (pos === 4 || pos === 12) snare(t, 0.22);
+      if (last && pos >= 12) snare(t, 0.14);       // fill into the next lap
+      hat(t, pos % 4 === 2 ? 0.06 : 0.03, pos % 4 === 2);
+      tone(mtof(root + (pos % 2 ? 12 : 0)), t, STEP * 0.9, 'sawtooth', 0.06, { lp: 1300 });
+      if (pos % 2 === 0) tone(mtof(tri[[0, 1, 2, 1, 0, 2, 1, 2][pos / 2]] + 12), t, STEP * 0.7, 'square', 0.02, { lp: 4200, echo: 0.12 });
+      if (pos === 0) tri.forEach(function (n) { tone(mtof(n), t, STEP * 15, 'sawtooth', 0.012, { atk: 0.15, hold: 0.7, lp: 1400 }); });
+      if (lead) {
+        var rf = mtof(lead[1] + 12);
+        tone(rf, t, STEP * lead[2] * 0.9, 'sawtooth', 0.035, { echo: 0.22, lp: 5200 });
+        tone(rf, t, STEP * lead[2] * 0.9, 'square', 0.022, { detune: -8, echo: 0.15 });
+      }
     }
     else {                                         // harvest tide: reef calypso, marimba and steel drum
       var swg = (pos % 4 === 2) ? STEP * 0.22 : 0;

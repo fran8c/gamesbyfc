@@ -4,7 +4,7 @@
    Everything else (icons, fonts): use the saved copy, refresh in the background.
    When you add a game, add its folder to PAGES and bump VERSION. */
 
-var VERSION = 'gbfc-v3';
+var VERSION = 'gbfc-v4';
 var PAGES = [
   './',
   './velocity/',
@@ -12,7 +12,8 @@ var PAGES = [
   './shaman/',
   './neon-3026/',
   './time-hole/',
-  './harvest-tide/'
+  './harvest-tide/',
+  './skyduel/'
 ];
 var ASSETS = [
   './manifest.webmanifest',
