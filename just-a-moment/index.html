@@ -3,6 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#ff5d8f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Just a Moment">
 <title>Just a Moment!</title>
 <style>
 :root{--ink:#2b2238;--cream:#fff7e6;--sun:#ffd23f;--pink:#ff5d8f;--teal:#2ec4b6;--sky:#7ad3ff;--panel:#fffaf0}
@@ -108,6 +115,20 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle
 .paper .pcols{columns:2;column-gap:16px;font-size:13px}.paper .pcols p{margin:0 0 8px;break-inside:avoid}
 .paper .pad{border:2px dashed #222;padding:6px;font-size:12px;margin:8px 0;text-align:center}
 @media (max-width:700px){.paper .pcols{columns:1}.paper .phl{font-size:19px}#rightCol{width:min(200px,46vw)}}
+.devnote{font-size:12px;margin:6px 0;opacity:.85}
+#phoneNote{position:fixed;inset:0;z-index:20;background:rgba(30,20,50,.75);display:none;align-items:center;justify-content:center;padding:16px}
+#phoneNote .card{max-width:340px;text-align:center}
+.loadbar{height:16px;border:3px solid var(--ink);border-radius:10px;background:#fff;overflow:hidden;margin:10px 0 4px}.loadbar i{display:block;height:100%;width:0;background:var(--pink);transition:width .2s}
+.htabs{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 10px}.help li{margin:0 0 6px}.hrow{display:flex;gap:10px;align-items:flex-start;padding:5px 0;border-bottom:1px dashed #d9cdb5}.hrow small{display:block;color:#555}.hic{font-size:22px;width:30px;text-align:center;flex:none}
+.oldtools{display:none}
+.tool.big{width:78px;height:64px;font-size:13px}.tool.big b{font-size:26px}
+@media (pointer:coarse){.tool.big{width:84px;height:68px;font-size:14px}}
+@media (max-height:520px){.tool.big{width:60px;height:50px;font-size:11px}.tool.big b{font-size:19px}}
+.gtabs{display:flex;gap:4px;margin:-2px 0 10px;flex-wrap:wrap;padding-right:40px}
+.gtabs .btn{min-height:38px}
+#celebrate{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:9;pointer-events:none;background:var(--cream);border:4px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);padding:14px 26px;text-align:center;font-weight:800;font-size:22px;transition:all .35s cubic-bezier(.2,1.6,.4,1)}
+#celebrate.show{opacity:1;transform:translate(-50%,-50%) scale(1)}#celebrate small{display:block;font-size:14px;font-weight:700;color:#7a5cff}
+.checklist .gr{font-size:12px}
 .quip{font-style:italic;color:#7a5cff;font-size:13px;margin:4px 0 8px}
 .memo{background:#fff;border:3px dashed var(--ink);border-radius:10px;padding:8px 10px;text-align:left;font-size:13px;margin:10px 0}
 .memo b{display:block;font-size:12px;opacity:.75}
@@ -160,6 +181,11 @@ body.big .pill{font-size:16px}body.big #sheet .sub,body.big #sheet .opt,body.big
 </div>
 
 <div id="toolbar" style="display:none">
+  <button class="tool big" id="gBuild" title="Build rooms, place items, expand (B)"><b>🏗️</b>Build</button>
+  <button class="tool big" id="gStaff" title="Hire and manage staff (H)"><b>👥</b>Staff</button>
+  <button class="tool big" id="gOffice" title="Rooms, money, research and news (O)"><b>🏢</b>Office<span class="badge" id="officeBadge" style="display:none">0</span></button>
+  <button class="tool big" id="gView" title="Labels, walls, zoom"><b>👁️</b>View</button>
+  <span class="oldtools">
   <button class="tool" id="tBuild"><b>🏗️</b>Build</button>
   <button class="tool" id="tFurn"><b>🪑</b>Items</button>
   <button class="tool" id="tHire"><b>🙋</b>Hire</button>
@@ -170,15 +196,17 @@ body.big .pill{font-size:16px}body.big #sheet .sub,body.big #sheet .opt,body.big
   <button class="tool" id="tLog"><b>📨</b>News<span class="badge" id="logBadge" style="display:none">0</span></button>
   <button class="tool" id="tLabels"><b>🏷️</b>Labels</button>
   <button class="tool" id="tWalls"><b>🧱</b>Walls</button>
-  <button class="tool" id="tUndo" title="Undo (Ctrl+Z)"><b>↶</b>Undo</button>
-  <button class="tool" id="tSandbox" style="display:none"><b>🧪</b>Sandbox</button>
+  </span>
+  <button class="tool big" id="tUndo" title="Undo (Ctrl+Z)"><b>↶</b>Undo</button>
+  <button class="tool big" id="tSandbox" style="display:none"><b>🧪</b>Sandbox</button>
   <div id="tip"></div>
   <button class="tool" id="tKopi" style="display:none"><b>☕</b>Kopi</button>
   <button class="btn go" id="bOpen">Open Doors</button>
 </div>
 
 <div id="ticker" style="display:none"></div>
-<div id="rightCol"><div id="goalCard"></div><button id="alertBtn" style="display:none"></button></div>
+<div id="celebrate"></div>
+<div id="rightCol" style="display:none"><div id="goalCard"></div><button id="alertBtn" style="display:none"></button></div>
 <div id="buildbar"></div>
 <div id="sheet"></div>
 <div id="advisor"></div>
@@ -186,6 +214,7 @@ body.big .pill{font-size:16px}body.big #sheet .sub,body.big #sheet .opt,body.big
 <div id="tooltip"></div>
 <div id="reviews"></div>
 
+<div class="overlay" id="loading" style="z-index:30"><div class="card" style="text-align:center;max-width:380px"><h2>Just a Moment!</h2><p class="sub" id="loadLine">Stamping your forms…</p><div class="loadbar"><i id="loadFill"></i></div><p class="sub" id="loadPct">0%</p></div></div>
 <div class="overlay" id="title">
   <div class="card">
     <h1>Just a Moment!</h1>
@@ -193,10 +222,12 @@ body.big .pill{font-size:16px}body.big #sheet .sub,body.big #sheet .opt,body.big
     <input id="nameIn" maxlength="24" placeholder="Seri Sejahtera General" aria-label="Hospital name">
     <div class="levels" id="levelList"></div>
     <button class="btn go" id="bCont" style="display:none"></button>
+    <p class="sub devnote">💻 Best played on a computer or tablet. On a phone, turn it sideways and pinch to zoom.</p>
     <button class="btn white" id="bSandbox">🧪 Sandbox: try everything, no targets</button>
     <div class="credit">A Game by FC · turn your sound on · mouse wheel to zoom, drag to scroll</div>
   </div>
 </div>
+<div id="phoneNote"><div class="card"><h3>📱 Small screen</h3><p class="sub">Just a Moment! is best on a <b>computer or tablet</b>. It works on a phone, but things are small. Turn your phone sideways and pinch to zoom.</p><button class="btn go" id="bPhoneOk">Play anyway</button></div></div>
 <div class="overlay" id="paper" style="display:none;z-index:8"><div class="card paper" id="paperCard"></div></div>
 <div class="overlay" id="report" style="display:none"><div class="card" id="reportCard"></div></div>
 <div class="overlay" id="dilemma" style="display:none;z-index:9"><div class="card" id="dilemmaCard"></div></div>
@@ -514,6 +545,22 @@ const LEVELS = [
    ailments:Object.keys(AILMENTS), extras:{events:true, vips:true, chaos:true, emergencies:true, research:true},
    blurb:'The flagship. Every department, every ailment, and the Minister is watching.'},
 ];
+// ---------- balance: change difficulty here ----------
+const TUNING = {
+  referralChance:0.25,      // share of GP visits (Level 2+) that need a scan first
+  queueSwitchGap:2,         // switch to the other GP / desk when its queue is this much shorter
+  fireDayChance:0.6,        // chance of one fire a day, from day 2
+  fireBurnSeconds:22,       // time to put a fire out before the item burns out
+  fireTaps:4,               // taps needed to put a fire out
+  extinguisherRange:5,      // tiles
+  noticeBoardRange:6,       // tiles
+  lostChance:0.25,          // chance of getting lost on a long walk with no notice board
+  lostMinWalk:11,           // tiles: shorter walks never get lost
+  coolerPatience:8, vendingPatience:15, vendingPrice:5,
+  suppliesBase:30, suppliesPerShelf:20,
+  expandCost:1500, expandsPerLevel:3, expandStep:3,
+  endlessPatients:1.15, endlessTarget:1.11, endlessBank:1.2,
+};
 // Level 4: endless. The Level 3 hospital keeps running, year after year (8 days a year), each year busier.
 LEVELS.push(Object.assign({}, LEVELS[2], {id:4, name:'Endless: Ministry Central', endless:true, days:8, goal:{cures:160, bank:25000, rating:4},
   blurb:'Never ends. Each year: about 15% more patients, a new illness, more VIPs and chaos, and the Ministry Awards.'}));
@@ -557,11 +604,13 @@ Object.assign(CONTENT.ailments, {
 
 // ---------- pictures ----------
 const SPRITES = Object.create(null);
-function loadSprite(key, src){ const img = new Image(); img.onload = () => { SPRITES[key] = img; }; img.src = src; }
+// pictures load in the background; the loading screen counts them in
+const LOADING = {total:0, done:0};
+function loadSprite(key, src){ const img = new Image(); LOADING.total++; img.onload = () => { SPRITES[key] = img; LOADING.done++; }; img.onerror = () => { LOADING.done++; }; img.src = src; }
 const hasSprite = k => { const im = SPRITES[k]; return !!(im && im.complete && im.naturalWidth > 0); };
-['doctor','nurse','receptionist','pharmacist','handyman','patient-1','patient-2','patient-3','patient-4','patient-5','patient-6','patient-seated','patient-seated-back','patient-bed','vip-nephew','vip-influencer','vip-auntie']
+['doctor','nurse','receptionist','pharmacist','handyman','patient-1','patient-2','patient-3','patient-4','patient-5','patient-6','vip-nephew','vip-influencer','vip-auntie']
   .forEach(n => loadSprite('person:' + n, 'assets/people/' + n + '.png'));
-['reception-desk','ticket-machine','ticket-machine-empty','bench','bench-back','chair','plant','vending-machine','gp-desk','exam-couch','pharmacy-shelves','pharmacy-counter','ward-bed','scanner','treatment-bed','monitor','filing-cabinets','stamp-desk','photocopier','photocopier-jammed','trolley-bed','crash-cart','neuro-chair','physio-set','operating-table','ambulance','motorbike','rain-tree','console-desk','water-cooler','storage-shelf','notice-board','fire-extinguisher','kopi-trolley','cat','pigeon','bin','litter','toilet','toilet-occupied','sink','shrub-planter','reception-desk-back','gp-desk-back','pharmacy-counter-back','stamp-desk-back','console-desk-back','pharmacy-shelves-back','storage-shelf-back','filing-cabinets-back','ticket-machine-back','notice-board-back','scanner-back','vending-machine-back','physio-set-back','exam-couch-back','trolley-bed-back','ward-bed-back','treatment-bed-back','neuro-chair-back','operating-table-back','water-cooler-back','photocopier-back','crash-cart-back','kopi-trolley-back','toilet-back','bin-back']
+['reception-desk','ticket-machine','ticket-machine-empty','bench','bench-back','plant','vending-machine','gp-desk','exam-couch','pharmacy-shelves','pharmacy-counter','ward-bed','scanner','treatment-bed','monitor','filing-cabinets','stamp-desk','photocopier','photocopier-jammed','trolley-bed','crash-cart','neuro-chair','physio-set','operating-table','ambulance','motorbike','console-desk','water-cooler','storage-shelf','notice-board','fire-extinguisher','kopi-trolley','cat','pigeon','bin','litter','toilet','toilet-occupied','sink','shrub-planter','reception-desk-back','gp-desk-back','pharmacy-counter-back','stamp-desk-back','console-desk-back','pharmacy-shelves-back','storage-shelf-back','filing-cabinets-back','ticket-machine-back','notice-board-back','scanner-back','vending-machine-back','physio-set-back','exam-couch-back','trolley-bed-back','ward-bed-back','treatment-bed-back','neuro-chair-back','operating-table-back','water-cooler-back','photocopier-back','crash-cart-back','kopi-trolley-back','toilet-back','bin-back']
   .forEach(n => loadSprite('prop:' + n, 'assets/furniture/' + n + '.png'));
 ['star','advisor'].forEach(n => loadSprite('ui:' + n, 'assets/ui/' + n + '.png'));
 // each character's own poses, listed here once their pose sheets have been cut: stand, walk1, walk2, back, sit, sit-back, lie, act
@@ -569,7 +618,7 @@ const ALL_POSES = ['stand','walk1','walk2','back','sit','sit-back','lie','act'];
 const POSE_FILES = {'doctor':ALL_POSES, 'nurse':ALL_POSES, 'receptionist':ALL_POSES, 'pharmacist':ALL_POSES, 'handyman':ALL_POSES, 'patient-1':ALL_POSES, 'patient-2':ALL_POSES, 'patient-3':ALL_POSES, 'patient-4':ALL_POSES, 'patient-5':ALL_POSES, 'patient-6':ALL_POSES, 'vip-nephew':ALL_POSES, 'vip-influencer':ALL_POSES, 'vip-auntie':ALL_POSES};
 for (const [c, poses] of Object.entries(POSE_FILES)) for (const p of poses) loadSprite('person:' + c + '/' + p, 'assets/people/' + c + '/' + p + '.png');
 for (let i = 0; i < 9; i++) loadSprite('floor:' + i, 'assets/tiles/floor-' + i + '.png');
-['wall-in','wall-in-window','door-in','wall-out','wall-out-window','door-out'].forEach(n => loadSprite('tile:' + n, 'assets/tiles/' + n + '.png'));
+['wall-in','wall-in-window','door-in','wall-out','wall-out-window'].forEach(n => loadSprite('tile:' + n, 'assets/tiles/' + n + '.png'));
 
 // ---------- seeded randomness: everything the simulation decides goes through rand() ----------
 function rand(){
@@ -585,7 +634,7 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 let S = null;
 const level = () => { const L = LEVELS[S.level]; if (L.endless) L.goal = endlessGoal(); return L; };
-const target = () => Math.round(Math.min(30, 4 + 2 * S.day + 2 * Math.min(S.level, 2)) * (LEVELS[S.level].endless ? Math.pow(1.11, (S.year || 1) - 1) : 1)) + (S.event && S.event.type === 'ministryInspection' ? 2 : 0);
+const target = () => Math.round(Math.min(30, 4 + 2 * S.day + 2 * Math.min(S.level, 2)) * (LEVELS[S.level].endless ? Math.pow(TUNING.endlessTarget, (S.year || 1) - 1) : 1)) + (S.event && S.event.type === 'ministryInspection' ? 2 : 0);
 
 // ---------- map ----------
 // The building fills x 0..bw-1, y 0..bh-1. Below it: a pavement row (bh) and a road row (bh+1).
@@ -597,7 +646,7 @@ function rebuildGrid(){
   G = {room:new Int32Array(W * H), obj:new Int32Array(W * H), wh:new Uint8Array(W * (H + 1)), wv:new Uint8Array((W + 1) * H)};
   for (const r of S.rooms) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) G.room[y * W + x] = r.id;
   for (const o of S.objs) for (const t of objTiles(o)) if (inMap(t.x, t.y)) G.obj[t.y * W + t.x] = o.id;
-  for (let x = 0; x < S.bw; x++){ G.wh[0 * W + x] = 1; G.wh[S.bh * W + x] = x === S.ent ? 2 : 1; }
+  for (let x = 0; x < S.bw; x++){ G.wh[0 * W + x] = 1; G.wh[S.bh * W + x] = isEntX(x) ? 2 : 1; }
   for (let y = 0; y < S.bh; y++){ G.wv[y * (W + 1) + 0] = 1; G.wv[y * (W + 1) + S.bw] = 1; }
   for (const r of S.rooms){
     for (let x = r.x; x < r.x + r.w; x++){ G.wh[r.y * W + x] = 1; G.wh[(r.y + r.h) * W + x] = 1; }
@@ -663,6 +712,9 @@ function distMap(from, limit = 60){
   }
   return d;
 }
+// the entrance is two tiles wide: x = ent and ent + 1
+const isEntX = x => x === S.ent || (x === S.ent + 1 && S.ent + 1 < S.bw);
+const isEntTile = (x, y) => y === S.bh - 1 && isEntX(x);
 const entranceIn = () => ({x:S.ent, y:S.bh - 1});
 const entranceOut = () => ({x:S.ent, y:S.bh});
 
@@ -683,7 +735,7 @@ function spotOf(o, k){ const d = OBJ[o.key][k]; return d ? toWorld(o, d[0], d[1]
 const tileOfPt = p => ({x:Math.floor(p.x), y:Math.floor(p.y)});
 
 // picture metrics, measured from each furniture picture: [bottom-corner x, left reach, right reach, width, height]
-const SPR_META = {"ambulance":[164,162,109,276,256],"bench-back":[204,202,67,274,256],"bench":[193,191,63,259,256],"bin-back":[96,96,84,181,247],"bin":[96,94,99,198,256],"cat":[65,62,168,237,256],"chair":[91,89,87,181,256],"console-desk-back":[131,131,78,210,256],"console-desk":[79,77,128,210,256],"crash-cart-back":[89,89,106,196,256],"crash-cart":[100,98,103,206,256],"exam-couch-back":[94,94,189,284,256],"exam-couch":[87,85,182,272,256],"filing-cabinets-back":[177,177,45,223,256],"filing-cabinets":[176,175,45,223,256],"fire-extinguisher":[72,70,61,136,256],"gp-desk-back":[194,194,113,308,256],"gp-desk":[194,194,113,308,256],"kopi-trolley-back":[81,81,104,186,256],"kopi-trolley":[82,80,102,187,256],"litter":[129,127,228,360,225],"monitor":[78,76,20,101,256],"motorbike":[42,40,204,249,256],"neuro-chair-back":[63,63,142,206,256],"neuro-chair":[76,74,109,188,256],"notice-board-back":[129,129,42,172,256],"notice-board":[125,124,40,167,256],"operating-table-back":[72,72,129,202,256],"operating-table":[124,122,72,199,256],"pharmacy-counter-back":[140,140,108,249,256],"pharmacy-counter":[140,138,106,249,256],"pharmacy-shelves-back":[134,134,39,174,256],"pharmacy-shelves":[134,132,38,175,256],"photocopier-back":[108,108,132,241,256],"photocopier-jammed":[128,126,111,242,256],"photocopier":[135,133,115,253,256],"physio-set-back":[102,102,216,318,256],"physio-set":[100,97,209,313,250],"pigeon":[90,87,107,201,223],"plant":[77,75,71,151,256],"rain-tree":[178,176,168,348,256],"reception-desk-back":[217,217,68,286,256],"reception-desk":[214,214,66,281,256],"scanner-back":[146,146,128,276,256],"scanner":[192,190,71,266,256],"shrub-planter":[64,64,64,129,180],"sink":[51,51,48,100,200],"stamp-desk-back":[166,166,90,258,256],"stamp-desk":[91,89,164,258,256],"storage-shelf-back":[142,142,68,212,256],"storage-shelf":[141,140,68,211,256],"ticket-machine-back":[93,93,74,168,256],"ticket-machine-empty":[91,89,73,167,256],"ticket-machine":[93,92,82,177,256],"toilet-back":[76,76,77,154,220],"toilet-occupied":[76,76,77,154,220],"toilet":[98,98,76,175,220],"treatment-bed-back":[187,187,139,327,256],"treatment-bed":[149,147,91,243,256],"trolley-bed-back":[122,122,153,276,256],"trolley-bed":[128,126,167,298,256],"vending-machine-back":[88,88,74,163,256],"vending-machine":[99,98,64,165,256],"ward-bed-back":[97,97,180,278,256],"ward-bed":[96,94,170,269,256],"water-cooler-back":[77,77,61,139,256],"water-cooler":[69,68,68,139,256]};
+const SPR_META = {"ambulance":[106,105,72,180,167],"bench-back":[134,133,44,180,168],"bench":[134,133,44,180,178],"bin-back":[70,70,61,132,180],"bin":[67,66,70,139,180],"cat":[45,43,119,167,180],"console-desk-back":[92,92,55,148,180],"console-desk":[55,54,91,148,180],"crash-cart-back":[63,63,74,138,180],"crash-cart":[70,69,73,145,180],"exam-couch-back":[59,59,120,180,162],"exam-couch":[57,56,121,180,169],"filing-cabinets-back":[124,124,32,157,180],"filing-cabinets":[124,123,31,157,180],"fire-extinguisher":[51,50,43,96,180],"gp-desk-back":[113,113,66,180,150],"gp-desk":[113,113,66,180,150],"kopi-trolley-back":[57,57,73,131,180],"kopi-trolley":[57,56,72,131,180],"litter":[64,63,114,180,112],"monitor":[55,54,14,71,180],"motorbike":[30,29,143,175,180],"neuro-chair-back":[44,44,100,145,180],"neuro-chair":[54,53,76,132,180],"notice-board-back":[91,91,29,121,180],"notice-board":[87,86,28,117,180],"operating-table-back":[51,51,90,142,180],"operating-table":[87,86,51,140,180],"pharmacy-counter-back":[98,98,76,175,180],"pharmacy-counter":[98,97,75,175,180],"pharmacy-shelves-back":[94,94,27,122,180],"pharmacy-shelves":[94,93,27,123,180],"photocopier-back":[74,74,94,169,180],"photocopier-jammed":[90,88,78,170,180],"photocopier":[95,94,81,178,180],"physio-set-back":[58,58,122,180,145],"physio-set":[58,56,119,180,144],"pigeon":[72,70,87,162,180],"plant":[54,53,50,106,180],"reception-desk-back":[136,136,42,180,161],"reception-desk":[137,137,42,180,164],"scanner-back":[95,95,84,180,167],"scanner":[130,129,48,180,173],"shrub-planter":[64,64,64,129,180],"sink":[46,46,43,90,180],"stamp-desk-back":[116,116,63,180,179],"stamp-desk":[64,62,114,180,179],"storage-shelf-back":[100,100,48,149,180],"storage-shelf":[98,98,48,148,180],"ticket-machine-back":[65,65,52,118,180],"ticket-machine-empty":[64,62,52,117,180],"ticket-machine":[65,65,57,124,180],"toilet-back":[62,62,63,126,180],"toilet-occupied":[62,62,63,126,180],"toilet":[80,80,62,143,180],"treatment-bed-back":[103,103,76,180,141],"treatment-bed":[105,104,64,171,180],"trolley-bed-back":[79,79,100,180,167],"trolley-bed":[77,76,101,180,155],"vending-machine-back":[62,62,52,115,180],"vending-machine":[70,68,44,116,180],"ward-bed-back":[63,63,116,180,166],"ward-bed":[64,62,113,180,171],"water-cooler-back":[56,56,41,98,180],"water-cooler":[48,47,48,98,180]};
 // The picture is scaled to its real height (characters are 56 px tall), never bigger than its floor space,
 // then pushed against the wall behind it (the side opposite the way it faces). Returns the rectangle it covers.
 function objRect(o, key){
@@ -755,10 +807,29 @@ function doorOutside(p){
 // ---------- saving: the whole state, so a shift survives closing the tab ----------
 function save(){
   if (!S || S.phase === 'levelEnd') return;
+  S.ver = GAME_VER;
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked: keep playing */ }
 }
+// GAME_VER goes up with every release; older saves are upgraded by filling in anything they lack
+const GAME_VER = 7;
+let saveProblem = false;
+function upgradeSave(d){
+  if (!LEVELS[d.level]) throw new Error('unknown level');
+  const def = {stamps:30, stampOrderAt:null, expands:0, seatTaken:{}, looTaken:{}, lineCache:{}, litter:[], history:[], fire:null, firePlan:null, sbRefer:false, posters:[], blocks:{}, research:{}, ratings:[]};
+  for (const [k, v] of Object.entries(def)) if (d[k] === undefined) d[k] = JSON.parse(JSON.stringify(v));
+  if (LEVELS[d.level].endless && !d.year) d.year = 1;
+  d.lineCache = {}; d.fire = null;
+  for (const pt of d.patients || []){ pt.line = pt.line || false; pt.wander = false; if (pt.st === 'wait') pt.repath = true; }
+  for (const o of d.objs || []) if (!OBJ[o.key]) throw new Error('unknown item ' + o.key);
+  d.ver = GAME_VER;
+  return d;
+}
 function loadSave(){
-  try { const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null'); return d && d.v === 2 ? d : null; } catch (e) { return null; }
+  try {
+    const d = JSON.parse(localStorage.getItem(SAVE_KEY) || 'null');
+    if (!d || d.v !== 2) return null;
+    return (d.ver || 0) < GAME_VER ? upgradeSave(d) : d;
+  } catch (e){ saveProblem = true; return null; }
 }
 function progress(){ try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{"unlocked":1}'); } catch (e) { return {unlocked:1}; } }
 function setProgress(p){ try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(p)); } catch (e) {} }
@@ -955,7 +1026,7 @@ function checkRoomRect(type, r){
     if (!inBuilding(x, y)) return 'Must be inside the building';
     if (roomAt(x, y)) return 'Overlaps another room';
     if (objAt(x, y)) return 'Something is in the way';
-    if (x === ei.x && y === ei.y) return 'Keep the entrance clear';
+    if (isEntTile(x, y)) return 'Keep the entrance clear';
     if (S.rooms.some(q => q.door && q.door.ox === x && q.door.oy === y)) return 'Blocks a door';
   }
   if (S.cash < roomCost(type, r.w, r.h)) return 'Not enough cash';
@@ -1023,7 +1094,7 @@ function checkPlace(g, free){
   for (const t of objTiles(g)){
     if (!area(t.x, t.y)) return inRoom ? 'Must go inside the room' : 'Must go in a corridor';
     if (objAt(t.x, t.y)) return 'Something is in the way';
-    if (t.x === ei.x && t.y === ei.y) return 'Keep the entrance clear';
+    if (isEntTile(t.x, t.y)) return 'Keep the entrance clear';
     if (doorIns.some(d => (d.x === t.x && d.y === t.y) || (d.ox === t.x && d.oy === t.y))) return 'Keep the doorway clear';
   }
   for (const k of ['s', 'p']){
@@ -1148,7 +1219,7 @@ function newGame(li, name){
        rooms:[], objs:[], staff:[], patients:[], litter:[], nextId:1, usedNames:[], hireCands:{},
        cures:0, walkouts:0, earned:0, totalCures:0, ratings:[], lvRateSum:0, lvRateN:0, points:0, research:{},
        stamps:30, stampOrderAt:null, event:null, lastEventDay:-9, mods:{}, blocks:{}, freezeUntil:0, chaos:null,
-       debt:0, ticketNo:0, spawned:0, arrivals:0, schedule:[], log:[], unread:0, later:[], tut: li === 0 ? 0 : null,
+       debt:0, ticketNo:0, spawned:0, arrivals:0, schedule:[], log:[], unread:0, later:[], tut: null,
        combo:{n:0, last:-99}, bestCombo:0, fastCures:0, labels:true, flood:null};
   S.goal = pickGoal(); S.posters = pickPosters(); planFire();
   rebuildGrid();
@@ -1203,6 +1274,8 @@ function goalMet(gl){
   return false;
 }
 
+
+// ================== simulation: staff and handymen ==================
 // ---------- staff ----------
 function makeCandidate(role){
   const pool = NAMES[role].filter(n => !S.usedNames.includes(n));
@@ -1398,6 +1471,8 @@ function finishTask(st){
   st.mood = Math.max(0, st.mood - 1.5);
 }
 
+
+// ================== simulation: patients, queues, referrals, cures ==================
 // ---------- patients ----------
 function availableAilments(){
   const ready = t => S.rooms.some(r => r.type === t && r.state === 'ready');
@@ -1458,12 +1533,19 @@ function lineTiles(p){
   const start = doorOutside(p); if (!start) return [];
   let d = lineDir(p); const out = [start], used = new Set([start.x + ',' + start.y]);
   const ok = (a, b) => inMap(b.x, b.y) && isCorridor(b.x, b.y) && !objAt(b.x, b.y) && !used.has(b.x + ',' + b.y) && canStepEdge(a.x, a.y, b.x, b.y)
-    && !S.rooms.some(r => r.door && r.door.ox === b.x && r.door.oy === b.y) && !(b.x === S.ent && b.y === S.bh - 1);
+    && !S.rooms.some(r => r.door && r.door.ox === b.x && r.door.oy === b.y) && !isEntTile(b.x, b.y);
   for (let i = 0; i < 10; i++){
     const a = out[out.length - 1];
     const tries = [d, {x:d.y, y:-d.x}, {x:-d.y, y:d.x}];
     const nd = tries.find(t => ok(a, {x:a.x + t.x, y:a.y + t.y})); if (!nd) break;
     d = nd; const b = {x:a.x + d.x, y:a.y + d.y}; out.push(b); used.add(b.x + ',' + b.y);
+  }
+  // blocked by benches or walls: carry on through the nearest free floor tiles, so nobody piles up on the door
+  if (out.length < 8){
+    const dm = distMap(start, 12), W = S.W, extra = [];
+    for (let i = 0; i < dm.length; i++){ if (dm[i] < 0) continue; const b = {x:i % W, y:(i / W) | 0}; if (!used.has(b.x + ',' + b.y) && isCorridor(b.x, b.y) && !objAt(b.x, b.y) && !S.rooms.some(r => r.door && r.door.ox === b.x && r.door.oy === b.y) && !isEntTile(b.x, b.y)) extra.push([dm[i], b]); }
+    extra.sort((a, b) => a[0] - b[0]);
+    for (const [, b] of extra){ if (out.length >= 10) break; out.push(b); used.add(b.x + ',' + b.y); }
   }
   S.lineCache[key] = {v:layoutV, t:out};
   return out;
@@ -1472,7 +1554,10 @@ function lineSlot(p, i){
   const t = lineTiles(p); if (!t.length) return null;
   const pts = t.map(q => ({x:q.x + 0.5, y:q.y + 0.5}));
   let dist = i * LINE_GAP;
-  for (let k = 0; k < pts.length - 1; k++){ if (dist <= 1) return {x:pts[k].x + (pts[k + 1].x - pts[k].x) * dist, y:pts[k].y + (pts[k + 1].y - pts[k].y) * dist}; dist -= 1; }
+  for (let k = 0; k < pts.length - 1; k++){
+    const seg = Math.hypot(pts[k + 1].x - pts[k].x, pts[k + 1].y - pts[k].y);
+    if (seg > 1.01){ if (dist < 0.6) return pts[k]; dist -= 0.6; continue; }   // a jump to a spare tile: one person per tile
+    if (dist <= 1) return {x:pts[k].x + (pts[k + 1].x - pts[k].x) * dist, y:pts[k].y + (pts[k + 1].y - pts[k].y) * dist}; dist -= 1; }
   // longer than the chain: bunch up at the end
   const e = pts[pts.length - 1]; return {x:e.x + ((i * 0.37) % 0.5) - 0.25, y:e.y + ((i * 0.61) % 0.5) - 0.25};
 }
@@ -1481,6 +1566,9 @@ function standingIndex(pt, p){ let n = 0; for (const id of p.queue){ if (id === 
 // once a second: step forward when someone ahead leaves, and grab a bench seat when one frees up
 function tickLines(){
   if (Math.floor(S.time * 10) % 10 !== 0) return;
+  // tidy up seats left reserved by patients who have gone or moved on
+  if (S.seatTaken) for (const k in S.seatTaken){ const q = S.patients.find(a => a.id === S.seatTaken[k]); if (!q || q.seat !== k || q.st !== 'wait') delete S.seatTaken[k]; }
+  rebalanceQueues();
   for (const p of allPoints()){
     let n = 0;
     for (const id of p.queue){
@@ -1489,6 +1577,22 @@ function tickLines(){
       if (pt.lineSlot !== n){ const sp = lineSlot(p, n); if (sp){ pt.lineSlot = n; walkPath(pt, sp); } }
       n++;
     }
+  }
+}
+// two GPs (or desks) of the same kind: people at the back of a long queue switch to the shorter one
+function rebalanceQueues(){
+  const groups = {};
+  for (const p of allPoints()){ const t = p.type || p.key; if (t === 'ticket') continue; if (!S.staff.some(s => s.assigned === keyOf(p) && s.mode !== 'off')) continue; (groups[t] = groups[t] || []).push(p); }
+  for (const list of Object.values(groups)){
+    if (list.length < 2) continue;
+    const load = p => p.queue.length + p.serving.length;
+    list.sort((a, b) => load(b) - load(a));
+    const long = list[0], short = list[list.length - 1];
+    if (load(long) - load(short) < TUNING.queueSwitchGap) continue;
+    const id = [...long.queue].reverse().find(id => { const q = S.patients.find(a => a.id === id); return q && q.st === 'wait' && !q.vip && !q.emergency; });
+    const pt = id && S.patients.find(a => a.id === id); if (!pt) continue;
+    leaveQueue(pt); joinQueue(pt, short);
+    if (rand() < 0.4) showBubble(pt, pick(['Ooh, a shorter queue!', 'Psst, that one\'s empty!', 'Switching queues. Bold move.']), 3);
   }
 }
 function freeSeatNear(p){
@@ -1536,7 +1640,7 @@ function finishLoo(pt){
 function sendHome(pt, walked){
   if (pt.looObj && S.looTaken && S.looTaken[pt.looObj] === pt.id) delete S.looTaken[pt.looObj];
   leaveQueue(pt); pt.server = null; pt.st = 'leave'; pt.walkout = walked;
-  walkPath(pt, {x:S.ent + 0.5, y:S.bh + 0.5});
+  walkPath(pt, {x:S.ent + 0.5 + (pt.id % 2 && S.ent + 1 < S.bw ? 1 : 0), y:S.bh + 0.5});
   pt.path.push({x:(pt.pos.x < S.bw / 2 ? -0.5 : S.bw + 0.5), y:S.bh + 1.5});
 }
 function walkOut(pt){
@@ -1623,7 +1727,10 @@ function tickPatient(pt){
         if (S.time >= pt.looUntil){
           const c = objById(pt.looObj); if (c){ if ((c.dirt || 0) >= 50){ pt.patience = Math.max(1, pt.patience - 10); showBubble(pt, 'That toilet needs a committee.', 3); } c.dirt = (c.dirt || 0) + 12; }
           if (S.looTaken) delete S.looTaken[pt.looObj]; pt.looObj = null;
-          const sk = roomObjs(r).find(o => o.key === 'sink');
+          // the sink with the fewest people using it, then the nearest
+          const sinks = roomObjs(r).filter(o => o.key === 'sink'), busy = o => S.patients.filter(q => q.sinkObj === o.id && q.looPh === 'wash').length;
+          const sk = sinks.sort((a, b) => busy(a) - busy(b) || (Math.abs(a.x - pt.pos.x) + Math.abs(a.y - pt.pos.y)) - (Math.abs(b.x - pt.pos.x) + Math.abs(b.y - pt.pos.y)))[0];
+          if (sk) pt.sinkObj = sk.id;
           if (sk){ walkPath(pt, spotOf(sk, 'p')); pt.looPh = 'wash'; } else finishLoo(pt);
         }
       }
@@ -1711,7 +1818,7 @@ function finishService(pt, p){
 // ---------- GP referrals: from Level 2, the GP is sometimes unsure and sends the patient for a scan first ----------
 const REFER_LINES = ['The doctor wants a scan. Just to be sure. Probably.', 'Referred! I feel very important now.', 'Another room? Fine. I brought snacks.', 'The GP said "hmm". That is never good.'];
 function gpReferral(pt){
-  if (!level().rooms.includes('diagnosis') || pt.route.includes('diagnosis') || pt.emergency || (!S.sbRefer && rand() >= 0.25)) return;
+  if (!level().rooms.includes('diagnosis') || pt.route.includes('diagnosis') || pt.emergency || (!S.sbRefer && rand() >= TUNING.referralChance)) return;
   const scan = S.rooms.some(r => r.type === 'diagnosis' && r.state === 'ready');
   if (scan){
     pt.route.splice(pt.ri, 0, 'diagnosis'); pt.referred = true;
@@ -1793,9 +1900,11 @@ function tickBubbles(){
   showBubble(pt, rand() < 0.3 ? pick(CONTENT.ailments[pt.ailment]) : pick(CONTENT.bubbles[pt.patience >= 70 ? 'calm' : pt.patience >= 30 ? 'restless' : 'fed_up']), 3);
 }
 
+
+// ================== simulation: opening, ticking and ending a shift ==================
 // ---------- shift flow ----------
 function canOpen(){
-  if (!S.objs.some(o => o.key === 'reception')) return 'Place a Reception Desk first (Items).';
+  if (!S.objs.some(o => o.key === 'reception')) return 'Place a Reception Desk first (Build → Items).';
   if (!S.rooms.some(r => r.type === 'gp' && r.state === 'ready')) return 'Build a GP Office first (Build).';
   return null;
 }
@@ -1898,7 +2007,7 @@ function tickEvents(){
   if (E === 'jamEpidemic' && ((T2 >= 80 && T2 - STEP < 80) || (T2 >= 170 && T2 - STEP < 170))){ S.objs.filter(o => o.key === 'copier').forEach(jamCopier); pa('event', {}, CONTENT.events.jamEpidemic.pa); }
   if (E === 'monsoonDay' && !S.flood && T2 >= 30){
     const cands = [];
-    for (let y = 0; y < S.bh; y++) for (let x = 0; x < S.bw; x++) if (isCorridor(x, y) && tileFree(x, y) && !(x === S.ent && y === S.bh - 1)) cands.push({x, y});
+    for (let y = 0; y < S.bh; y++) for (let x = 0; x < S.bw; x++) if (isCorridor(x, y) && tileFree(x, y) && !isEntTile(x, y)) cands.push({x, y});
     for (let k = 0; k < 20 && cands.length; k++){
       const c = cands.splice(Math.floor(rand() * cands.length), 1)[0];
       S.flood = {x:c.x, y:c.y, taps:0, mopped:false}; rebuildGrid();
@@ -1908,6 +2017,7 @@ function tickEvents(){
     else S.flood = {mopped:true};
   }
 }
+
 
 
 // ---------- VIPs ----------
@@ -2067,7 +2177,7 @@ const frontOf = o => toWorld(o, OBJ[o.key].L / 2, OBJ[o.key].D + 0.5);
 const objNear = (pos, key, r) => S.objs.find(o => o.key === key && Math.abs(o.x + OBJ[o.key].L / 2 - pos.x) <= r && Math.abs(o.y + 0.5 - pos.y) <= r);
 
 // ---------- supplies (used by the Pharmacy and the Records Office) ----------
-function supplyCap(){ return 30 + 20 * S.objs.filter(o => o.key === 'shelf').length + (S.research.bulkStamps ? 20 : 0); }
+function supplyCap(){ return TUNING.suppliesBase + TUNING.suppliesPerShelf * S.objs.filter(o => o.key === 'shelf').length + (S.research.bulkStamps ? 20 : 0); }
 const usesSupplies = p => p.type === 'pharmacy' || p.type === 'records';
 function supplyNeed(p, pt){ return p.type === 'records' && AILMENTS[pt.ailment].doubleStamp ? 2 : 1; }
 function supplyCost(){ return Math.max(10, supplyCap() - S.stamps); }
@@ -2089,11 +2199,11 @@ const FIRE_PA = {
   out:['Fire out. Thank you for your service. Please return the hose.', 'The fire is out. The paperwork is only just catching fire.'],
   burnt:['The {item} has burnt out. A replacement has been requested in triplicate.', 'Fire damage: one {item}. Morale: also slightly singed.']
 };
-function planFire(){ S.firePlan = S.day >= 2 && rand() < 0.6 ? {at:40 + rand() * 160, done:false} : null; S.fire = null; }
+function planFire(){ S.firePlan = S.day >= 2 && rand() < TUNING.fireDayChance ? {at:40 + rand() * 160, done:false} : null; S.fire = null; }
 function startFire(o){
   const name = OBJ[o.key].name;
-  S.fire = {obj:o.id, x:o.x + OBJ[o.key].L / 2, y:o.y + 0.5, t0:S.time, taps:0, need:4, until:S.time + 22, name};
-  const ext = objNear({x:S.fire.x, y:S.fire.y}, 'extinguisher', 5);
+  S.fire = {obj:o.id, x:o.x + OBJ[o.key].L / 2, y:o.y + 0.5, t0:S.time, taps:0, need:TUNING.fireTaps, until:S.time + TUNING.fireBurnSeconds, name};
+  const ext = objNear({x:S.fire.x, y:S.fire.y}, 'extinguisher', TUNING.extinguisherRange);
   if (ext) S.fire.autoAt = S.time + 2.5;
   else { const rid = roomAt(o.x, o.y); if (rid) { S.fire.room = 'r' + rid; S.blocks[S.fire.room] = Infinity; } }
   pa('event', {item:name.toLowerCase()}, FIRE_PA.start); sfx('empty');
@@ -2125,9 +2235,9 @@ function tapFire(){ const f = S.fire; if (!f || f.autoAt) return; if (++f.taps >
 // ---------- getting lost (big hospitals, far from a notice board) ----------
 const LOST_LINES = ['Is this Pharmacy? It looks like a corridor.', 'I have been walking for 20 minutes. I think.', 'The sign said "this way". Which way?', 'I followed the arrows. The arrows were lying.'];
 function maybeLost(pt){
-  if (pt.wander || pt.vip || pt.emergency || pt.path.length < 11) return;
-  if (objNear(pt.pos, 'noticeboard', 6)) return;
-  if (rand() >= 0.25) return;
+  if (pt.wander || pt.vip || pt.emergency || pt.path.length < TUNING.lostMinWalk) return;
+  if (objNear(pt.pos, 'noticeboard', TUNING.noticeBoardRange)) return;
+  if (rand() >= TUNING.lostChance) return;
   // wander off to a nearby corridor spot first
   const here = tileOfPt(pt.pos), spots = [];
   for (let y = here.y - 5; y <= here.y + 5; y++) for (let x = here.x - 5; x <= here.x + 5; x++) if (inMap(x, y) && isCorridor(x, y) && !objAt(x, y)) spots.push({x, y});
@@ -2146,8 +2256,8 @@ function findDrink(pt){
 function finishDrink(pt){
   const o = objById(pt.drinkObj), cooler = o && o.key === 'cooler';
   pt.drinkUntil = 0; pt.drank = true;
-  if (cooler){ pt.patience = Math.min(100, pt.patience + 8); floatText(pt.pos.x, pt.pos.y, '💧 +8', '#7fd4ff'); }
-  else { pt.patience = Math.min(100, pt.patience + 15); S.cash += 5; S.earned += 5; floatText(pt.pos.x, pt.pos.y, '+$5 🥤', '#3fc33a'); sfx('ticket'); }
+  if (cooler){ pt.patience = Math.min(100, pt.patience + TUNING.coolerPatience); floatText(pt.pos.x, pt.pos.y, '💧 +' + TUNING.coolerPatience, '#7fd4ff'); }
+  else { pt.patience = Math.min(100, pt.patience + TUNING.vendingPatience); S.cash += TUNING.vendingPrice; S.earned += TUNING.vendingPrice; floatText(pt.pos.x, pt.pos.y, '+$' + TUNING.vendingPrice + ' 🥤', '#3fc33a'); sfx('ticket'); }
 }
 
 
@@ -2189,7 +2299,7 @@ function fxBurst(x, y, kind){
 function tileTex(x, y){
   if (y === S.bh) return 6; if (y > S.bh) return 7;
   const r = roomAt(x, y); if (r){ const R = roomById(r); return R ? ROOMS[R.type].floor : 0; }
-  return Math.abs(x - S.ent) + (S.bh - 1 - y) <= 3 ? 3 : 0;
+  return Math.abs(x - S.ent - 0.5) + (S.bh - 1 - y) <= 3.5 ? 3 : 0;
 }
 function drawFloorTile(x, y, tex){
   const [ox, oy] = iso(x, y), key = 'floor:' + tex;
@@ -2204,7 +2314,7 @@ function drawFloors(){
   // road markings and kerb
   for (let x = 0; x < S.W; x += 2){ P([iso(x + 0.3, S.bh + 1.45), iso(x + 1.2, S.bh + 1.45), iso(x + 1.2, S.bh + 1.57), iso(x + 0.3, S.bh + 1.57)]); g.fillStyle = '#ffe36e'; g.fill(); }
   // entrance mat
-  P([iso(S.ent + 0.1, S.bh - 0.9), iso(S.ent + 0.9, S.bh - 0.9), iso(S.ent + 0.9, S.bh - 0.1), iso(S.ent + 0.1, S.bh - 0.1)]); fillInk('#ff5d5d', 1.5);
+  P([iso(S.ent + 0.1, S.bh - 0.9), iso(S.ent + 1.9, S.bh - 0.9), iso(S.ent + 1.9, S.bh - 0.1), iso(S.ent + 0.1, S.bh - 0.1)]); fillInk('#ff5d5d', 1.5);
   if (S.flood && !S.flood.mopped && S.flood.x !== undefined){ P([iso(S.flood.x + 0.05, S.flood.y + 0.05), iso(S.flood.x + 0.95, S.flood.y + 0.05), iso(S.flood.x + 0.95, S.flood.y + 0.95), iso(S.flood.x + 0.05, S.flood.y + 0.95)]); fillInk('rgba(80,170,255,.8)', 1.5); }
   // unfinished rooms get a dashed outline
   for (const r of S.rooms) if (r.state !== 'ready'){ P([iso(r.x + 0.05, r.y + 0.05), iso(r.x + r.w - 0.05, r.y + 0.05), iso(r.x + r.w - 0.05, r.y + r.h - 0.05), iso(r.x + 0.05, r.y + r.h - 0.05)]); g.setLineDash([6, 5]); g.lineWidth = 2.5; g.strokeStyle = '#ff8c3a'; g.stroke(); g.setLineDash([]); }
@@ -2235,7 +2345,7 @@ function wallItems(items){
     const outer = y === 0 || y === S.bh, nearRoom = y < S.bh ? roomAt(x, y) : 0, farRoom = y > 0 ? roomAt(x, y - 1) : 0;
     const tall = y === 0 || (!S.wallsDown && y < S.bh && nearRoom && nearRoom !== farRoom);
     const p0 = iso(x, y), p1 = iso(x + 1, y), bx = [x, y, x + 1, y], k = x + y + 0.5;
-    if (v === 2){ if (tall) push(k, () => wallSeg(p0, p1, WALL, 'tile:door-in', '#c9783f', false), bx); else push(k, () => { doorPosts(p0, p1, outer); }, bx, 40); continue; }
+    if (v === 2){ if (tall) push(k, () => wallSeg(p0, p1, WALL, 'tile:door-in', '#c9783f', false), bx); else push(k, () => { doorPosts(p0, p1, outer, !outer || x === S.ent); }, bx, 40); continue; }
     const tex = outer ? (x % 3 === 1 ? 'tile:wall-out-window' : 'tile:wall-out') : 'tile:wall-in';
     push(k, () => wallSeg(p0, p1, tall ? (outer ? WALL + 6 : WALL) : LOW, tex, outer ? OUTCOL : INCOL, false), bx, tall ? 90 : 30);
   }
@@ -2250,9 +2360,9 @@ function wallItems(items){
     push(k, () => wallSeg(p0, p1, tall ? (outer ? WALL + 6 : WALL) : LOW, tex, outer ? OUTCOL : INCOL, true), bx, tall ? 90 : 30);
   }
 }
-function doorPosts(p0, p1, outer){
+function doorPosts(p0, p1, outer, label = true){
   for (const p of [p0, p1]){ g.beginPath(); g.moveTo(p[0], p[1]); g.lineTo(p[0], p[1] - 14); g.lineWidth = 4; g.strokeStyle = OL; g.stroke(); }
-  if (outer){ const m = lerp(p0, p1, 0.5); plateW(m[0], m[1] - 26, 'ENTRANCE', '#ff5d8f'); }
+  if (outer && label){ const m = lerp(p0, p1, 1); plateW(m[0], m[1] - 26, 'ENTRANCE', '#ff5d8f'); }
 }
 function plateW(x, y, text, bg){ g.font = 'bold 9px "Comic Sans MS",sans-serif'; const w = g.measureText(text).width + 10; g.beginPath(); g.roundRect(x - w / 2, y - 7, w, 14, 7); g.fillStyle = bg; g.fill(); g.lineWidth = 1.5; g.strokeStyle = OL; g.stroke(); g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, x, y + 0.5); }
 // ---------- furniture ----------
@@ -2261,7 +2371,7 @@ function drawObj(o, alpha = 1){
   const def = OBJ[o.key], f = foot(def, o.o);
   let key = o.o >= 2 && def.back && hasSprite(def.back) ? def.back : def.spr;
   if (o.jam && def.jamSpr && hasSprite(def.jamSpr)) key = def.jamSpr;
-  if (o.key === 'toilet' && o.o < 2 && S.looTaken && S.looTaken[o.id] && hasSprite('prop:toilet-occupied')) key = 'prop:toilet-occupied';
+  if (o.key === 'toilet' && o.o < 2 && S.looTaken && S.looTaken[o.id] && S.patients.some(q => q.looObj === o.id && (q.looPh === 'in')) && hasSprite('prop:toilet-occupied')) key = 'prop:toilet-occupied';
   if (o.key === 'ticket' && o.empty && hasSprite('prop:ticket-machine-empty')) key = 'prop:ticket-machine-empty';
   const occ = LIE_ON.includes(o.key) ? S.patients.find(p => p.svcObj === o.id && p.st === 'serve') : null;
   let [cx] = iso(o.x + f.w / 2, o.y + f.h / 2), [, fy] = iso(o.x + f.w, o.y + f.h);
@@ -2334,8 +2444,8 @@ function sceneItems(alpha){
   for (const o of S.objs){ const f = foot(OBJ[o.key], o.o); items.push({key:objKey(o), draw:() => drawObj(o), box:[o.x, o.y, o.x + f.w, o.y + f.h], h:Math.max(60, OBJ[o.key].H || 60)}); }
   for (const l of S.litter) items.push({key:l.x + l.y + 0.8, box:[l.x + 0.3, l.y + 0.3, l.x + 0.7, l.y + 0.7], h:10, draw:() => { if (!drawSpriteAt('prop:litter', l.x + 0.5, l.y + 0.5, 0, 26, 18)){ const [sx, sy] = iso(l.x + 0.5, l.y + 0.5); rr(sx - 7, sy - 5, 7, 5, 1, '#fff', 1.2); rr(sx + 1, sy - 4, 6, 6, 2, '#c9783f', 1.2); g.beginPath(); g.ellipse(sx - 1, sy + 2, 5, 2, 0.4, 0, 7); fillInk('#ffd23f', 1.2); } }});
   // pavement extras
-  for (const mx of [1.5, S.bw - 3.5]) if (mx > S.ent + 2 || mx < S.ent - 1) items.push({key:mx + S.bh + 0.4, box:pbox(mx, S.bh + 0.5), h:45, draw:() => { if (!(hasSprite('prop:motorbike') && drawSpriteAt('prop:motorbike', mx, S.bh + 0.5, 0, 46, 40, -1))) box(mx - 0.3, S.bh + 0.3, 0.6, 0.25, 12, '#ff5d8f'); }});
-  for (const px of [S.ent - 1.4, S.ent + 1.6, S.bw - 0.6]) if (px > 0.4) items.push({key:px + S.bh + 0.5, box:pbox(px, S.bh + 0.55), h:50, draw:() => { if (!drawSpriteAt('prop:shrub-planter', px, S.bh + 0.55, 0, 36, 40) && !drawSpriteAt('prop:plant', px, S.bh + 0.55, 0, 34, 44)) ell(px, S.bh + 0.55, 18, 10, 9, '#3fbf4f'); }});
+  for (const mx of [1.5, S.bw - 3.5]) if (mx > S.ent + 3 || mx < S.ent - 1) items.push({key:mx + S.bh + 0.4, box:pbox(mx, S.bh + 0.5), h:45, draw:() => { if (!(hasSprite('prop:motorbike') && drawSpriteAt('prop:motorbike', mx, S.bh + 0.5, 0, 46, 40, -1))) box(mx - 0.3, S.bh + 0.3, 0.6, 0.25, 12, '#ff5d8f'); }});
+  for (const px of [S.ent - 1.4, S.ent + 3.4, S.bw - 0.6]) if (px > 0.4) items.push({key:px + S.bh + 0.5, box:pbox(px, S.bh + 0.55), h:50, draw:() => { if (!drawSpriteAt('prop:shrub-planter', px, S.bh + 0.55, 0, 36, 40) && !drawSpriteAt('prop:plant', px, S.bh + 0.55, 0, 34, 44)) ell(px, S.bh + 0.55, 18, 10, 9, '#3fbf4f'); }});
   if (S.ambulance && S.time - S.ambulance.t0 < 10){
     const k = (S.time - S.ambulance.t0) / 10, ax = k < 0.4 ? -3 + (S.ent + 1.5 + 3) * (k / 0.4) : k < 0.7 ? S.ent + 1.5 : S.ent + 1.5 + (k - 0.7) / 0.3 * (S.bw + 5 - S.ent);   // drives along the road, nose first (the picture faces +x)
     items.push({key:ax + S.bh + 2.5, box:[ax - 1, S.bh + 1.2, ax + 1, S.bh + 2], h:100, draw:() => { if (!(hasSprite('prop:ambulance') && drawSpriteAt('prop:ambulance', ax, S.bh + 1.6, 0, 120, 100, 1))) box(ax - 0.9, S.bh + 1.2, 1.8, 0.8, 26, '#ffffff'); }});
@@ -2389,7 +2499,7 @@ function render(alpha){
   if (!S) return;
   g.setTransform(dpr * cam.z, 0, 0, dpr * cam.z, dpr * cam.x, dpr * cam.y);
   drawFloors();
-  drawBuildUnder();
+  drawRoomTints(); drawBuildUnder();
   depthSort(sceneItems(alpha)).forEach(it => it.draw());
   drawHighlights();
   drawBuildOver();
@@ -2571,6 +2681,7 @@ function openBuild(){
     Object.entries(ROOMS).map(([k, R]) => { const ok = L.rooms.includes(k); const c = roomCost(k, R.min[0], R.min[1]);
       return `<button class="btn white opt" data-room="${k}" ${ok ? '' : 'disabled'}><span class="ic">${R.icon}</span><span>${R.name}<small>${ok ? 'From ' + money(c) + ' (' + R.min[0] + '×' + R.min[1] + ') · ' + (R.role ? 'needs a ' + ROLES[R.role].name : 'where staff rest') + (R.charge ? ' · charges ' + money(R.charge) : '') : 'Unlocks in a later level'}</small></span></button>`; }).join('') + '</div>', 'tBuild');
   on('[data-room]', b => startRoom(b.dataset.room));
+  $('sheet').insertAdjacentHTML('beforeend', expandHtml()); on('[data-exp]', b => expandBuilding(b.dataset.exp));
 }
 function openItems(){
   showSheet(`<h3>🪑 Items for corridors</h3><p class="sub">Click an item, then click where it goes. R or right-click turns it. Room furniture is added while building the room.</p><div class="grid">` +
@@ -2718,7 +2829,7 @@ function showBuildBar(){
     h = `<span><b>${R.name}:</b></span>` + items.map(k => `<button class="btn sm ${R.need.includes(k) && !have(k) ? '' : 'white'}" data-obj="${k}" title="${OBJ[k].note || ITEM_NOTE[k] || ''}">${OBJ[k].icon} ${OBJ[k].name} ${money(OBJ[k].price)}${have(k) ? ' ✓' : R.need.includes(k) ? ' *' : ''}</button>`).join('') +
       `<button class="btn sm white" data-auto ${R.need.every(k => have(k)) ? 'disabled' : ''}>✨ Auto-furnish</button><button class="btn sm go" data-done ${R.need.every(k => have(k)) ? '' : 'disabled'}>Done</button><button class="btn sm white" data-undo ${UNDO.length ? '' : 'disabled'}>↶ Undo</button><button class="btn sm red" data-sellroom>Sell room</button>`;
   }
-  else if (T.mode === 'place'){ const d = OBJ[T.key]; h = `<span>${T.moving ? 'Moving' : 'Placing'} <b>${d.icon} ${d.name}</b> (${T.moving ? 'free' : money(d.price)}) · R or right-click to turn${T.o >= 2 && !(d.back && hasSprite(d.back)) && d.L >= 2 ? ' · <i>back-view picture coming soon</i>' : ''}</span><button class="btn sm white" data-rot>⟳ Turn</button><button class="btn sm white" data-cancel>${T.roomId ? 'Back' : 'Done'}</button>`; }
+  else if (T.mode === 'place'){ const d = OBJ[T.key]; h = `<span>${T.moving ? 'Moving' : 'Placing'} <b>${d.icon} ${d.name}</b> (${T.moving ? 'free' : money(d.price)}) · ${matchMedia('(pointer:coarse)').matches ? 'tap ⟳ or hold to turn' : 'R or right-click to turn'}</span><button class="btn white" data-rot style="font-size:18px">⟳ Turn</button><button class="btn sm white" data-cancel>${T.roomId ? 'Back' : 'Done'}</button>`; }
   if (!h){ b.style.display = 'none'; return; }
   b.innerHTML = h; b.style.display = 'flex'; b.style.flexWrap = 'wrap';
   b.querySelectorAll('[data-cancel]').forEach(x => x.onclick = () => { if (T.mode === 'door'){ const rr2 = roomById(T.roomId); T.mode = null; if (rr2) sellRoom(rr2); cancelTool(); } else cancelTool(); });
@@ -2732,19 +2843,19 @@ function showBuildBar(){
 // ---------- tutorial (Level 1) ----------
 const TUT = [
   {t:'Welcome to {level}! I am Encik Nasihat from the Ministry, here to help. First, every hospital needs a Reception Desk.', next:true},
-  {t:'Click <b>Items</b>, choose <b>Reception Desk</b>, then click a spot in the corridor near the entrance. R or right-click turns it.', done:() => S.objs.some(o => o.key === 'reception')},
+  {t:'Click <b>Build</b>, open the <b>Items</b> tab, choose <b>Reception Desk</b>, then click a spot in the corridor near the entrance. R or right-click turns it.', done:() => S.objs.some(o => o.key === 'reception')},
   {t:'Now a GP Office. Click <b>Build</b>, choose <b>GP Office</b>, then drag out a room at least 3×3 on the empty floor.', done:() => S.rooms.some(r => r.type === 'gp')},
   {t:'Click one of the white dots in the corridor to place the door.', done:() => S.rooms.some(r => r.type === 'gp' && r.door)},
   {t:'Place the <b>GP Desk</b> inside. The doctor stands on the blue square, patients on the yellow one. Then press <b>Done</b>.', done:() => S.rooms.some(r => r.type === 'gp' && r.state === 'ready')},
   {t:'Build a <b>Pharmacy</b> the same way: Build, drag, door, counter, Done.', done:() => S.rooms.some(r => r.type === 'pharmacy' && r.state === 'ready')},
-  {t:'Patients hate standing. Put at least two <b>Benches</b> near the doors (Items, then Bench).', done:() => S.objs.filter(o => o.key === 'bench').length >= 2},
-  {t:'Time to hire. Click <b>Hire</b> and take on a <b>Receptionist</b>, a <b>Doctor</b> and a <b>Pharmacist</b>. They walk to their posts by themselves.', done:() => ['receptionist', 'doctor', 'pharmacist'].every(r => S.staff.some(s => s.role === r))},
+  {t:'Patients hate standing. Put at least two <b>Benches</b> near the doors (Build → Items → Bench).', done:() => S.objs.filter(o => o.key === 'bench').length >= 2},
+  {t:'Time to hire. Click <b>Staff</b> and take on a <b>Receptionist</b>, a <b>Doctor</b> and a <b>Pharmacist</b>. They walk to their posts by themselves.', done:() => ['receptionist', 'doctor', 'pharmacist'].every(r => S.staff.some(s => s.role === r))},
   {t:'All set. Press <b>Open Doors</b>! Patients check in at Reception, see the GP, then go wherever the GP sends them.', done:() => S.phase === 'open'},
   {t:'Click anyone to see what is wrong with them. You can pick people up and drop them somewhere else. Mouse wheel zooms, dragging the floor scrolls.', next:true},
-  {t:'Hit the level targets (click <b>Money</b> to see them) before the last day: cures, money in the bank and a good rating. Good luck!', next:true, last:true},
+  {t:'Hit the level targets (the 🎯 card, top right) before the last day: cures, money in the bank and a good rating. Good luck!', next:true, last:true},
 ];
 const HINTS = {
-  litter:'Litter! Patients get grumpy near it and reviews suffer. Hire a <b>Handyman</b> (Hire, then Handyman). They also fix broken machines. Bins help too.',
+  litter:'Litter! Patients get grumpy near it and reviews suffer. Hire a <b>Handyman</b> (Staff → Hire). They also fix broken machines. Bins help too.',
   firstCure:'A cure! Every department charges as the patient leaves it. Watch the green numbers.',
 };
 function hint(id){ if (!S || S.level !== 0 || (S.hintsShown || {})[id]) return; (S.hintsShown = S.hintsShown || {})[id] = true; S.hintNow = id; drawAdvisor(); }
@@ -2780,7 +2891,7 @@ function updateHud(){
   setH('hCash', money(S.cash));
   const rate = levelRating();
   setH('hRate', '★ ' + (rate ? rate.toFixed(1) : '–') + (L.sandbox ? '' : ' <small>/ ' + L.goal.rating + '</small>'));
-  updateGoalCard(); updateAlert();
+  updateGoalCard(); updateAlert(); updateToolbar(); checkCelebrations();
   setH('hToday', 'Cured ' + S.cures + '/' + target() + (S.walkouts ? ' <small class="bad">· left ' + S.walkouts + '</small>' : '') + ' <small>· level ' + S.totalCures + '/' + L.goal.cures + '</small>');
   setShow('hGoal', false); setShow('hToday', false); if (false) setH('hGoal', 'Goal: ' + goalLabel(S.goal));
   const E = S.emergency; setShow('hEmerg', !!E); if (E) setH('hEmerg', '🚑 ' + E.cured + '/' + E.n + ' · ' + Math.max(0, Math.ceil(E.until - S.time)) + ' s');
@@ -2795,7 +2906,7 @@ function updateHud(){
   setShow('paused', open && speed === 0); if (open && speed === 0) $('paused').style.display = 'flex';
   const hh = $('hud').offsetHeight, tk = $('ticker'); tk.style.top = hh + 'px'; const top = hh + (tk.style.display === 'flex' ? tk.offsetHeight : 0) + 4;
   $('reviews').style.top = top + 'px'; sheet.style.top = top + 'px'; $('rightCol').style.top = top + 'px'; $('toast').style.top = (top + 4) + 'px';
-  $('rightCol').style.display = sheet.style.display === 'block' ? 'none' : 'flex'; setShow('tSandbox', !!level().sandbox);
+  $('rightCol').style.display = sheet.style.display === 'block' || $('title').style.display !== 'none' ? 'none' : 'flex'; setShow('tSandbox', !!level().sandbox);
   const tip = $('tip'); if (tip.dataset.pa === '1') return;
   const err = canOpen();
   const text = S.held ? 'Click where to drop them. Esc puts them back.'
@@ -2851,7 +2962,8 @@ function refreshTitle(){
   const P2 = progress(), d = loadSave();
   $('levelList').innerHTML = LEVELS.map((L, i) => L.sandbox ? '' : `<button class="btn ${i < P2.unlocked ? 'red' : 'white'}" data-lv="${i}" ${i < P2.unlocked ? '' : 'disabled'}>Level ${L.id}: ${L.name}<small>${i < P2.unlocked ? L.blurb + ' Targets: ' + L.goal.cures + ' cures, ' + money(L.goal.bank) + ' in the bank, ' + L.goal.rating + '★, in ' + L.days + ' days.' : 'Finish the level before to unlock'}</small></button>`).join('');
   document.querySelectorAll('[data-lv]').forEach(b => b.onclick = () => { audioInit(); startLevel(+b.dataset.lv, $('nameIn').value.trim(), 0); });
-  const c = $('bCont'); if (d){ c.style.display = ''; c.textContent = 'Continue: ' + d.name + ' · Level ' + (d.level + 1) + ', Day ' + d.day; } else c.style.display = 'none';
+  const c = $('bCont'); if (d){ const L = LEVELS[d.level]; c.style.display = ''; c.textContent = 'Continue: ' + d.name + ' · ' + (L.sandbox ? 'Sandbox' : L.endless ? 'Endless Year ' + (d.year || 1) : 'Level ' + L.id) + ', Day ' + d.day; } else c.style.display = 'none';
+  if (saveProblem){ saveProblem = false; setTimeout(() => toast('Your saved hospital was from an older version and couldn\'t be opened, so it has been put aside. Sorry! Start a new one below.', 8000), 600); }
 }
 function startLevel(li, name, points){
   newGame(li, name); S.points = points || 0;
@@ -2886,6 +2998,7 @@ $('bMusic').onclick = () => { audioInit(); setMusic(!AU.music); };
 $('bSfx').onclick = () => { audioInit(); setSfx(!AU.sfx); sfx('click'); };
 $('bMenu').onclick = () => {
   showSheet(`<h3>Menu</h3><p class="sub">${S.name} · ${level().name} · Day ${S.day}</p><div class="grid">
+    <button class="btn white opt" data-help><span>❓ How to play<small>Rooms, items, illnesses and what every icon means</small></span></button>
     <button class="btn white opt" data-fit><span>Reset the view<small>Zoom out to see the whole hospital</small></span></button>
     <button class="btn white opt" data-tut><span>${S.tut === null ? 'Show the tutorial again' : 'Hide the tutorial'}</span></button>
     <button class="btn white opt" data-set="big"><span>${SET.big ? '✅' : '⬜'} Larger text</span></button>
@@ -2893,6 +3006,7 @@ $('bMenu').onclick = () => {
     <button class="btn white opt" data-set="cb"><span>${SET.cb ? '✅' : '⬜'} Colour-blind friendly colours<small>Blue, orange and purple bars</small></span></button>
     <div class="grid2"><button class="btn sm white" data-mus>${AU.music ? '🎵 Music on' : '🔇 Music off'}</button><button class="btn sm white" data-sfx>${AU.sfx ? '🔊 Sound on' : '🔇 Sound off'}</button></div>
     <button class="btn white opt" data-title><span>Save and quit to the title screen</span></button></div>`);
+  on('[data-help]', () => openHelp('basics'));
   on('[data-fit]', () => { fitCamera(); closeSheet(); });
   on('[data-tut]', () => { S.tut = S.tut === null ? 0 : null; drawAdvisor(); closeSheet(); });
   on('[data-title]', () => toTitle());
@@ -3215,7 +3329,7 @@ function showPaper(force){
 
 // ---------- endless mode: after Level 3 the hospital keeps going, a little busier each year ----------
 const yearOf = () => S.year || 1;
-function endlessGoal(){ const y = yearOf() - 1; return {cures:Math.round(160 * Math.pow(1.15, y) / 10) * 10, bank:Math.round(25000 * Math.pow(1.2, y) / 1000) * 1000, rating:4}; }
+function endlessGoal(){ const y = yearOf() - 1; return {cures:Math.round(160 * Math.pow(TUNING.endlessPatients, y) / 10) * 10, bank:Math.round(25000 * Math.pow(TUNING.endlessBank, y) / 1000) * 1000, rating:4}; }
 const busier = () => level().endless ? Math.pow(1.15, yearOf() - 1) : 1;
 function goEndless(fresh){
   if (!fresh){ S.level = LEVELS.findIndex(l => l.endless); S.year = 1; S.day = 0; S.totalCures = 0; S.lvRateSum = 0; S.lvRateN = 0; $('report').style.display = 'none'; S.phase = 'report'; nextDay(); }
@@ -3239,7 +3353,7 @@ function awardCeremony(won){
     <div class="memo"><b>Year ${y + 1}: what changes</b>About 15% more patients every day · VIPs and chaos a little more often${AILMENTS[Object.keys(AILMENTS).find(k => AILMENTS[k].year === y + 1)] ? ' · a new illness: <b>' + AILMENTS[Object.keys(AILMENTS).find(k => AILMENTS[k].year === y + 1)].icon + ' ' + AILMENTS[Object.keys(AILMENTS).find(k => AILMENTS[k].year === y + 1)].name + '</b>' : ''}<br>Targets: ${nextG.cures} cures, ${money(nextG.bank)}, ${nextG.rating} ★</div>
     <button class="btn go" id="bYear">Start Year ${y + 1} →</button>`;
   $('report').style.display = 'flex'; sfx('star');
-  $('bYear').onclick = () => { S.year = y + 1; S.day = 0; S.totalCures = 0; S.lvRateSum = 0; S.lvRateN = 0; nextDay(); };
+  $('bYear').onclick = () => { S.year = y + 1; S.expands = 0; S.day = 0; S.totalCures = 0; S.lvRateSum = 0; S.lvRateN = 0; nextDay(); };
 }
 
 // ---------- sandbox: try everything ----------
@@ -3281,6 +3395,229 @@ function sandboxDo(cmd){
 }
 function maybeLostForce(pt){ const here = tileOfPt(pt.pos), spots = []; for (let y = here.y - 5; y <= here.y + 5; y++) for (let x = here.x - 5; x <= here.x + 5; x++) if (inMap(x, y) && isCorridor(x, y) && !objAt(x, y)) spots.push({x, y}); if (!spots.length) return; const t = pick(spots); pt.wander = true; pt.at = 'lost'; walkPath(pt, {x:t.x + 0.5, y:t.y + 0.5}); showBubble(pt, pick(LOST_LINES), 3); }
 function startSandbox(){ audioInit(); startLevel(LEVELS.findIndex(l => l.sandbox), $('nameIn').value.trim() || 'Sandbox General', 0); S.tut = null; S.labels = true; drawAdvisor(); toast('🧪 Sandbox: unlimited money, every room. Use the 🧪 button to trigger anything.', 6000); }
+
+// ---------- expanding the building: buy a 3-tile strip at the side or the back (between shifts) ----------
+const EXPAND_STEP = TUNING.expandStep, EXPAND_MAX = {w:33, h:24};
+const expandFree = () => !!level().sandbox;
+const expandLeft = () => expandFree() ? 99 : TUNING.expandsPerLevel - (S.expands || 0);
+const expandCost = () => expandFree() ? 0 : TUNING.expandCost * ((S.expands || 0) + 1);
+function expandWhyNot(dir){
+  if (S.phase === 'open') return 'Only between shifts';
+  if (expandLeft() <= 0) return 'No more land this level';
+  if (dir === 'side' && S.bw + EXPAND_STEP > EXPAND_MAX.w) return 'The neighbours won\'t sell';
+  if (dir === 'back' && S.bh + EXPAND_STEP > EXPAND_MAX.h) return 'The river is in the way';
+  if (S.cash < expandCost()) return 'Not enough money';
+  return null;
+}
+function expandBuilding(dir){
+  const why = expandWhyNot(dir); if (why){ toast(why); sfx('error'); return; }
+  S.cash -= expandCost(); S.expands = (S.expands || 0) + 1;
+  const n = EXPAND_STEP;
+  if (dir === 'side'){ S.bw += n; S.W = S.bw; }
+  else {
+    // new rows at the back: everything inside moves down by n
+    const sh = p => { if (p) p.y += n; };
+    for (const r of S.rooms){ r.y += n; if (r.door){ r.door.y += n; r.door.oy += n; } }
+    for (const o of S.objs) o.y += n;
+    for (const l of S.litter) l.y += n;
+    for (const a of [...S.staff, ...S.patients]){ sh(a.pos); sh(a.prev); (a.path || []).forEach(sh); }
+    if (S.flood && S.flood.y !== undefined) S.flood.y += n;
+    S.bh += n; S.H = S.bh + 2;
+  }
+  S.lineCache = {}; UNDO.length = 0; rebuildGrid(); fitCamera();
+  pa('event', {}, ['The Ministry has approved the extension. The paperwork took longer than the building.', 'New wing open! Please do not ask what it is for.']);
+  toast('🏗️ The building is bigger: ' + S.bw + ' × ' + S.bh + (expandFree() ? '' : ' · ' + expandLeft() + ' expansion' + (expandLeft() === 1 ? '' : 's') + ' left'));
+  sfx('build'); save(); openBuild();
+}
+function expandHtml(){
+  const c = expandCost(), lbl = d => { const w = expandWhyNot(d); return w ? `<small>${w}</small>` : `<small>${c ? money(c) : 'Free'} · +${EXPAND_STEP} ${d === 'side' ? 'columns' : 'rows'}</small>`; };
+  return `<h3 style="margin-top:12px">📐 Expand the building</h3><p class="sub">Now ${S.bw} × ${S.bh} tiles. ${expandFree() ? 'Free in Sandbox.' : expandLeft() + ' of ' + TUNING.expandsPerLevel + ' expansions left this level.'} Between shifts only.</p>
+    <div class="grid2"><button class="btn white opt" data-exp="side" ${expandWhyNot('side') ? 'disabled' : ''}><span class="ic">➡️</span><span>Wider${lbl('side')}</span></button>
+    <button class="btn white opt" data-exp="back" ${expandWhyNot('back') ? 'disabled' : ''}><span class="ic">⬆️</span><span>Deeper${lbl('back')}</span></button></div>`;
+}
+// small screens: suggest a computer or tablet, once
+(function phoneNote(){
+  const small = Math.min(innerWidth, innerHeight) < 500 && matchMedia('(pointer:coarse)').matches;
+  let seen = false; try { seen = localStorage.getItem('just-a-moment-phone-note') === '1'; } catch (e){}
+  if (!small || seen) return;
+  $('phoneNote').style.display = 'flex';
+  $('bPhoneOk').onclick = () => { $('phoneNote').style.display = 'none'; try { localStorage.setItem('just-a-moment-phone-note', '1'); } catch (e){} };
+})();
+
+// ---------- How to play: everything explained in one place ----------
+const HELP_ICONS = [
+  ['⚠️', 'Red button, top right', 'How many problems need you. Tap it to jump to the next one.'],
+  ['😩', 'Over a staff member', 'Stressed. Tap them and send them on a break (a Staff Room helps).'],
+  ['⏳', 'At a door', 'Six or more people queueing. Build another room of that kind, or add benches.'],
+  ['🔧', 'Over a machine', 'Broken. A handyman fixes it, or tap it to pay for a repair.'],
+  ['🔥', 'Flames on an item', 'Fire! Tap the flames. An extinguisher within 5 tiles puts it out by itself.'],
+  ['🧻', 'Over a toilet', 'Filthy. Handymen clean toilets.'],
+  ['📦', 'On a room label', 'Supplies are low. Tap the Pharmacy or Records Office to order more.'],
+  ['🙋', 'In the problem list', 'A room has no staff. Hire one or drag one in.'],
+  ['❓', 'In the news', 'A patient got lost. Notice Boards stop that nearby.'],
+  ['!', 'Over a patient', 'Running out of patience and about to walk out.'],
+  ['🔢', 'Yellow number on a door', 'How many people are waiting there.']
+];
+function openHelp(tab){
+  const tabs = [['basics', 'Basics'], ['rooms', 'Rooms'], ['items', 'Items'], ['ill', 'Illnesses'], ['icons', 'Icons']];
+  let body = '';
+  if (tab === 'basics') body = `<ol class="help">
+    <li><b>Build rooms</b> (🏗️ Build): drag out a room, place its door, then its furniture. Auto-furnish does it for you.</li>
+    <li><b>Place a Reception Desk</b> and benches (🪑 Items). Every patient checks in at Reception first.</li>
+    <li><b>Hire staff</b> (🙋 Hire): each room needs the right person. Drag people to move them.</li>
+    <li><b>Open the doors</b>. Patients go Reception → GP → the rooms their illness needs → home.</li>
+    <li><b>Keep them happy</b>: benches, plants, drinks and toilets keep patience up. Walkouts hurt your rating.</li>
+    <li><b>Hit the targets</b> on the 🎯 goal card (top right) before the last day of the level.</li>
+    <li><b>Run out of space?</b> Build → 📐 Expand the building, between shifts.</li></ol>
+    <p class="sub">Tips: two rooms of the same kind share their queue. From Level 2, the GP sometimes sends patients for a scan first. Press Space to pause, R to turn an item, Ctrl+Z to undo.</p>`;
+  else if (tab === 'rooms') body = Object.entries(ROOMS).map(([k, R]) => `<div class="hrow"><span class="hic">${R.icon}</span><span><b>${R.name}</b>${R.role ? ' · needs a ' + ROLES[R.role].name : ''}<small>${ROOM_QUIP[k] || ''}</small></span></div>`).join('');
+  else if (tab === 'items') body = Object.entries(OBJ).map(([k, d]) => `<div class="hrow"><span class="hic">${d.icon}</span><span><b>${d.name}</b> · ${money(d.price)}<small>${d.note || ITEM_NOTE[k] || ''}</small></span></div>`).join('');
+  else if (tab === 'ill') body = Object.entries(AILMENTS).filter(([, A]) => !A.year || level().endless || level().sandbox).map(([, A]) => `<div class="hrow"><span class="hic">${A.icon}</span><span><b>${A.name}</b><small>Goes to: ${A.route.map(t => ROOMS[t] ? ROOMS[t].name : t).join(' → ')}</small></span></div>`).join('');
+  else body = HELP_ICONS.map(([i, w, t]) => `<div class="hrow"><span class="hic">${i}</span><span><b>${w}</b><small>${t}</small></span></div>`).join('');
+  showSheet(`<h3>❓ How to play</h3><div class="htabs">${tabs.map(([k, n]) => `<button class="btn sm ${k === tab ? '' : 'white'}" data-htab="${k}">${n}</button>`).join('')}</div>${body}`);
+  document.querySelectorAll('[data-htab]').forEach(b => b.onclick = () => openHelp(b.dataset.htab));
+}
+
+// ================== UI/UX: grouped toolbar, one message at a time, checklist, celebrations ==================
+
+// ---------- grouped toolbar: each big button opens a panel with tabs ----------
+const GROUPS = {
+  gBuild:[['tBuild', '🏗️ Rooms', () => openBuild()], ['tFurn', '🪑 Items', () => openItems()]],
+  gStaff:[['tHire', '🙋 Hire', () => openHire()], ['tStaff', '📋 My staff', () => openStaffList()]],
+  gOffice:[['tRooms', '🏥 Overview', () => openRooms()], ['tMoney', '💰 Money', () => openMoney()], ['tResearch', '🔬 Research', () => openResearch()], ['tLog', '📨 News', () => openLog()]]
+};
+const TOOL_GROUP = {}; for (const [g, tabs] of Object.entries(GROUPS)) for (const [id] of tabs) TOOL_GROUP[id] = g;
+const lastTab = {};
+const _showSheet = showSheet;
+showSheet = function(html, toolId){
+  const grp = TOOL_GROUP[toolId];
+  let tabs = '';
+  if (grp){ lastTab[grp] = toolId; tabs = '<div class="gtabs">' + GROUPS[grp].map(([id, n]) => `<button class="btn sm ${id === toolId ? '' : 'white'}" data-gtab="${id}">${n}${id === 'tLog' && S && S.unread ? ' (' + S.unread + ')' : ''}</button>`).join('') + '</div>'; }
+  _showSheet(tabs + html, toolId);
+  if (grp){
+    sheet.querySelectorAll('[data-gtab]').forEach(b => b.onclick = () => { cancelTool(); GROUPS[grp].find(t => t[0] === b.dataset.gtab)[2](); sfx('click'); });
+    $(grp).classList.add('active');
+  }
+};
+for (const g of Object.keys(GROUPS)) $(g).onclick = () => {
+  if (sheet.style.display === 'block' && $(g).classList.contains('active')){ closeSheet(); return; }
+  cancelTool(); const id = lastTab[g] || GROUPS[g][0][0]; GROUPS[g].find(t => t[0] === id)[2](); sfx('click');
+};
+$('gView').onclick = () => {
+  if (sheet.style.display === 'block' && $('gView').classList.contains('active')){ closeSheet(); return; }
+  const v = () => showSheet(`<h3>👁️ View</h3><div class="grid">
+    <button class="btn white opt" data-v="labels"><span>${S.labels ? '✅' : '⬜'} Show all labels<small>Otherwise only problems and what you point at</small></span></button>
+    <button class="btn white opt" data-v="walls"><span>${S.wallsDown ? '✅' : '⬜'} Walls down<small>See behind the walls</small></span></button>
+    <button class="btn white opt" data-v="fit"><span>🔍 See the whole hospital</span></button></div>`, 'gView');
+  v(); $('gView').classList.add('active');
+  sheet.querySelectorAll('[data-v]').forEach(b => b.onclick = () => { const k = b.dataset.v; if (k === 'labels') S.labels = !S.labels; else if (k === 'walls') S.wallsDown = !S.wallsDown; else { fitCamera(); closeSheet(); return; } sfx('click'); $('gView').onclick(); $('gView').onclick(); });
+};
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || !S || $('title').style.display !== 'none') return;
+  const k = e.key.toLowerCase(); if (k === 'b') $('gBuild').onclick(); else if (k === 'h') $('gStaff').onclick(); else if (k === 'o') $('gOffice').onclick();
+});
+function updateToolbar(){
+  const n = S.unread || 0, b = $('officeBadge'); b.style.display = n ? 'flex' : 'none'; if (n) b.textContent = n;
+  $('gView').classList.toggle('on', !!(S.labels || S.wallsDown));
+  // one message at a time at the bottom: the adviser or the build bar wins over the tip line
+  const busy = $('advisor').style.display === 'block' || $('advisor').style.display === 'flex' || $('buildbar').style.display === 'flex' || $('buildbar').style.display === 'block';
+  $('tip').style.visibility = busy ? 'hidden' : 'visible';
+}
+
+// ---------- reviews: one at a time, and kept in the News ----------
+showReview = function(stars, who, text){
+  const box = $('reviews'); box.innerHTML = '';
+  if (sheet.style.display === 'block') return;      // a panel is open: don't cover it
+  const el = document.createElement('div'); el.className = 'rev';
+  el.innerHTML = '<span class="st">' + '★'.repeat(stars) + '<i>' + '★'.repeat(5 - stars) + '</i></span> <b></b> <span class="t"></span>';
+  el.querySelector('b').textContent = who; el.querySelector('.t').textContent = text;
+  box.append(el); setTimeout(() => el.remove(), 5000);
+};
+
+// ---------- getting-started checklist (replaces the long tutorial) ----------
+function startChecklist(){
+  if (!S || S.day !== 1 || level().sandbox || S.checkDone) return null;
+  const has = k => S.objs.some(o => o.key === k), ready = t => S.rooms.some(r => r.type === t && r.state === 'ready'), hired = r => S.staff.some(s => s.role === r);
+  const list = [
+    ['Place a Reception Desk', has('reception'), 'Build → Items'],
+    ['Build a GP Office', ready('gp'), 'Build → Rooms'],
+    ['Build a Pharmacy', ready('pharmacy'), 'Build → Rooms'],
+    ['Put down 2 benches', S.objs.filter(o => o.key === 'bench').length >= 2, 'Build → Items'],
+    ['Hire a Receptionist, Doctor and Pharmacist', ['receptionist', 'doctor', 'pharmacist'].every(hired), 'Staff → Hire'],
+    ['Press Open Doors', S.phase === 'open', 'bottom right']
+  ];
+  if (list.every(x => x[1])){ S.checkDone = true; celebrate('🎉 All set!', 'Your hospital is open for business'); return null; }
+  return list;
+}
+const _updateGoalCard = updateGoalCard;
+updateGoalCard = function(){
+  const list = startChecklist(), c = $('goalCard');
+  if (!list){ _updateGoalCard(); return; }
+  const next = list.find(x => !x[1]);
+  const h = `<div class="gh">🧭 Getting started</div><div class="checklist">` + list.map(x => `<div class="gr${x[1] ? ' ok' : ''}"><span>${x[1] ? '✅' : x === next ? '👉' : '⬜'} ${x[0]}</span></div>${x === next ? `<div class="gr mini"><span>${x[2]}</span></div>` : ''}`).join('') + '</div>';
+  if (c.innerHTML !== h) c.innerHTML = h;
+};
+
+// ---------- celebrations: daily goal, today's cures, level targets ----------
+function celebrate(title, sub){
+  const el = $('celebrate'); el.innerHTML = title + (sub ? '<small>' + sub + '</small>' : '');
+  el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2600);
+  sfx('star');
+  if (!SET.calm && S){ const c = {x:S.ent + 1, y:S.bh - 3}; for (let i = 0; i < 40; i++) fx.push({x:c.x + (fxRand() - 0.5) * 6, y:c.y + (fxRand() - 0.5) * 6, vx:(fxRand() - 0.5) * 160, vy:-80 - fxRand() * 120, col:['#ff5d8f', '#ffd23f', '#3fc33a', '#5ab8ff', '#a77bff'][i % 5], t0:performance.now()}); }
+}
+function checkCelebrations(){
+  if (!S || S.phase !== 'open' || level().sandbox) return;
+  const C = S.cheered = S.cheered || {}, L = level(), day = 'd' + S.day + (S.year ? 'y' + S.year : '');
+  if (S.goal && goalMet(S.goal) && !C[day + 'goal']){ C[day + 'goal'] = 1; celebrate('🎯 Ministry goal met!', goalLabel(S.goal)); }
+  if (S.cures >= target() && !C[day + 'target']){ C[day + 'target'] = 1; celebrate('✅ Today\'s cures done!', S.cures + ' patients cured'); }
+  const lv = (S.year ? 'y' + S.year : 'lv'), g2 = L.goal;
+  if (S.totalCures >= g2.cures && !C[lv + 'cures']){ C[lv + 'cures'] = 1; celebrate('🏅 Cures target reached!', S.totalCures + ' / ' + g2.cures); }
+  if (S.cash >= g2.bank && S.day > 1 && !C[lv + 'bank']){ C[lv + 'bank'] = 1; celebrate('💰 Money target reached!', money(S.cash)); }
+}
+
+// ---------- why did they walk out? ----------
+function walkoutReason(pt){
+  const p = pt.at && getPoint(pt.at), where = p ? pointName(p) : null;
+  if (pt.st === 'lost' || pt.wander) return 'Got lost' + (where ? ' looking for the ' + where : '');
+  if (pt.needLoo) return 'Needed a toilet';
+  if (where && p.type && !S.staff.some(s => s.assigned === keyOf(p))) return 'No staff at the ' + where;
+  if (where) return 'Waited too long at the ' + where;
+  return 'Couldn\'t find where to go';
+}
+const _walkOut = walkOut;
+walkOut = function(pt){
+  const why = walkoutReason(pt);
+  _walkOut(pt);
+  floatText(pt.pos.x, pt.pos.y, '🚶 ' + why, '#ff4f4f');
+  addLog('🚶 A patient walked out: ' + why.toLowerCase() + '.', 'alert', {x:pt.pos.x, y:pt.pos.y});
+};
+
+// ---------- room colours: each room type has its own label colour and a coloured outline ----------
+const ROOM_COL = {gp:'#4f8df5', pharmacy:'#2fb36b', ward:'#8c6cf0', diagnosis:'#1fb3c4', treatment:'#f07ab0', records:'#b07a3a', emergency:'#ef4b4b', neurology:'#7c5cff', physio:'#f2a33a', surgery:'#2a9d8f', toilet:'#5aa7e0', staff:'#c8821e'};
+function drawRoomTints(){
+  g.save(); g.lineWidth = 3; g.setLineDash([]);
+  for (const r of S.rooms){ const col = ROOM_COL[r.type]; if (!col) continue;
+    const pts = [iso(r.x + 0.08, r.y + 0.08), iso(r.x + r.w - 0.08, r.y + 0.08), iso(r.x + r.w - 0.08, r.y + r.h - 0.08), iso(r.x + 0.08, r.y + r.h - 0.08)];
+    g.beginPath(); g.moveTo(...pts[0]); for (const p of pts.slice(1)) g.lineTo(...p); g.closePath();
+    g.globalAlpha = 0.10; g.fillStyle = col; g.fill(); g.globalAlpha = 0.55; g.strokeStyle = col; g.stroke(); }
+  g.restore();
+}
+
+// ---------- undo for dragging staff and patients ----------
+function snapPeople(label){
+  UNDO.push({label, people:true, staff:JSON.stringify(S.staff.map(s => ({id:s.id, assigned:s.assigned, pos:s.pos})))});
+  if (UNDO.length > 15) UNDO.shift();
+}
+const _undo = undo;
+undo = function(){
+  const u = UNDO[UNDO.length - 1];
+  if (!u || !u.people) return _undo();
+  UNDO.pop();
+  for (const o of JSON.parse(u.staff)){ const st = S.staff.find(s => s.id === o.id); if (!st) continue; if (st.assigned !== o.assigned){ for (const s of S.staff) if (s !== st && s.assigned === o.assigned && o.assigned) s.assigned = null; st.assigned = o.assigned; } if (st.mode !== 'off'){ st.mode = 'walk'; st.repath = true; } }
+  toast('Undone: ' + u.label); sfx('click'); save();
+};
+const _finishDrop = finishDrop;
+finishDrop = function(a, r, t){ if (S.held && S.held.kind === 'staff') snapPeople('move ' + a.name); _finishDrop(a, r, t); };
 
 
 // ================== input ==================
@@ -3325,6 +3662,8 @@ cv.addEventListener('pointerdown', e => {
     if (navigator.vibrate) navigator.vibrate(15);
     setTimeout(() => { tt.style.display = 'none'; }, 2500);
   }, 500);
+  // touch: hold while placing an item to turn it
+  if (e.pointerType === 'touch' && T.mode === 'place') lpTimer = setTimeout(() => { if (!press || press.moved) return; press.long = true; rotateGhost(); if (navigator.vibrate) navigator.vibrate(15); }, 450);
   if (e.button === 2){ if (T.mode === 'place') rotateGhost(); else if (S.held) dropBack(); else if (T.mode) cancelTool(); press.pan = true; press.right = true; }
   if (T.mode === 'room' && e.button === 0 && T.hover){ T.drag = {x0:clamp(T.hover.x, 0, S.bw - 1), y0:clamp(T.hover.y, 0, S.bh - 1), x1:clamp(T.hover.x, 0, S.bw - 1), y1:clamp(T.hover.y, 0, S.bh - 1)}; }
 });
@@ -3459,9 +3798,27 @@ function prepTick(){
   if (S.phase !== 'prep') return;
   S.time += STEP; tickStaff();
 }
-addEventListener('visibilitychange', () => { if (document.hidden) save(); });
+addEventListener('visibilitychange', () => {
+  if (document.hidden){ save(); if (S && S.phase === 'open' && speed > 0 && $('title').style.display === 'none'){ S.awayPaused = speed; setSpeed(0); } }
+  else if (S && S.awayPaused){ toast('⏸️ Paused while you were away. Press 1× to carry on.', 5000); S.awayPaused = 0; }
+});
 addEventListener('pagehide', save);
 resize(); refreshTitle(); requestAnimationFrame(frame);
+// loading screen: wait for the pictures (at most 12 s), with a line of Ministry humour
+(function loadingScreen(){
+  const lines = ['Stamping your forms…', 'Laminating the notices…', 'Counting the queue…', 'Finding the right department…', 'Waiting for approval to load…', 'Photocopying the photocopier…'];
+  const t0 = performance.now(); let li = 0;
+  const step = () => {
+    const f = LOADING.total ? LOADING.done / LOADING.total : 1, p = Math.round(f * 100);
+    $('loadFill').style.width = p + '%'; $('loadPct').textContent = p + '%';
+    if (performance.now() - t0 > (li + 1) * 900){ li++; $('loadLine').textContent = lines[li % lines.length]; }
+    if (f >= 1 || performance.now() - t0 > 12000){ $('loading').style.display = 'none'; return; }
+    setTimeout(step, 100);
+  };
+  step();
+})();
+// install on tablets / play offline: only works when served from a website (e.g. GitHub Pages)
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 // test hooks
 window.__jam = {
   get S(){ return S; }, T, cam,
