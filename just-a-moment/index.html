@@ -129,6 +129,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle
 #celebrate{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(.6);opacity:0;z-index:9;pointer-events:none;background:var(--cream);border:4px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);padding:14px 26px;text-align:center;font-weight:800;font-size:22px;transition:all .35s cubic-bezier(.2,1.6,.4,1)}
 #celebrate.show{opacity:1;transform:translate(-50%,-50%) scale(1)}#celebrate small{display:block;font-size:14px;font-weight:700;color:#7a5cff}
 .checklist .gr{font-size:12px}
+.hsec{margin:12px 0 4px;font-size:15px}
+.qlist{background:#fff;border:2px solid var(--ink);border-radius:10px;padding:6px 8px;margin:6px 0;font-size:12px}
+.qrow{display:grid;grid-template-columns:1.3fr 1fr 60px;gap:6px;align-items:center;padding:2px 0}
+.qbar{height:6px;background:#e6dcc8;border-radius:3px;overflow:hidden}.qbar i{display:block;height:100%}
+.dgraph{background:#fff;border:2px solid var(--ink);border-radius:12px;padding:8px;margin:8px 0;font-size:12px}
+.dbars{display:flex;gap:6px;align-items:flex-end;height:90px;margin:6px 0}
+.dcol{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+.dstack{flex:1;width:100%;display:flex;gap:2px;align-items:flex-end}.dstack i{flex:1;display:block;border-radius:3px 3px 0 0;min-height:1px}
+i.dc,.dkey.dc{background:#3fc33a}i.dw,.dkey.dw{background:#ff4f4f}.dkey{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 3px 0 6px}
 .quip{font-style:italic;color:#7a5cff;font-size:13px;margin:4px 0 8px}
 .memo{background:#fff;border:3px dashed var(--ink);border-radius:10px;padding:8px 10px;text-align:left;font-size:13px;margin:10px 0}
 .memo b{display:block;font-size:12px;opacity:.75}
@@ -167,8 +176,6 @@ body.big .pill{font-size:16px}body.big #sheet .sub,body.big #sheet .opt,body.big
   <span class="pill" id="hDay"></span>
   <span class="pill cash" id="hCash"></span>
   <span class="pill" id="hRate"></span>
-  <span class="pill" id="hToday"></span>
-  <span class="pill goal" id="hGoal" style="display:none"></span>
   <span class="pill" id="hEmerg" style="display:none;background:#ffd0d6"></span>
   <span class="spacer"></span>
   <button class="btn sm white" id="bMusic" title="Music">🎵</button>
@@ -779,11 +786,22 @@ const pointRole = p => p.type ? ROOMS[p.type].role : p.key === 'reception' ? 're
 const allPoints = () => [...S.rooms.filter(r => r.state === 'ready' && ROOMS[r.type].svc), ...S.objs.filter(o => o.key === 'reception' || o.key === 'ticket')];
 const roomObjs = r => S.objs.filter(o => o.room === r.id);
 function svcObjs(r){ const k = ROOMS[r.type].svc; return roomObjs(r).filter(o => o.key === k && !o.broken); }
-function capacity(p){ if (!p.type) return 1; if (p.type === 'ward') return svcObjs(p).length; return svcObjs(p).length ? 1 : 0; }
+// rooms where a second desk (with its own member of staff) sees a second patient at the same time
+const MULTI_DESK = ['gp', 'pharmacy', 'treatment'];
+function capacity(p){
+  if (!p.type) return 1; const n = svcObjs(p).length;
+  if (p.type === 'ward') return n;
+  if (MULTI_DESK.includes(p.type)) return n ? Math.max(1, Math.min(n, presentStaff(p).length)) : 0;
+  return n ? 1 : 0;
+}
 // where staff stand for a point
-function staffSpot(p){
+function staffSpot(p, st){
   if (!p.type){ return p.key === 'reception' ? spotOf(p, 's') : null; }
   const R = ROOMS[p.type];
+  if (st && MULTI_DESK.includes(p.type)){
+    const desks = svcObjs(p).filter(o => OBJ[o.key].s), mates = S.staff.filter(s => s.assigned === keyOf(p)).sort((a, b) => a.id - b.id);
+    const i = mates.indexOf(st); if (i >= 0 && desks[i % Math.max(1, desks.length)]) return spotOf(desks[i % desks.length], 's');
+  }
   if (R.staffAt){ const o = roomObjs(p).find(q => q.key === R.staffAt); if (o) return spotOf(o, 's'); }
   const so = roomObjs(p).find(q => q.key === R.svc);
   if (so && OBJ[so.key].s) return spotOf(so, 's');
@@ -808,14 +826,15 @@ function doorOutside(p){
 function save(){
   if (!S || S.phase === 'levelEnd') return;
   S.ver = GAME_VER;
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* storage blocked: keep playing */ }
+  // caches are rebuilt on load, so they are left out of the save
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S, (k, v) => k === 'lineCache' || k === 'sbubbles' || k === 'bubble' ? undefined : v)); } catch (e) { /* storage blocked: keep playing */ }
 }
 // GAME_VER goes up with every release; older saves are upgraded by filling in anything they lack
-const GAME_VER = 7;
+const GAME_VER = 8;
 let saveProblem = false;
 function upgradeSave(d){
   if (!LEVELS[d.level]) throw new Error('unknown level');
-  const def = {stamps:30, stampOrderAt:null, expands:0, seatTaken:{}, looTaken:{}, lineCache:{}, litter:[], history:[], fire:null, firePlan:null, sbRefer:false, posters:[], blocks:{}, research:{}, ratings:[]};
+  const def = {stamps:30, stampOrderAt:null, expands:0, seatTaken:{}, looTaken:{}, lineCache:{}, litter:[], history:[], fire:null, firePlan:null, sbRefer:false, sbubbles:[], bubble:null, tips:{}, cheered:{}, posters:[], blocks:{}, research:{}, ratings:[]};
   for (const [k, v] of Object.entries(def)) if (d[k] === undefined) d[k] = JSON.parse(JSON.stringify(v));
   if (LEVELS[d.level].endless && !d.year) d.year = 1;
   d.lineCache = {}; d.fire = null;
@@ -1031,9 +1050,9 @@ function checkRoomRect(type, r){
   }
   if (S.cash < roomCost(type, r.w, r.h)) return 'Not enough cash';
   // try it: the rest of the hospital must stay reachable and the room needs a possible door
-  const tmp = {id:-1, type, ...r, door:null, state:'door', queue:[], serving:[]};
+  const base = baseIssues(), tmp = {id:-1, type, ...r, door:null, state:'door', queue:[], serving:[]};
   S.rooms.push(tmp); rebuildGrid();
-  const ok = layoutOk(), doors = doorOptions(tmp).length;
+  const ok = layoutIssues() <= base, doors = doorOptions(tmp).length;
   S.rooms.pop(); rebuildGrid();
   if (!ok) return 'That would block the way';
   if (!doors) return 'No space for a door';
@@ -1047,19 +1066,24 @@ function doorOptions(r){
   return out.filter(d => !S.rooms.some(q => q.id !== r.id && q.door && q.door.ox === d.ox && q.door.oy === d.oy));
 }
 // everything that people need to reach must be reachable from the entrance
-function layoutOk(){
-  const d = distMap(entranceIn(), 999), W = S.W;
+// how many doors, spots and seats can't be reached from the entrance
+function layoutIssues(){
+  let n = 0; const d = distMap(entranceIn(), 999), W = S.W;
   const reach = t => inMap(t.x, t.y) && d[t.y * W + t.x] >= 0;
   const reachNear = p => { const t = tileOfPt(p); if (reach(t)) return true; return [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => reach({x:t.x + dx, y:t.y + dy})); };
-  for (const r of S.rooms) if (r.door && !reach({x:r.door.ox, y:r.door.oy})) return false;
+  for (const r of S.rooms) if (r.door && !reach({x:r.door.ox, y:r.door.oy})) n++;
   for (const o of S.objs){
     const def = OBJ[o.key];
-    if (def.s && !reachNear(spotOf(o, 's'))) return false;
-    if (def.p && !reachNear(spotOf(o, 'p'))) return false;
-    for (const s of seatsOf(o)) if (!reach(s.front)) return false;
+    if (def.s && !reachNear(spotOf(o, 's'))) n++;
+    if (def.p && !reachNear(spotOf(o, 'p'))) n++;
+    for (const s of seatsOf(o)) if (!reach(s.front)) n++;
   }
-  return true;
+  return n;
 }
+const layoutOk = () => layoutIssues() === 0;
+// a change is fine as long as it doesn't cut off anything that could be reached before
+let issuesCache = {v:-1, n:0};
+const baseIssues = () => { if (issuesCache.v !== layoutV) issuesCache = {v:layoutV, n:layoutIssues()}; return issuesCache.n; };
 function startRoom(type){ cancelTool(); T.mode = 'room'; T.roomType = type; closeSheet(); showBuildBar(); }
 function finishRoomDrag(){
   const r = rectOf(T.drag); T.drag = null;
@@ -1074,8 +1098,9 @@ function finishRoomDrag(){
 }
 function placeDoor(d){
   const r = roomById(T.roomId); if (!r) return;
+  r.door = null; rebuildGrid(); const base = baseIssues();
   r.door = d; r.state = 'furnish'; rebuildGrid();
-  if (!layoutOk()){ r.door = null; r.state = 'door'; rebuildGrid(); toast('That door is blocked'); sfx('error'); return; }
+  if (layoutIssues() > base){ r.door = null; r.state = 'door'; rebuildGrid(); toast('That door is blocked'); sfx('error'); return; }
   sfx('click'); T.mode = 'furnish'; showBuildBar(); tutCheck();
 }
 function startPlace(key, roomId){ T.mode = 'place'; T.key = key; T.roomId = roomId || null; T.o = T.o || 0; closeSheet(); showBuildBar(); }
@@ -1104,8 +1129,8 @@ function checkPlace(g, free){
   }
   for (const s of seatsOf(g)){ const t = s.front; if (!area(t.x, t.y) || objAt(t.x, t.y)) return 'Needs space in front to sit down'; }
   // try it
-  const tmp = {...g, id:-1}; S.objs.push(tmp); rebuildGrid();
-  const ok = layoutOk(); S.objs.pop(); rebuildGrid();
+  const base = baseIssues(), v0 = layoutV, tmp = {...g, id:-1}; S.objs.push(tmp); rebuildGrid();
+  const ok = layoutIssues() <= base; S.objs.pop(); rebuildGrid(); layoutV = v0;
   return ok ? null : 'That would block the way';
 }
 function placeObject(g){
@@ -1152,6 +1177,8 @@ function finishFurnish(){
   const missing = ROOMS[r.type].need.filter(k => !roomObjs(r).some(o => o.key === k));
   if (missing.length){ toast('Still needed: ' + missing.map(k => OBJ[k].name).join(', ')); sfx('error'); return; }
   r.state = 'ready'; sfx('star'); floatText(r.x + r.w / 2, r.y + r.h / 2, ROOMS[r.type].name + ' ready!', '#3fc33a');
+  r.blocked = roomProblem(r);
+  if (r.blocked){ toast('⚠️ The ' + ROOMS[r.type].name + ' ' + r.blocked + '. Move or turn the furniture.', 6000, {x:r.x + r.w / 2, y:r.y + r.h / 2}); sfx('error'); }
   cancelTool(); autoAssign(); tutCheck(); save();
 }
 // items in use can't be moved or turned until people step away
@@ -1303,13 +1330,16 @@ function autoAssign(){
   for (const p of allPoints()){
     const role = pointRole(p); if (!role) continue;
     const k = keyOf(p);
-    if (S.staff.some(s => s.assigned === k)) continue;
-    const st = S.staff.find(s => s.role === role && !s.assigned && s.mode !== 'held');
-    if (st){ st.assigned = k; st.repath = true; }
+    // rooms with several desks take one member of staff per desk
+    const want = p.type && MULTI_DESK.includes(p.type) ? Math.max(1, svcObjs(p).length) : 1;
+    for (let n = S.staff.filter(s => s.assigned === k).length; n < want; n++){
+      const st = S.staff.find(s => s.role === role && !s.assigned && s.mode !== 'held');
+      if (!st) break; st.assigned = k; st.repath = true;
+    }
   }
   for (const s of S.staff) if (s.assigned && !getPoint(s.assigned)) { s.assigned = null; s.repath = true; }
 }
-const staffSpotOf = st => { const p = getPoint(st.assigned); return p ? staffSpot(p) : null; };
+const staffSpotOf = st => { const p = getPoint(st.assigned); return p ? staffSpot(p, st) : null; };
 function atSpot(a, sp){ return sp && Math.hypot(a.pos.x - sp.x, a.pos.y - sp.y) < 0.15; }
 function presentStaff(p){
   const k = keyOf(p);
@@ -1320,7 +1350,8 @@ function staffRoom(){ return S.rooms.find(r => r.type === 'staff' && r.state ===
 function walkTo(a, sp, goal){
   const from = tileOfPt(a.pos), to = tileOfPt(sp);
   const path = bfs(from, to);
-  if (!path){ a.path = []; a.goal = goal; a.mode = 'walk'; a.dest = sp; a.stuck = (a.stuck || 0) + 1; return false; }
+  if (!path){ a.path = []; a.goal = goal; a.mode = 'walk'; a.dest = sp; a.stuck = (a.stuck || 0) + 1; markStuck(a, sp, false); return false; }
+  markStuck(a, sp, true);
   a.path = path.slice(1).map(t => ({x:t.x + 0.5, y:t.y + 0.5}));
   a.path.push({x:sp.x, y:sp.y}); a.dest = sp; a.goal = goal; a.mode = 'walk'; a.stuck = 0;
   return true;
@@ -1622,7 +1653,8 @@ function goWait(pt, p){
 function walkPath(a, sp){
   const from = tileOfPt(a.pos), to = tileOfPt(sp);
   const path = bfs(from, to);
-  if (path){ a.path = path.slice(1).map(t => ({x:t.x + 0.5, y:t.y + 0.5})); a.path.push({x:sp.x, y:sp.y}); return true; }
+  if (path){ markStuck(a, sp, true); a.path = path.slice(1).map(t => ({x:t.x + 0.5, y:t.y + 0.5})); a.path.push({x:sp.x, y:sp.y}); return true; }
+  markStuck(a, sp, false);
   // no way through: walk to the reachable tile nearest the target instead of cutting through a wall
   const d = distMap(from, 200), W = S.W; let best = -1, bd = 1e9;
   for (let i = 0; i < d.length; i++){ if (d[i] < 0) continue; const x = i % W, y = (i / W) | 0, m = Math.abs(x - to.x) + Math.abs(y - to.y) + d[i] * 0.001; if (m < bd){ bd = m; best = i; } }
@@ -1644,7 +1676,10 @@ function sendHome(pt, walked){
   pt.path.push({x:(pt.pos.x < S.bw / 2 ? -0.5 : S.bw + 0.5), y:S.bh + 1.5});
 }
 function walkOut(pt){
+  const why = walkoutReason(pt);
   sendHome(pt, true); S.walkouts++;
+  floatText(pt.pos.x, pt.pos.y, '🚶 ' + why, '#ff4f4f');
+  addLog('🚶 A patient walked out: ' + why.toLowerCase() + '.', 'alert', {x:pt.pos.x, y:pt.pos.y});
   showBubble(pt, pick(CONTENT.bubbles.walkout), 3); sfx('walkout'); pa('walkout', {ticket: pt.ticket || 'A-000'});
   postReview(pt, true);
   if (pt.vip){ S.vipWalkout = pt.vip; S.points = Math.max(0, S.points - 2); pa('event', {vip: CONTENT.vips[pt.vip].name}, CONTENT.vips[pt.vip].walkout); }
@@ -1793,7 +1828,7 @@ function finishService(pt, p){
   }
   if (so && OBJ[so.key].machine){
     so.wear += 8 + rand() * 6;
-    if (so.wear >= 100 && !so.broken){ so.broken = true; sfx('empty'); pa('event', {station: OBJ[so.key].name}, PA_EXTRA.breakdown); addLog('The ' + OBJ[so.key].name + ' has broken down. A handyman can fix it.', 'alert', {x:so.x + 0.5, y:so.y + 0.5}); }
+    if (so.wear >= 100 && !so.broken){ so.broken = true; firstTip('broken', 'Machines wear out and break. A Handyman repairs them, or tap the machine to pay for a repair. A spare machine in the same room keeps it going.', {x:so.x + 0.5, y:so.y + 0.5}); sfx('empty'); pa('event', {station: OBJ[so.key].name}, PA_EXTRA.breakdown); addLog('The ' + OBJ[so.key].name + ' has broken down. A handyman can fix it.', 'alert', {x:so.x + 0.5, y:so.y + 0.5}); }
   }
   if (p.type === 'records'){
     const cp = roomObjs(p).find(o => o.key === 'copier');
@@ -1860,7 +1895,10 @@ function tickPoints(){
     const busy = new Set(p.serving.map(id => (S.patients.find(q => q.id === id) || {}).server));
     // tired staff finish their patient and then take a break instead of taking the next one
     const tiredOk = s => !(s.mood < 25 && staffRoom() && S.phase === 'open');
-    const pres = presentStaff(p).filter(tiredOk), srv = pres.find(s => !busy.has(s.id)) || pres[0];
+    const pres = presentStaff(p).filter(tiredOk), free = pres.filter(s => !busy.has(s.id));
+    // with several desks, the free member of staff nearest the chosen desk serves
+    const ds = so && OBJ[so.key].s ? spotOf(so, 's') : null;
+    const srv = (ds && free.length ? free.slice().sort((a, b) => Math.hypot(a.pos.x - ds.x, a.pos.y - ds.y) - Math.hypot(b.pos.x - ds.x, b.pos.y - ds.y))[0] : free[0]) || (MULTI_DESK.includes(p.type) ? null : pres[0]);
     if (!srv && p.key !== 'ticket') continue;
     p.queue = p.queue.filter(id => id !== pt.id); p.serving.push(pt.id); freeSeat(pt);
     pt.server = srv ? srv.id : null; pt.svcObj = so ? so.id : null; pt.spot = spot; pt.st = 'call'; pt.repath = true; pt.drinkUntil = 0;
@@ -1935,7 +1973,7 @@ function tick(){
   for (const a of S.patients){ a.prev.x = a.pos.x; a.prev.y = a.pos.y; }
   for (const a of S.staff) if (a.pos){ a.prev.x = a.pos.x; a.prev.y = a.pos.y; }
   if (S.phase !== 'open' || S.dilemmaOpen) return;
-  const before = S.time; S.time += STEP;
+  const before = S.time; S.time += STEP; if (Math.floor(S.time * 4) !== Math.floor(before * 4)) trackHour();
   if (before < SHIFT && S.time >= SHIFT) pa('closing_time');
   if (S.time < SHIFT && S.spawned < S.arrivals && S.time >= S.schedule[S.spawned]){ spawnPatient(); S.spawned++; }
   if ((before < 45 && S.time >= 45) || (before < 145 && S.time >= 145)) pa('rush');
@@ -2025,7 +2063,7 @@ const VIP_TYPES = ['nephew', 'influencer', 'auntie'];
 function spawnVip(type){
   const pt = spawnPatient({vip:type});
   pa('event', {vip: CONTENT.vips[type].name}, CONTENT.vips[type].arrive); sfx('doors');
-  S.later.push({at:S.time + 3, vipBubble:pt.id});
+  S.later.push({at:S.time + 3, vipBubble:pt.id}); vipArrived(pt);
   return pt;
 }
 // ---------- pop-up choices ----------
@@ -2207,6 +2245,7 @@ function startFire(o){
   if (ext) S.fire.autoAt = S.time + 2.5;
   else { const rid = roomAt(o.x, o.y); if (rid) { S.fire.room = 'r' + rid; S.blocks[S.fire.room] = Infinity; } }
   pa('event', {item:name.toLowerCase()}, FIRE_PA.start); sfx('empty');
+  firstTip('fire', 'Fires start in machines like copiers and drinks machines. A Fire Extinguisher within 5 tiles puts them out by itself.', {x:S.fire.x, y:S.fire.y});
   addLog('🔥 Fire near the ' + name + '!' + (ext ? ' The extinguisher is on it.' : ' Tap the fire to put it out. Tip: an extinguisher nearby puts fires out by itself.'), 'alert', {x:S.fire.x, y:S.fire.y});
 }
 function endFire(how){
@@ -2502,14 +2541,14 @@ function render(alpha){
   drawRoomTints(); drawBuildUnder();
   depthSort(sceneItems(alpha)).forEach(it => it.draw());
   drawHighlights();
-  drawBuildOver();
+  drawBuildOver(); drawPlaceMarkers(); drawMoveRoom();
   // confetti
   const tnow = performance.now();
   fx = fx.filter(p => tnow - p.t0 < 1100);
   for (const p of fx){ const k = (tnow - p.t0) / 1000, [sx, sy] = iso(p.x, p.y); g.globalAlpha = 1 - k / 1.1; g.fillStyle = p.col; g.fillRect(sx + p.vx * k - 2, sy - 40 + p.vy * k + 120 * k * k - 2, 4, 5); }
   g.globalAlpha = 1;
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawOverlay(alpha); drawAttention();
+  drawOverlay(alpha); drawAttention(); drawPatienceBars(); if (S.phase === 'open'){ refreshRoomChecks(); drawStuck(); }
 }
 // ---------- build previews ----------
 function tileQuad(x, y, w, h, fill, stroke){ P([iso(x, y), iso(x + w, y), iso(x + w, y + h), iso(x, y + h)]); g.fillStyle = fill; g.fill(); if (stroke){ g.lineWidth = 2; g.strokeStyle = stroke; g.stroke(); } }
@@ -2530,12 +2569,13 @@ function drawBuildUnder(){
     if (T.doorPick){ const d = T.doorPick; tileQuad(d.x, d.y, 1, 1, 'rgba(63,195,58,.35)'); tileQuad(d.ox, d.oy, 1, 1, 'rgba(63,195,58,.25)'); }
   }
   if (T.mode === 'place' && T.hover){
-    const gh = ghostAt(T.hover.x, T.hover.y), err = checkPlace(gh), f = foot(OBJ[gh.key], gh.o);
+    const gh = ghostAt(T.hover.x, T.hover.y), pk = gh.key + gh.x + ',' + gh.y + ',' + gh.o + ',' + gh.room + '|' + layoutV + '|' + S.cash;
+    if (T.placeKey !== pk){ T.placeKey = pk; T.placeErr = checkPlace(gh); }
+    const err = T.placeErr, f = foot(OBJ[gh.key], gh.o);
     T.ghost = gh; T.ghostErr = err;
     tileQuad(gh.x, gh.y, f.w, f.h, err ? 'rgba(255,79,124,.35)' : 'rgba(63,195,58,.35)', err ? '#ff4f7c' : '#3fc33a');
     const def = OBJ[gh.key];
-    for (const k of ['s', 'p']) if (def[k] && !(def.onIt && k === 'p')){ const t = tileOfPt(spotOf(gh, k)); tileQuad(t.x + 0.25, t.y + 0.25, 0.5, 0.5, k === 's' ? 'rgba(59,139,255,.6)' : 'rgba(255,210,63,.7)'); }
-    for (const s of seatsOf(gh)) tileQuad(s.front.x + 0.3, s.front.y + 0.3, 0.4, 0.4, 'rgba(255,210,63,.6)');
+
   }
 }
 function drawBuildOver(){
@@ -2605,7 +2645,7 @@ function drawOverlay(alpha){
   if (S.bubble){ const pt = S.patients.find(q => q.id === S.bubble.id); if (pt) speech(pt.pos.x, pt.pos.y, S.bubble.text, '#fff'); }
   for (const b of S.sbubbles || []){ if (b.until < S.time) continue; const st = S.staff.find(s => s.id === b.sid); if (st && st.pos) speech(st.pos.x, st.pos.y, b.text, '#dff2ff'); }
   if (T.mode === 'room' && T.ghostInfo && T.hover){ const gi = T.ghostInfo, [gx, gy] = toScreen(gi.r.x + gi.r.w / 2, gi.r.y + gi.r.h / 2, 8); plate(gx, gy, gi.r.w + '×' + gi.r.h + ' · $' + gi.cost + (gi.err && T.drag ? ' · ' + gi.err : ''), gi.err && T.drag ? '#ff4f7c' : '#3fc33a'); }
-  if (T.mode === 'place' && T.ghost && T.ghostErr && T.hover){ const [gx, gy] = toScreen(T.ghost.x + 0.5, T.ghost.y + 0.5, 70); plate(gx, gy, T.ghostErr, '#ff4f7c'); }
+  if (T.mode === 'place' && T.ghost && T.ghostErr && T.hover){ const [gx, gy] = toScreen(T.ghost.x + 0.5, T.ghost.y + 0.5, 70); plate(gx, gy, placeMessage(T.ghost, T.ghostErr), '#ff4f7c'); }
   floaters = floaters.filter(f => performance.now() - f.t0 < 1300);
   for (const f of floaters){
     const k = (performance.now() - f.t0) / 1300, [sx, sy] = toScreen(f.x, f.y, 50 + k * 40);
@@ -2658,17 +2698,25 @@ let toastTimer = 0, paTimer = 0;
 function toast(msg, ms = 2600, at = null){ const t = $('toast'); t.textContent = msg; t.style.display = 'block'; t.classList.toggle('go', !!at); t.onclick = at ? () => { centerOn(at); t.style.display = 'none'; } : null; clearTimeout(toastTimer); toastTimer = setTimeout(() => t.style.display = 'none', ms); }
 function showPA(text){ tickerPush(text); return; const tip = $('tip'); tip.innerHTML = '<span class="pa">PA</span><span></span>'; tip.lastChild.textContent = text; tip.dataset.pa = '1'; clearTimeout(paTimer); paTimer = setTimeout(() => { tip.dataset.pa = ''; }, 7000); }
 function showReview(stars, who, text){
-  const box = $('reviews'), el = document.createElement('div'); el.className = 'rev';
+  // one review at a time, and none while a panel is open (they are all in the News)
+  const box = $('reviews'); box.innerHTML = '';
+  if (sheet.style.display === 'block') return;
+  const el = document.createElement('div'); el.className = 'rev';
   el.innerHTML = '<span class="st">' + '★'.repeat(stars) + '<i>' + '★'.repeat(5 - stars) + '</i></span> <b></b> <span class="t"></span>';
   el.querySelector('b').textContent = who; el.querySelector('.t').textContent = text;
-  box.prepend(el); while (box.children.length > 3) box.lastChild.remove(); setTimeout(() => el.remove(), 8000);
+  box.append(el); setTimeout(() => el.remove(), 5000);
 }
 function closeSheet(){ sheet.style.display = 'none'; T.selected = null; document.querySelectorAll('.tool').forEach(b => b.classList.remove('active')); }
 function showSheet(html, toolId){
-  sheet.innerHTML = html + `<button class="btn white x" data-close aria-label="Close">✕</button>`;
+  // panels that belong to a toolbar group get tabs along the top
+  const grp = TOOL_GROUP[toolId];
+  let tabs = '';
+  if (grp){ lastTab[grp] = toolId; tabs = '<div class="gtabs">' + GROUPS[grp].map(([id, n]) => `<button class="btn sm ${id === toolId ? '' : 'white'}" data-gtab="${id}">${n}${id === 'tLog' && S && S.unread ? ' (' + S.unread + ')' : ''}</button>`).join('') + '</div>'; }
+  sheet.innerHTML = tabs + html + `<button class="btn white x" data-close aria-label="Close">✕</button>`;
   sheet.style.display = 'block';
-  document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.id === toolId));
+  document.querySelectorAll('.tool').forEach(b => b.classList.toggle('active', b.id === toolId || b.id === grp));
   sheet.querySelector('[data-close]').onclick = closeSheet;
+  if (grp) sheet.querySelectorAll('[data-gtab]').forEach(b => b.onclick = () => { cancelTool(); GROUPS[grp].find(t => t[0] === b.dataset.gtab)[2](); sfx('click'); });
 }
 const on = (sel, fn) => sheet.querySelectorAll(sel).forEach(b => b.onclick = () => fn(b));
 const money = n => '$' + Math.round(n).toLocaleString('en-US');
@@ -2790,15 +2838,17 @@ function openRoomCard(r){
   const R = ROOMS[r.type], st = S.staff.find(s => s.assigned === 'r' + r.id);
   const machines = roomObjs(r).filter(o => OBJ[o.key].machine);
   let h = `<h3>${R.icon} ${R.name}</h3><p class="sub">${r.w}×${r.h}${R.charge ? ' · charges ' + money(R.charge) + ' · ' + R.time + ' s per patient' : ''}</p>${ROOM_QUIP[r.type] ? `<p class="quip">“${ROOM_QUIP[r.type]}”</p>` : ''}`;
+  if (r.state === 'ready') h += roomInfoHtml(r) + queueHtml(r);
   if (r.state !== 'ready') h += `<p class="sub"><b>Unfinished.</b> Still needed: ${R.need.filter(k => !roomObjs(r).some(o => o.key === k)).map(k => OBJ[k].name).join(', ') || 'press Done'}.</p>`;
   if (R.role) h += `<p class="sub">${st ? 'Staff: <b>' + st.name + '</b> · ' + staffStatus(st) : '<b class="bad">No ' + ROLES[R.role].name + '!</b> Hire one, or drop one in here.'}</p>`;
   if (R.svc) h += `<p class="sub">Queue: <b>${r.queue.length}</b> · being seen: ${r.serving.length}${r.type === 'ward' ? ' of ' + svcObjs(r).length + ' beds' : ''}</p>`;
   for (const m of machines) h += `<p class="sub">${OBJ[m.key].name}: ${m.broken ? '<b class="bad">broken</b>' : m.jam ? '<b class="bad">jammed</b>' : 'wear ' + Math.round(m.wear) + '%'}</p>${bar(m.wear, m.wear >= 75 ? '#ff4f4f' : '#ffb020')}` + (m.broken ? `<button class="btn sm red" data-fix="${m.id}" ${S.cash < 150 ? 'disabled' : ''}>Emergency repair · $150</button>` : '');
   if (usesSupplies(r)) h += `<p class="sub">📦 Supplies: <b>${S.stamps}</b> of ${supplyCap()}${S.stampOrderAt !== null ? ' (on the way)' : ''} · each Storage Shelf holds 20 more</p>${bar(100 * S.stamps / supplyCap(), S.stamps < 8 ? '#ff4f4f' : '#3fc33a')}<button class="btn sm white" data-stamps ${S.stampOrderAt !== null || S.stamps >= supplyCap() || S.cash < supplyCost() ? 'disabled' : ''}>Order supplies · $${supplyCost()}</button>`;
-  h += `<div class="grid2" style="margin-top:8px"><button class="btn sm white" data-edit>Edit furniture</button><button class="btn sm red" data-sell>Sell (+${money(refund(r) + roomObjs(r).reduce((a, o) => a + refund(o), 0))})</button></div>`;
+  h += `<div class="grid2" style="margin-top:8px"><button class="btn sm white" data-edit>Edit furniture</button><button class="btn sm white" data-mvroom>✋ Move room</button><button class="btn sm red" data-sell>Sell (+${money(refund(r) + roomObjs(r).reduce((a, o) => a + refund(o), 0))})</button></div>`;
   showSheet(h);
   on('[data-edit]', () => { cancelTool(); T.mode = 'furnish'; T.roomId = r.id; closeSheet(); showBuildBar(); });
   confirmBtn(sheet.querySelector('[data-sell]'), 'Tap again to sell', () => { sellRoom(r); closeSheet(); });
+  on('[data-mvroom]', () => startMoveRoom(r));
   on('[data-fix]', b => { emergencyRepair(objById(+b.dataset.fix)); openRoomCard(r); });
   on('[data-stamps]', () => { orderSupplies(); openRoomCard(r); });
 }
@@ -2806,8 +2856,9 @@ function openObjCard(o){
   T.selected = {kind:'obj', id:o.id};
   const d = OBJ[o.key];
   let h = `<h3>${d.icon} ${d.name}</h3><p class="sub"><b>What it does:</b> ${d.note || ITEM_NOTE[o.key] || ''}</p>${ITEM_QUIP[o.key] ? `<p class="quip">“${ITEM_QUIP[o.key]}”</p>` : ''}`;
+  h += dupNote(o);
   if (o.key === 'noticeboard') h += `<div class="memo"><b>Notice of the day</b>${S.posters[o.id % S.posters.length]}</div>`;
-  if (o.key === 'reception'){ const st = S.staff.find(s => s.assigned === 'o' + o.id); h += `<p class="sub">${st ? 'Receptionist: <b>' + st.name + '</b>' : '<b class="bad">No Receptionist!</b>'} · queue ${o.queue.length}</p>`; }
+  if (o.key === 'reception'){ const st = S.staff.find(s => s.assigned === 'o' + o.id); h += `<p class="sub">${st ? 'Receptionist: <b>' + st.name + '</b>' : '<b class="bad">No Receptionist!</b>'}</p>` + queueHtml(o); }
   if (d.machine) h += `<p class="sub">Wear ${Math.round(o.wear)}%${o.broken ? ' · <b class="bad">broken</b>' : ''}</p>${bar(o.wear, '#ffb020')}`;
   h += `<div class="grid2"><button class="btn sm white" data-turn>⟳ Turn</button><button class="btn sm white" data-move>✋ Move</button><button class="btn sm red" data-sell>Sell (+${money(refund(o))})</button>${o.room ? '<button class="btn sm white" data-room>Room details</button>' : ''}</div>
     <p class="later" style="font-size:12px;opacity:.7">Moving is free. Selling gives back ${o.day === S.day && S.phase === 'prep' ? 'the full price (bought today)' : 'half the price'}.</p>`;
@@ -2821,7 +2872,8 @@ function openObjCard(o){
 function showBuildBar(){
   const b = $('buildbar'); let h = '';
   const r = T.roomId ? roomById(T.roomId) : null;
-  if (T.mode === 'room'){ const R = ROOMS[T.roomType]; h = `<span>${R.icon} Drag out a <b>${R.name}</b> (at least ${R.min[0]}×${R.min[1]}) · ${money(R.price)} + ${money(R.tile)} per tile</span><button class="btn sm white" data-cancel>Cancel</button>`; }
+  if (T.mode === 'moveRoom'){ const mr = roomById(T.moveId); h = `<span>✋ Moving the <b>${mr ? ROOMS[mr.type].name : 'room'}</b>: click its new spot (furniture moves with it)</span><button class="btn sm white" data-cancel>Cancel</button>`; }
+  else if (T.mode === 'room'){ const R = ROOMS[T.roomType]; h = `<span>${R.icon} Drag out a <b>${R.name}</b> (at least ${R.min[0]}×${R.min[1]}) · ${money(R.price)} + ${money(R.tile)} per tile</span><button class="btn sm white" data-cancel>Cancel</button>`; }
   else if (T.mode === 'door') h = `<span>🚪 Click a white dot in the corridor to place the door</span><button class="btn sm red" data-cancel>Cancel room</button>`;
   else if (T.mode === 'furnish' && r){
     const R = ROOMS[r.type], have = k => roomObjs(r).filter(o => o.key === k).length;
@@ -2846,7 +2898,7 @@ const TUT = [
   {t:'Click <b>Build</b>, open the <b>Items</b> tab, choose <b>Reception Desk</b>, then click a spot in the corridor near the entrance. R or right-click turns it.', done:() => S.objs.some(o => o.key === 'reception')},
   {t:'Now a GP Office. Click <b>Build</b>, choose <b>GP Office</b>, then drag out a room at least 3×3 on the empty floor.', done:() => S.rooms.some(r => r.type === 'gp')},
   {t:'Click one of the white dots in the corridor to place the door.', done:() => S.rooms.some(r => r.type === 'gp' && r.door)},
-  {t:'Place the <b>GP Desk</b> inside. The doctor stands on the blue square, patients on the yellow one. Then press <b>Done</b>.', done:() => S.rooms.some(r => r.type === 'gp' && r.state === 'ready')},
+  {t:'Place the <b>GP Desk</b> inside. The doctor stands on the 👤 square, patients on the 🙂 one: green means free, red means blocked. Then press <b>Done</b>.', done:() => S.rooms.some(r => r.type === 'gp' && r.state === 'ready')},
   {t:'Build a <b>Pharmacy</b> the same way: Build, drag, door, counter, Done.', done:() => S.rooms.some(r => r.type === 'pharmacy' && r.state === 'ready')},
   {t:'Patients hate standing. Put at least two <b>Benches</b> near the doors (Build → Items → Bench).', done:() => S.objs.filter(o => o.key === 'bench').length >= 2},
   {t:'Time to hire. Click <b>Staff</b> and take on a <b>Receptionist</b>, a <b>Doctor</b> and a <b>Pharmacist</b>. They walk to their posts by themselves.', done:() => ['receptionist', 'doctor', 'pharmacist'].every(r => S.staff.some(s => s.role === r))},
@@ -2892,8 +2944,7 @@ function updateHud(){
   const rate = levelRating();
   setH('hRate', '★ ' + (rate ? rate.toFixed(1) : '–') + (L.sandbox ? '' : ' <small>/ ' + L.goal.rating + '</small>'));
   updateGoalCard(); updateAlert(); updateToolbar(); checkCelebrations();
-  setH('hToday', 'Cured ' + S.cures + '/' + target() + (S.walkouts ? ' <small class="bad">· left ' + S.walkouts + '</small>' : '') + ' <small>· level ' + S.totalCures + '/' + L.goal.cures + '</small>');
-  setShow('hGoal', false); setShow('hToday', false); if (false) setH('hGoal', 'Goal: ' + goalLabel(S.goal));
+
   const E = S.emergency; setShow('hEmerg', !!E); if (E) setH('hEmerg', '🚑 ' + E.cured + '/' + E.n + ' · ' + Math.max(0, Math.ceil(E.until - S.time)) + ' s');
   setH('bOpen', S.phase === 'prep' ? 'Open Doors' : open ? (S.time < SHIFT ? 'Open · ' + Math.ceil((SHIFT - S.time)) + ' s' : 'Closing…') : '…');
   if ($('bOpen').disabled !== (S.phase !== 'prep')) $('bOpen').disabled = S.phase !== 'prep';
@@ -2901,7 +2952,6 @@ function updateHud(){
   if (kon){ const cd = Math.ceil((S.kopiReady || 0) - S.time); setH('tKopi', '<b>☕</b>' + (cd > 0 ? cd + ' s' : 'Kopi $40')); kb.disabled = cd > 0 || S.cash < 40; }
   if ($('tResearch').disabled !== !L.extras.research) $('tResearch').disabled = !L.extras.research;
   setShow('logBadge', !!S.unread); setH('logBadge', String(Math.min(99, S.unread)));
-  $('tLabels').classList.toggle('active', !!S.labels); $('tWalls').classList.toggle('active', !!S.wallsDown);
   if ($('tUndo').disabled !== !UNDO.length) $('tUndo').disabled = !UNDO.length;
   setShow('paused', open && speed === 0); if (open && speed === 0) $('paused').style.display = 'flex';
   const hh = $('hud').offsetHeight, tk = $('ticker'); tk.style.top = hh + 'px'; const top = hh + (tk.style.display === 'flex' ? tk.offsetHeight : 0) + 4;
@@ -2932,7 +2982,7 @@ function showReport(R){
   const tg = (ok, label, val) => `<div><span>${ok ? '✅' : '⬜'} ${label}</span><b>${val}</b></div>`;
   $('reportCard').innerHTML = `<h2>Day ${S.day} Report</h2><div class="stars">${starHtml(stars)}</div>
     <div class="news"><b>${CONTENT.newspaper.masthead}</b><div class="hl">${hl}</div><div class="side">Notice of the day: ${S.posters[0] || ''}</div></div>
-    <div class="stats"><span>Cured</span><span>${S.cures} / ${t}</span><span>Walkouts</span><span>${S.walkouts}</span>${S.sentHome ? `<span>Sent home untreated</span><span>${S.sentHome}</span>` : ''}<span>Fees earned</span><span>${money(S.earned)}</span>
+    ${dayGraphHtml()}<div class="stats"><span>Cured</span><span>${S.cures} / ${t}</span><span>Walkouts</span><span>${S.walkouts}</span>${S.sentHome ? `<span>Sent home untreated</span><span>${S.sentHome}</span>` : ''}<span>Fees earned</span><span>${money(S.earned)}</span>
     <span>Star bonus</span><span>${money(bonus)}</span><span>Wages</span><span>−${money(wages)}</span><span>Cash now</span><span>${money(S.cash)}</span>
     <span>KopiReviews today</span><span>${avg ? avg.toFixed(1) + ' ★' : '–'}</span><span>Ministry Points</span><span>${S.points}${nextRank ? ' / ' + nextRank : ''}</span></div>
     ${L.sandbox ? '' : `<div class="targets"><b>${L.endless ? 'Year ' + (S.year || 1) + ' targets' : 'Level targets'} (Day ${S.day} of ${L.days})</b>${tg(S.totalCures >= g2.cures, 'Cures', S.totalCures + ' / ' + g2.cures)}${tg(S.cash >= g2.bank, 'Money in the bank', money(S.cash) + ' / ' + money(g2.bank))}${tg(rate >= g2.rating, 'Rating', (rate ? rate.toFixed(1) : '–') + ' / ' + g2.rating + ' ★')}</div>`}
@@ -3000,7 +3050,6 @@ $('bMenu').onclick = () => {
   showSheet(`<h3>Menu</h3><p class="sub">${S.name} · ${level().name} · Day ${S.day}</p><div class="grid">
     <button class="btn white opt" data-help><span>❓ How to play<small>Rooms, items, illnesses and what every icon means</small></span></button>
     <button class="btn white opt" data-fit><span>Reset the view<small>Zoom out to see the whole hospital</small></span></button>
-    <button class="btn white opt" data-tut><span>${S.tut === null ? 'Show the tutorial again' : 'Hide the tutorial'}</span></button>
     <button class="btn white opt" data-set="big"><span>${SET.big ? '✅' : '⬜'} Larger text</span></button>
     <button class="btn white opt" data-set="calm"><span>${SET.calm ? '✅' : '⬜'} Less motion<small>No bouncing, shaking or confetti</small></span></button>
     <button class="btn white opt" data-set="cb"><span>${SET.cb ? '✅' : '⬜'} Colour-blind friendly colours<small>Blue, orange and purple bars</small></span></button>
@@ -3008,7 +3057,6 @@ $('bMenu').onclick = () => {
     <button class="btn white opt" data-title><span>Save and quit to the title screen</span></button></div>`);
   on('[data-help]', () => openHelp('basics'));
   on('[data-fit]', () => { fitCamera(); closeSheet(); });
-  on('[data-tut]', () => { S.tut = S.tut === null ? 0 : null; drawAdvisor(); closeSheet(); });
   on('[data-title]', () => toTitle());
   on('[data-set]', b => { SET[b.dataset.set] = !SET[b.dataset.set]; saveSet(); $('bMenu').onclick(); });
   on('[data-mus]', () => { audioInit(); setMusic(!AU.music); $('bMenu').onclick(); });
@@ -3032,8 +3080,17 @@ function snap(label){
   UNDO.push({label, rooms:JSON.stringify(S.rooms), objs:JSON.stringify(S.objs), cash:S.cash});
   if (UNDO.length > 15) UNDO.shift();
 }
+function snapPeople(label){
+  UNDO.push({label, people:true, staff:JSON.stringify(S.staff.map(s => ({id:s.id, assigned:s.assigned})))});
+  if (UNDO.length > 15) UNDO.shift();
+}
 function undo(){
   const u = UNDO.pop(); if (!u){ toast('Nothing to undo.'); return; }
+  if (u.people){
+    // staff moves: put everyone back on their old post
+    for (const o of JSON.parse(u.staff)){ const st = S.staff.find(s => s.id === o.id); if (!st) continue; if (st.assigned !== o.assigned){ for (const s of S.staff) if (s !== st && s.assigned === o.assigned && o.assigned) s.assigned = null; st.assigned = o.assigned; } if (st.mode !== 'off'){ st.mode = 'walk'; st.repath = true; } }
+    toast('Undone: ' + u.label); sfx('click'); save(); return;
+  }
   if (T.moving){ S.objs.push(T.moving); T.moving = null; }
   Object.assign(T, {mode:null, roomType:null, drag:null, key:null, roomId:null, ghost:null, doorPick:null}); $('buildbar').style.display = 'none';
   S.rooms = JSON.parse(u.rooms); S.objs = JSON.parse(u.objs); S.cash = u.cash; S.looTaken = {};
@@ -3165,6 +3222,7 @@ function tooltipHtml(sx, sy){
   const hp = personAt(sx, sy);
   if (hp && hp.kind === 'patient') return `<b>${hp.a.vip ? '⭐ ' + CONTENT.vips[hp.a.vip].name : hp.a.ticket || 'Patient'}</b><br>${AILMENTS[hp.a.ailment].name} · patience ${Math.round(hp.a.patience)}`;
   if (hp) return `<b>${hp.a.name}</b><br>${ROLES[hp.a.role].name} · mood ${Math.round(hp.a.mood)}<br>${staffStatus(hp.a)}`;
+  const qp = pointAtDoor(tx, ty); if (qp && (qp.queue.length || qp.serving.length)) return `<b>${pointName(qp)}</b>` + `<div class="qlist" style="margin:4px 0 0">${queueRows(qp, 6)}</div>`;
   const o = objectAtScreen(sx, sy), r = roomById(roomAt(tx, ty));
   if (o) return `<b>${OBJ[o.key].name}</b>` + (OBJ[o.key].machine ? `<br>wear ${Math.round(o.wear)}%${o.broken ? ' · broken' : ''}` : '');
   if (r) return `<b>${ROOMS[r.type].name}</b><br>queue ${r.queue.length}` + (ROOMS[r.type].role ? ' · ' + ((S.staff.find(s => s.assigned === 'r' + r.id) || {}).name || 'no staff') : '');
@@ -3227,6 +3285,9 @@ function setShow(id, on){ const el = $(id), v = on ? '' : 'none'; if (el.style.d
 function problems(){
   const out = [], add = (icon, text, at, key) => out.push({icon, text, at, key});
   if (!S || S.phase !== 'open') return out;
+  refreshRoomChecks();
+  for (const a of stuckList()) add('🚧', (a.role ? a.name : 'A patient') + ' can\'t get to ' + stuckWhat(a) + '. Something is blocking the way.', a.pos, 'stk' + a.id);
+  for (const r of S.rooms) if (r.blocked) add('⚠️', 'The ' + ROOMS[r.type].name + ' ' + r.blocked + '. Move or turn the furniture.', {x:r.x + r.w / 2, y:r.y + r.h / 2}, 'blk' + r.id);
   if (S.fire && !S.fire.autoAt) add('🔥', 'Fire near the ' + S.fire.name + '! Tap the flames.', {x:S.fire.x, y:S.fire.y}, 'fire');
   if (S.chaos) add(S.chaos.type === 'powerCut' ? '⚡' : S.chaos.type === 'wardCat' ? '🐈' : '🐦', S.chaos.type === 'powerCut' ? 'Power cut! Tap the generator by the entrance.' : S.chaos.type === 'wardCat' ? 'A cat is in the ward. Tap it.' : 'A pigeon is at Reception. Tap it.', {x:S.chaos.x, y:S.chaos.y}, 'chaos');
   if (S.emergency) add('🚑', 'Emergency patients are waiting for the Emergency room.', null, 'emerg');
@@ -3274,7 +3335,7 @@ function updateAlert(){
 
 // ---------- pinned goal card ----------
 let goalOpen = !matchMedia('(pointer:coarse)').matches && innerWidth > 800;
-function updateGoalCard(){
+function goalTargetsCard(){
   const c = $('goalCard'); if (!c || !S) return;
   const L = level();
   if (L.sandbox){ c.innerHTML = '<div class="gh">🧪 Sandbox · Day ' + S.day + '</div>'; return; }
@@ -3459,7 +3520,7 @@ const HELP_ICONS = [
   ['🔢', 'Yellow number on a door', 'How many people are waiting there.']
 ];
 function openHelp(tab){
-  const tabs = [['basics', 'Basics'], ['rooms', 'Rooms'], ['items', 'Items'], ['ill', 'Illnesses'], ['icons', 'Icons']];
+  const tabs = [['basics', 'Basics'], ['how', 'How it works'], ['rooms', 'Rooms'], ['items', 'Items'], ['ill', 'Illnesses'], ['icons', 'Icons']];
   let body = '';
   if (tab === 'basics') body = `<ol class="help">
     <li><b>Build rooms</b> (🏗️ Build): drag out a room, place its door, then its furniture. Auto-furnish does it for you.</li>
@@ -3470,6 +3531,7 @@ function openHelp(tab){
     <li><b>Hit the targets</b> on the 🎯 goal card (top right) before the last day of the level.</li>
     <li><b>Run out of space?</b> Build → 📐 Expand the building, between shifts.</li></ol>
     <p class="sub">Tips: two rooms of the same kind share their queue. From Level 2, the GP sometimes sends patients for a scan first. Press Space to pause, R to turn an item, Ctrl+Z to undo.</p>`;
+  else if (tab === 'how') body = howItWorksHtml();
   else if (tab === 'rooms') body = Object.entries(ROOMS).map(([k, R]) => `<div class="hrow"><span class="hic">${R.icon}</span><span><b>${R.name}</b>${R.role ? ' · needs a ' + ROLES[R.role].name : ''}<small>${ROOM_QUIP[k] || ''}</small></span></div>`).join('');
   else if (tab === 'items') body = Object.entries(OBJ).map(([k, d]) => `<div class="hrow"><span class="hic">${d.icon}</span><span><b>${d.name}</b> · ${money(d.price)}<small>${d.note || ITEM_NOTE[k] || ''}</small></span></div>`).join('');
   else if (tab === 'ill') body = Object.entries(AILMENTS).filter(([, A]) => !A.year || level().endless || level().sandbox).map(([, A]) => `<div class="hrow"><span class="hic">${A.icon}</span><span><b>${A.name}</b><small>Goes to: ${A.route.map(t => ROOMS[t] ? ROOMS[t].name : t).join(' → ')}</small></span></div>`).join('');
@@ -3488,17 +3550,6 @@ const GROUPS = {
 };
 const TOOL_GROUP = {}; for (const [g, tabs] of Object.entries(GROUPS)) for (const [id] of tabs) TOOL_GROUP[id] = g;
 const lastTab = {};
-const _showSheet = showSheet;
-showSheet = function(html, toolId){
-  const grp = TOOL_GROUP[toolId];
-  let tabs = '';
-  if (grp){ lastTab[grp] = toolId; tabs = '<div class="gtabs">' + GROUPS[grp].map(([id, n]) => `<button class="btn sm ${id === toolId ? '' : 'white'}" data-gtab="${id}">${n}${id === 'tLog' && S && S.unread ? ' (' + S.unread + ')' : ''}</button>`).join('') + '</div>'; }
-  _showSheet(tabs + html, toolId);
-  if (grp){
-    sheet.querySelectorAll('[data-gtab]').forEach(b => b.onclick = () => { cancelTool(); GROUPS[grp].find(t => t[0] === b.dataset.gtab)[2](); sfx('click'); });
-    $(grp).classList.add('active');
-  }
-};
 for (const g of Object.keys(GROUPS)) $(g).onclick = () => {
   if (sheet.style.display === 'block' && $(g).classList.contains('active')){ closeSheet(); return; }
   cancelTool(); const id = lastTab[g] || GROUPS[g][0][0]; GROUPS[g].find(t => t[0] === id)[2](); sfx('click');
@@ -3525,15 +3576,6 @@ function updateToolbar(){
 }
 
 // ---------- reviews: one at a time, and kept in the News ----------
-showReview = function(stars, who, text){
-  const box = $('reviews'); box.innerHTML = '';
-  if (sheet.style.display === 'block') return;      // a panel is open: don't cover it
-  const el = document.createElement('div'); el.className = 'rev';
-  el.innerHTML = '<span class="st">' + '★'.repeat(stars) + '<i>' + '★'.repeat(5 - stars) + '</i></span> <b></b> <span class="t"></span>';
-  el.querySelector('b').textContent = who; el.querySelector('.t').textContent = text;
-  box.append(el); setTimeout(() => el.remove(), 5000);
-};
-
 // ---------- getting-started checklist (replaces the long tutorial) ----------
 function startChecklist(){
   if (!S || S.day !== 1 || level().sandbox || S.checkDone) return null;
@@ -3549,14 +3591,14 @@ function startChecklist(){
   if (list.every(x => x[1])){ S.checkDone = true; celebrate('🎉 All set!', 'Your hospital is open for business'); return null; }
   return list;
 }
-const _updateGoalCard = updateGoalCard;
-updateGoalCard = function(){
+// the goal card shows the getting-started checklist on day 1, then the targets
+function updateGoalCard(){
   const list = startChecklist(), c = $('goalCard');
-  if (!list){ _updateGoalCard(); return; }
+  if (!list){ goalTargetsCard(); return; }
   const next = list.find(x => !x[1]);
   const h = `<div class="gh">🧭 Getting started</div><div class="checklist">` + list.map(x => `<div class="gr${x[1] ? ' ok' : ''}"><span>${x[1] ? '✅' : x === next ? '👉' : '⬜'} ${x[0]}</span></div>${x === next ? `<div class="gr mini"><span>${x[2]}</span></div>` : ''}`).join('') + '</div>';
   if (c.innerHTML !== h) c.innerHTML = h;
-};
+}
 
 // ---------- celebrations: daily goal, today's cures, level targets ----------
 function celebrate(title, sub){
@@ -3569,6 +3611,7 @@ function checkCelebrations(){
   if (!S || S.phase !== 'open' || level().sandbox) return;
   const C = S.cheered = S.cheered || {}, L = level(), day = 'd' + S.day + (S.year ? 'y' + S.year : '');
   if (S.goal && goalMet(S.goal) && !C[day + 'goal']){ C[day + 'goal'] = 1; celebrate('🎯 Ministry goal met!', goalLabel(S.goal)); }
+  if (S.walkouts && !(S.tips || {}).walkout) firstTip('walkout', 'Someone walked out. The red line over them says why. Benches, drinks and toilets keep patience up.');
   if (S.cures >= target() && !C[day + 'target']){ C[day + 'target'] = 1; celebrate('✅ Today\'s cures done!', S.cures + ' patients cured'); }
   const lv = (S.year ? 'y' + S.year : 'lv'), g2 = L.goal;
   if (S.totalCures >= g2.cures && !C[lv + 'cures']){ C[lv + 'cures'] = 1; celebrate('🏅 Cures target reached!', S.totalCures + ' / ' + g2.cures); }
@@ -3584,14 +3627,6 @@ function walkoutReason(pt){
   if (where) return 'Waited too long at the ' + where;
   return 'Couldn\'t find where to go';
 }
-const _walkOut = walkOut;
-walkOut = function(pt){
-  const why = walkoutReason(pt);
-  _walkOut(pt);
-  floatText(pt.pos.x, pt.pos.y, '🚶 ' + why, '#ff4f4f');
-  addLog('🚶 A patient walked out: ' + why.toLowerCase() + '.', 'alert', {x:pt.pos.x, y:pt.pos.y});
-};
-
 // ---------- room colours: each room type has its own label colour and a coloured outline ----------
 const ROOM_COL = {gp:'#4f8df5', pharmacy:'#2fb36b', ward:'#8c6cf0', diagnosis:'#1fb3c4', treatment:'#f07ab0', records:'#b07a3a', emergency:'#ef4b4b', neurology:'#7c5cff', physio:'#f2a33a', surgery:'#2a9d8f', toilet:'#5aa7e0', staff:'#c8821e'};
 function drawRoomTints(){
@@ -3603,21 +3638,287 @@ function drawRoomTints(){
   g.restore();
 }
 
-// ---------- undo for dragging staff and patients ----------
-function snapPeople(label){
-  UNDO.push({label, people:true, staff:JSON.stringify(S.staff.map(s => ({id:s.id, assigned:s.assigned, pos:s.pos})))});
-  if (UNDO.length > 15) UNDO.shift();
+
+// ================== what's in the way? placement markers, room checks, stuck people ==================
+
+// ---------- 1. while placing: each standing spot is green (free) or red (blocked), with the culprit marked ----------
+function spotStatus(g){
+  const def = OBJ[g.key], inRoom = g.room ? roomById(g.room) : null;
+  const area = (x, y) => inRoom ? roomAt(x, y) === inRoom.id : isCorridor(x, y);
+  const mine = objTiles(g), out = [];
+  const one = (t, kind) => {
+    let why = null, by = null;
+    if (!area(t.x, t.y)) why = inRoom ? 'outside the room' : 'not in a corridor';
+    else if (mine.some(q => q.x === t.x && q.y === t.y)) why = 'under the item itself';
+    else { const id = objAt(t.x, t.y); if (id){ by = objById(id); why = 'blocked by the ' + (by ? OBJ[by.key].name : 'furniture'); } }
+    out.push({t, kind, why, by});
+  };
+  for (const k of ['s', 'p']) if (def[k] && !(def.onIt && k === 'p')) one(tileOfPt(spotOf(g, k)), k);
+  for (const s of seatsOf(g)) one(s.front, 'seat');
+  return out;
 }
-const _undo = undo;
-undo = function(){
-  const u = UNDO[UNDO.length - 1];
-  if (!u || !u.people) return _undo();
-  UNDO.pop();
-  for (const o of JSON.parse(u.staff)){ const st = S.staff.find(s => s.id === o.id); if (!st) continue; if (st.assigned !== o.assigned){ for (const s of S.staff) if (s !== st && s.assigned === o.assigned && o.assigned) s.assigned = null; st.assigned = o.assigned; } if (st.mode !== 'off'){ st.mode = 'walk'; st.repath = true; } }
-  toast('Undone: ' + u.label); sfx('click'); save();
+// things this item would cut off: list of {t, what}
+function cutOffBy(g){
+  const before = new Set(unreachable().map(c => c.what)), v0 = layoutV;
+  const tmp = {...g, id:-1}; S.objs.push(tmp); rebuildGrid();
+  const out = unreachable(tmp).filter(c => !before.has(c.what));
+  S.objs.pop(); rebuildGrid(); layoutV = v0;
+  return out;
+}
+function unreachable(skip){
+  const d = distMap(entranceIn(), 999), W = S.W, out = [];
+  const reach = t => inMap(t.x, t.y) && d[t.y * W + t.x] >= 0;
+  const near = p => { const t = tileOfPt(p); return reach(t) || [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => reach({x:t.x + dx, y:t.y + dy})); };
+  for (const r of S.rooms) if (r.door && !reach({x:r.door.ox, y:r.door.oy})) out.push({t:{x:r.door.ox, y:r.door.oy}, what:'the door of the ' + ROOMS[r.type].name});
+  for (const o of S.objs){ if (o === skip) continue; const def = OBJ[o.key];
+    if (def.s && !near(spotOf(o, 's'))) out.push({t:tileOfPt(spotOf(o, 's')), what:'the staff spot of the ' + def.name});
+    if (def.p && !def.onIt && !near(spotOf(o, 'p'))) out.push({t:tileOfPt(spotOf(o, 'p')), what:'the patient spot of the ' + def.name});
+    for (const s of seatsOf(o)) if (!reach(s.front)) { out.push({t:s.front, what:'a seat on the ' + def.name}); break; } }
+  return out;
+}
+function drawPlaceMarkers(){
+  if (T.mode !== 'place' || !T.ghost) return;
+  const gh = T.ghost, st = spotStatus(gh), pulse = 0.5 + 0.5 * Math.sin(now / 200);
+  for (const s of st){
+    const ok = !s.why, c = ok ? 'rgba(63,195,58,.85)' : 'rgba(255,79,79,' + (0.55 + 0.35 * pulse) + ')';
+    tileQuad(s.t.x + 0.12, s.t.y + 0.12, 0.76, 0.76, c, OL);
+    const [sx, sy] = iso(s.t.x + 0.5, s.t.y + 0.5);
+    g.font = 'bold 13px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff';
+    g.fillText(s.kind === 's' ? '👤' : s.kind === 'p' ? '🙂' : '🪑', sx, sy);
+    if (s.by){ const f = foot(OBJ[s.by.key], s.by.o); tileQuad(s.by.x, s.by.y, f.w, f.h, 'rgba(255,79,79,.25)', '#ff4f4f'); const [bx, by] = iso(s.by.x + f.w / 2, s.by.y + f.h / 2); g.font = 'bold 22px sans-serif'; g.fillStyle = '#ff2a2a'; g.fillText('✕', bx, by - 6); }
+  }
+  // cut-off spots (computed only when the ghost moves)
+  const key = gh.x + ',' + gh.y + ',' + gh.o + ',' + gh.key + ',' + layoutV;
+  if (T.cutKey !== key){ T.cutKey = key; T.cut = st.some(s => s.why) || checkPlaceBasic(gh) ? [] : cutOffBy(gh); }
+  for (const c of T.cut || []){ tileQuad(c.t.x + 0.1, c.t.y + 0.1, 0.8, 0.8, 'rgba(255,79,79,' + (0.4 + 0.4 * pulse) + ')', '#ff4f4f'); const [sx, sy] = iso(c.t.x + 0.5, c.t.y + 0.5); g.font = 'bold 15px sans-serif'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚫', sx, sy); }
+}
+// basic tile checks only (no route test), used to skip the costly test when the item can't go there anyway
+function checkPlaceBasic(g){ const r = checkPlace(g, true); return r && r !== 'That would block the way' ? r : null; }
+// clearer message for the build bar
+function placeMessage(g, err){
+  if (!err) return null;
+  const st = spotStatus(g).find(s => s.why);
+  if (st) return (st.kind === 's' ? 'The staff spot' : st.kind === 'p' ? 'The patient spot' : 'A seat') + ' is ' + st.why + (st.by ? ' (marked ✕)' : '');
+  if (err === 'That would block the way' && T.cut && T.cut.length) return 'This would block ' + T.cut[0].what + ' (marked 🚫)';
+  return err;
+}
+
+// ---------- 3. room check: can a patient and the staff reach every spot from the door? ----------
+function roomProblem(r){
+  if (!r.door) return 'has no door';
+  const d = distMap(entranceIn(), 999), W = S.W, reach = t => inMap(t.x, t.y) && d[t.y * W + t.x] >= 0;
+  if (!reach({x:r.door.ox, y:r.door.oy})) return 'can\'t be reached: its door is blocked outside';
+  const di = distMap({x:r.door.x, y:r.door.y}, 999);
+  const inside = t => inMap(t.x, t.y) && di[t.y * W + t.x] >= 0;
+  const near = p => { const t = tileOfPt(p); return inside(t) || [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => inside({x:t.x + dx, y:t.y + dy})); };
+  if (objAt(r.door.x, r.door.y)) return 'has furniture blocking the doorway';
+  for (const o of roomObjs(r)){ const def = OBJ[o.key];
+    if (def.s && !near(spotOf(o, 's'))) return 'staff can\'t reach the ' + def.name;
+    if (def.p && !near(spotOf(o, 'p'))) return 'patients can\'t reach the ' + def.name;
+    if (o.key === 'toilet' && !near({x:o.x + 0.5, y:o.y + 0.5})) return 'patients can\'t reach a toilet cubicle';
+    if (o.key === 'sink' && !near(spotOf(o, 'p'))) return 'patients can\'t reach a sink'; }
+  return null;
+}
+let roomCheckV = -1;
+function refreshRoomChecks(){
+  if (roomCheckV === layoutV) return; roomCheckV = layoutV;
+  for (const r of S.rooms) r.blocked = r.state === 'ready' ? roomProblem(r) : null;
+}
+// ---------- 5. during play: someone who can't get where they're going ----------
+function markStuck(a, target, ok){
+  if (ok){ a.blk = null; return; }
+  if (!a.blk) a.blk = {since:S.time, to:target};
+}
+function stuckList(){ return [...S.patients, ...S.staff].filter(a => a.blk && a.pos && S.time - a.blk.since > 3); }
+function stuckWhat(a){
+  const t = a.blk && a.blk.to; if (!t) return 'their destination';
+  const rid = roomAt(Math.floor(t.x), Math.floor(t.y)); if (rid){ const r = roomById(rid); if (r) return 'the ' + ROOMS[r.type].name; }
+  const o = objAt(Math.floor(t.x), Math.floor(t.y)) || S.objs.find(o => Math.abs(o.x + 1 - t.x) < 2 && Math.abs(o.y + 0.5 - t.y) < 2);
+  const ob = typeof o === 'number' ? objById(o) : o; return ob ? 'the ' + OBJ[ob.key].name : 'where they need to go';
+}
+function drawStuck(){
+  const pulse = 0.5 + 0.5 * Math.sin(now / 250);
+  for (const a of stuckList()){ const [sx, sy] = toScreen(a.pos.x, a.pos.y, 82); g.save(); g.beginPath(); g.arc(sx, sy - pulse * 3, 14, 0, 7); g.fillStyle = '#ffd23f'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = OL; g.stroke(); g.font = '15px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚧', sx, sy - pulse * 3 + 1); g.restore(); }
+  for (const r of S.rooms) if (r.blocked){ const [cx, cy] = toScreen(r.x + r.w / 2, r.y + r.h / 2, 46); plate(cx, cy + 22, '⚠️ ' + r.blocked, '#ff4f4f'); }
+}
+
+// ================== gameplay information inside the game ==================
+const VIP_INFO = {
+  nephew:{icon:'⭐', name:'The Nephew', look:'purple suit, sunglasses', twist:'Jumps the queue when 3 or more are waiting. Everyone he skips loses 10 patience.', tip:'Give his desk a second member of staff, or keep queues short.'},
+  influencer:{icon:'⭐', name:'The Influencer', look:'pink hoodie, selfie stick', twist:'Loses patience 1.5× faster. A 4–5★ review goes viral: +$150. A 1–2★ review costs a Ministry Point.', tip:'Rush her through: short queues and a clean, tidy hospital.'},
+  auntie:{icon:'⭐', name:'The Auntie', look:'batik kebaya, tiffin carrier', twist:'Loses patience twice as fast standing, half as fast sitting.', tip:'Keep a free bench seat near every desk.'}
 };
-const _finishDrop = finishDrop;
-finishDrop = function(a, r, t){ if (S.held && S.held.kind === 'staff') snapPeople('move ' + a.name); _finishDrop(a, r, t); };
+const VIP_ALL = 'All VIPs pay double, always post a review, give +2 Ministry Points if cured and −2 if they walk out, and make the next morning\'s headline.';
+
+// ---------- How it works ----------
+function howItWorksHtml(){
+  const sec = (t, items) => `<h4 class="hsec">${t}</h4><ul class="help">${items.map(i => '<li>' + i + '</li>').join('')}</ul>`;
+  return sec('🏥 Rooms and equipment', [
+      '<b>One patient at a time</b> per room. <b>GP Office, Pharmacy and Treatment Room</b> are different: each extra desk, counter or bed with its own member of staff sees one more patient at once.',
+      '<b>Ward:</b> every bed takes a patient. One nurse looks after them all. <b>Toilets:</b> every cubicle takes a patient; they use the least busy sink.',
+      '<b>Spares:</b> a second scanner, operating table, physio set and so on is only used if the first breaks down.',
+      '<b>Speed items</b> (exam couch, medicine shelves, filing cabinets, heart monitor): +10% each, up to +30%.',
+      '<b>Two rooms of the same kind</b> share one queue: people move to the shorter one.'])
+    + `<h4 class="hsec">⭐ VIPs (from Level 2)</h4><p class="sub">${VIP_ALL}</p>` + Object.values(VIP_INFO).map(v => `<div class="hrow"><span class="hic">${v.icon}</span><span><b>${v.name}</b> (${v.look})<small>${v.twist}<br><i>Tip: ${v.tip}</i></small></span></div>`).join('')
+    + sec('🙂 Patients and patience', [
+      'Patience drains fastest when <b>lost</b> or <b>standing</b>, slower when <b>sitting</b>, slowest while walking to a room.',
+      'Helps: <b>benches</b> (sitting halves the drain), <b>plants</b> nearby, a <b>drink</b> (drinks machine +15, water cooler +8), <b>toilets</b> (+5 after washing).',
+      'Hurts: no toilet when they need one, <b>litter</b>, fires nearby, VIP queue-jumpers.',
+      'At 0 they <b>walk out</b>; a red line over their head says why.'])
+    + sec('👥 Staff', [
+      'Each room needs its role: doctor, nurse, pharmacist, receptionist. Drag people to move them; Undo puts them back.',
+      '<b>Mood</b> drops while working. Below 30 you see 😩: send them on a break. A <b>Staff Room</b> and the <b>kopi trolley</b> help them recover.',
+      '<b>Handymen</b> fix breakdowns, clear jams, sweep litter, mop floods and clean toilets.',
+      'Free staff <b>help out</b> at busy rooms of their own kind.'])
+    + sec('🔥 Hazards', [
+      '<b>Fire</b> (from day 2): machines can catch fire. An extinguisher within 5 tiles puts it out; otherwise tap the flames 4 times before it burns out.',
+      '<b>Supplies:</b> the Pharmacy and Records Office use them. They refill each night; tap either room to order more. Each storage shelf holds 20 more.',
+      '<b>Getting lost:</b> long walks can lose people. A notice board within 6 tiles prevents it.',
+      '<b>Breakdowns:</b> machines wear out. Handymen repair them, or tap to pay.',
+      '<b>Blocked routes:</b> red squares while placing, ⚠️ on rooms and 🚧 over people show what\'s in the way.'])
+    + sec('💰 Money and rank', [
+      'Each room charges a fee (see its card). Reception charges $5. VIPs pay double. Drinks earn $5.',
+      'You pay staff wages each day and for repairs and orders.',
+      '<b>Ministry Points</b> raise your rank: ' + CONTENT.ranks.join(' → ') + '. Rank 2 unlocks the ☕ Kopi round.',
+      'Research (Office → Research) buys permanent upgrades.'])
+    + sec('🎯 Levels and Endless', [
+      'Each level gives you a set number of days to hit three targets: total cures, money in the bank, rating.',
+      'From Level 2 the GP sometimes sends patients for a scan first.',
+      'After Level 3, <b>Endless</b>: 8-day years, each with ~15% more patients, a new illness, more VIPs and chaos, higher targets, and the Ministry Awards.',
+      'Out of space? Build → 📐 Expand (3 times a level; free in Sandbox).']);
+}
+
+// ---------- extra card lines ----------
+function roomInfoHtml(r){
+  const R = ROOMS[r.type], n = svcObjs(r).length, all = roomObjs(r).filter(o => o.key === R.svc).length;
+  const boost = Math.min(3, roomObjs(r).filter(o => ['exam-couch', 'shelves', 'cabinets', 'monitor'].includes(o.key)).length);
+  let cap;
+  if (r.type === 'ward') cap = n + ' bed' + (n === 1 ? '' : 's') + ' = ' + n + ' patient' + (n === 1 ? '' : 's') + ' at once';
+  else if (r.type === 'toilet') cap = roomObjs(r).filter(o => o.key === 'toilet').length + ' cubicle(s)';
+  else if (MULTI_DESK.includes(r.type)){ const st = S.staff.filter(s => s.assigned === 'r' + r.id).length; cap = 'Sees ' + Math.max(1, Math.min(n, st || 1)) + ' at once (' + n + ' ' + OBJ[R.svc].name.toLowerCase() + (n === 1 ? '' : 's') + ', ' + st + ' staff)' + (n > st ? ' · <b class="bad">hire ' + (n - st) + ' more to use every desk</b>' : ''); }
+  else cap = 'Sees 1 patient at a time' + (all > 1 ? ' · ' + (all - 1) + ' spare' : '');
+  return `<p class="sub">👥 ${cap}${boost ? ' · ⚡ +' + boost * 10 + '% speed' : ''}${r.blocked ? ' · <b class="bad">⚠️ ' + r.blocked + '</b>' : ''}</p>`;
+}
+function dupNote(o){
+  const d = OBJ[o.key], r = o.room && roomById(o.room); if (!r) return '';
+  const R = ROOMS[r.type], same = roomObjs(r).filter(q => q.key === o.key).length;
+  if (o.key === R.svc && same > 1){
+    if (r.type === 'ward') return '';
+    return MULTI_DESK.includes(r.type) ? '<p class="sub">➕ Extra ' + d.name + ': sees another patient at the same time, if the room has a member of staff for it.</p>' : '<p class="sub">🔁 Spare: this room still sees one patient at a time. The spare is used if the other breaks down.</p>';
+  }
+  if (['exam-couch', 'shelves', 'cabinets', 'monitor'].includes(o.key)) return '<p class="sub">⚡ +10% speed for this room (up to 3 items count).</p>';
+  return '';
+}
+
+// ---------- first-time tips: shown once per save ----------
+function firstTip(key, text, at){
+  S.tips = S.tips || {}; if (S.tips[key]) return; S.tips[key] = 1;
+  addLog('💡 ' + text, 'advice', at); toast('💡 ' + text, 7000, at || null);
+}
+// VIP arrival: who it is and what to do
+function vipArrived(pt){
+  const v = VIP_INFO[pt.vip]; if (!v) return;
+  S.tips = S.tips || {}; const first = !S.tips.vip; S.tips.vip = 1;
+  toast('⭐ ' + v.name + ' has arrived! ' + (first ? v.twist + ' ' : '') + v.tip + (first ? ' VIPs pay double and always review.' : ''), first ? 9000 : 6000, pt.pos);
+  addLog('⭐ ' + v.name + ' arrived. ' + v.twist, 'advice', pt.pos);
+}
+
+// ================== more UI: queue lists, patience bars, moving rooms, the day graph ==================
+
+// ---------- queue list: who is waiting and for how long ----------
+function queueRows(p, max = 8){
+  const ids = [...p.serving.map(id => [id, true]), ...p.queue.map(id => [id, false])];
+  return ids.slice(0, max).map(([id, inNow]) => { const q = S.patients.find(a => a.id === id); if (!q) return '';
+    const w = Math.round(S.time - (q.qTime || S.time)), pc = Math.round(q.patience), col = pc < 30 ? '#ff4f4f' : pc < 60 ? '#ffb020' : '#3fc33a';
+    return `<div class="qrow"><span>${inNow ? '▶️' : ''}${q.vip ? '⭐' : ''}${AILMENTS[q.ailment].icon} ${q.ticket || 'Patient'}</span><span>${inNow ? 'being seen' : 'waiting ' + w + ' s'}</span><span class="qbar"><i style="width:${pc}%;background:${col}"></i></span></div>`; }).join('')
+    + (ids.length > max ? `<div class="qrow"><span>…and ${ids.length - max} more</span></div>` : '');
+}
+function queueHtml(p){ return p.queue.length || p.serving.length ? `<div class="qlist"><b>Queue (${p.queue.length} waiting)</b>${queueRows(p)}</div>` : '<p class="sub">Nobody waiting.</p>'; }
+function pointAtDoor(tx, ty){
+  return allPoints().find(p => { const d = doorOutside(p); return d && Math.abs(d.x - tx) <= (p.type ? 0 : 1) && Math.abs(d.y - ty) <= (p.type ? 0 : 1); });
+}
+
+// ---------- patience bars over patients (when Labels is on, or for anyone below 40) ----------
+function drawPatienceBars(){
+  if (!S || S.phase !== 'open') return;
+  for (const pt of S.patients){
+    if (!pt.pos || pt.st === 'serve' || pt.st === 'leave' || pt.st === 'gone' || pt.st === 'held') continue;
+    if (!S.labels && pt.patience >= 40) continue;
+    const [sx, sy] = toScreen(pt.pos.x, pt.pos.y, 86), w = 26, f = clamp(pt.patience / 100, 0, 1);
+    g.fillStyle = 'rgba(43,29,58,.85)'; g.fillRect(sx - w / 2 - 1.5, sy - 1.5, w + 3, 7);
+    g.fillStyle = f < 0.3 ? '#ff4f4f' : f < 0.6 ? '#ffb020' : '#3fc33a'; g.fillRect(sx - w / 2, sy, w * f, 4);
+  }
+}
+
+// ---------- moving a whole room (with its furniture) ----------
+function startMoveRoom(r){
+  if (S.phase === 'open' && (r.queue.length || r.serving.length || S.patients.some(p => roomAt(Math.floor(p.pos.x), Math.floor(p.pos.y)) === r.id))){ toast('Wait until the room is empty, or move it between shifts.'); sfx('error'); return; }
+  cancelTool(); closeSheet(); T.mode = 'moveRoom'; T.moveId = r.id; showBuildBar();
+}
+function moveRoomCheck(r, nx, ny){
+  const dx = nx - r.x, dy = ny - r.y; if (!dx && !dy) return {err:'Pick a new spot'};
+  // lift the room out, test the new rectangle, then put it back
+  const objs = roomObjs(r), keepRooms = S.rooms, keepObjs = S.objs, v0 = layoutV;
+  S.rooms = S.rooms.filter(q => q !== r); S.objs = S.objs.filter(o => o.room !== r.id); rebuildGrid();
+  const rect = {x:nx, y:ny, w:r.w, h:r.h}; let err = null;
+  for (let y = ny; y < ny + r.h && !err; y++) for (let x = nx; x < nx + r.w && !err; x++){
+    if (!inBuilding(x, y)) err = 'Must be inside the building';
+    else if (roomAt(x, y)) err = 'Overlaps another room';
+    else if (objAt(x, y)) err = 'Furniture is in the way';
+    else if (isEntTile(x, y)) err = 'Keep the entrance clear';
+  }
+  let doorOk = false;
+  if (!err && r.door){ const d = {x:r.door.x + dx, y:r.door.y + dy, ox:r.door.ox + dx, oy:r.door.oy + dy}; doorOk = inBuilding(d.ox, d.oy) && !roomAt(d.ox, d.oy) && !objAt(d.ox, d.oy); }
+  S.rooms = keepRooms; S.objs = keepObjs; rebuildGrid(); layoutV = v0;
+  if (!err && r.door && !doorOk) err = 'The door would open into a wall or another room';
+  return {err, doorOk, dx, dy};
+}
+function finishMoveRoom(nx, ny){
+  const r = roomById(T.moveId); if (!r) return cancelTool();
+  const c = moveRoomCheck(r, nx, ny); if (c.err){ toast(c.err); sfx('error'); return; }
+  const base = layoutIssues(); snap('move ' + ROOMS[r.type].name);
+  r.x += c.dx; r.y += c.dy;
+  for (const o of roomObjs(r)){ o.x += c.dx; o.y += c.dy; }
+  if (r.door){ if (c.doorOk){ r.door.x += c.dx; r.door.y += c.dy; r.door.ox += c.dx; r.door.oy += c.dy; } else r.door = null; }
+  for (const a of [...S.staff, ...S.patients]) if (a.pos && roomAt(Math.floor(a.pos.x), Math.floor(a.pos.y)) === r.id){ a.repath = true; }
+  S.lineCache = {}; rebuildGrid();
+  if (layoutIssues() > base){ undo(); toast('That spot would block the way to something else. Try another.'); sfx('error'); T.mode = 'moveRoom'; T.moveId = r.id; showBuildBar(); return; }
+  evictPeople();
+  if (roomProblem(r)){ r.blocked = roomProblem(r); toast('⚠️ Moved, but the ' + ROOMS[r.type].name + ' ' + r.blocked + '.', 5000); cancelTool(); }
+  else { toast('🏗️ ' + ROOMS[r.type].name + ' moved.'); cancelTool(); }
+  for (const s of S.staff) if (s.assigned === 'r' + r.id){ s.mode = 'walk'; s.repath = true; }
+  sfx('build'); save();
+}
+function drawMoveRoom(){
+  if (T.mode !== 'moveRoom' || !T.hover) return;
+  const r = roomById(T.moveId); if (!r) return;
+  const nx = clamp(T.hover.x - Math.floor(r.w / 2), 0, S.bw - r.w), ny = clamp(T.hover.y - Math.floor(r.h / 2), 0, S.bh - r.h);
+  const key = nx + ',' + ny; if (T.moveKey !== key){ T.moveKey = key; T.moveChk = moveRoomCheck(r, nx, ny); T.moveAt = {x:nx, y:ny}; }
+  const c = T.moveChk, bad = !!c.err;
+  tileQuad(r.x, r.y, r.w, r.h, 'rgba(122,92,255,.12)', '#7a5cff');
+  tileQuad(nx, ny, r.w, r.h, bad ? 'rgba(255,79,124,.35)' : 'rgba(63,195,58,.35)', bad ? '#ff4f7c' : '#3fc33a');
+  if (!bad && r.door){ const d = r.door; tileQuad(d.ox + c.dx + 0.25, d.oy + c.dy + 0.25, 0.5, 0.5, c.doorOk ? 'rgba(63,195,58,.9)' : 'rgba(255,79,79,.9)', OL); }
+  T.ghostInfo = {err:c.err || (r.door && !c.doorOk ? 'The door will need a new spot' : null)};
+}
+
+// ---------- the day, hour by hour ----------
+const HOURS = 8;
+function trackHour(){
+  if (!S || S.phase !== 'open') return;
+  const h = clamp(Math.floor(S.time / SHIFT * HOURS), 0, HOURS - 1);
+  const D = S.hours = S.hours && S.hours.day === S.day ? S.hours : {day:S.day, b:Array.from({length:HOURS}, () => ({c:0, w:0, m:0})), last:{c:0, w:0, m:0}};
+  const L = D.last, b = D.b[h];
+  b.c += S.cures - L.c; b.w += S.walkouts - L.w; b.m += S.earned - L.m;
+  D.last = {c:S.cures, w:S.walkouts, m:S.earned};
+}
+function dayGraphHtml(){
+  const D = S.hours; if (!D || D.day !== S.day) return '';
+  const maxC = Math.max(1, ...D.b.map(x => Math.max(x.c, x.w)));
+  const worst = D.b.reduce((a, x, i) => x.w > D.b[a].w ? i : a, 0);
+  const lbl = i => { const hr = 9 + i; return (hr % 12 || 12) + (hr < 12 ? 'am' : 'pm'); };
+  return `<div class="dgraph"><b>Your day, hour by hour</b><div class="dbars">${D.b.map((x, i) => `<div class="dcol" title="${lbl(i)}: ${x.c} cured, ${x.w} walked out, ${money(x.m)}"><div class="dstack"><i class="dc" style="height:${x.c / maxC * 100}%"></i><i class="dw" style="height:${x.w / maxC * 100}%"></i></div><small>${lbl(i)}</small></div>`).join('')}</div>
+    <small><span class="dkey dc"></span> cured <span class="dkey dw"></span> walked out${D.b[worst].w ? ' · worst hour: <b>' + lbl(worst) + '</b> (' + D.b[worst].w + ' walked out)' : ''}</small></div>`;
+}
 
 
 // ================== input ==================
@@ -3719,6 +4020,7 @@ function click(sx, sy){
   if (T.mode === 'place'){ if (T.ghost){ const ok = placeObject(T.ghost); if (ok && T.roomId) { /* back to furnishing */ } } return; }
   if (T.mode === 'furnish'){ const o = objectAtScreen(sx, sy); if (o && o.room === T.roomId){ openObjCard(o); } return; }
   if (T.mode === 'room') return;
+  if (T.mode === 'moveRoom'){ if (T.moveAt) finishMoveRoom(T.moveAt.x, T.moveAt.y); return; }
   // quick fixes first
   if (S.phase === 'open'){
     if (S.fire && !S.fire.autoAt){ const [fx, fy] = toScreen(S.fire.x, S.fire.y, 20); if (Math.hypot(sx - fx, sy - fy) < 50 * Math.max(0.8, cam.z)){ tapFire(); return; } }
@@ -3762,6 +4064,7 @@ function dropAt(w){
   finishDrop(a, r, t);
 }
 function finishDrop(a, r, t){
+  if (S.held.kind === 'staff') snapPeople('move ' + a.name);
   const kind = S.held.kind; S.held = null; sfx('click');
   if (kind === 'staff'){
     a.mode = 'walk'; a.repath = true; a.coverAt = null;
