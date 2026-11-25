@@ -43,6 +43,7 @@ async def main():
         await pg.goto(GAME); await pg.wait_for_timeout(800)
         await J("localStorage.setItem('just-a-moment-v2-progress', JSON.stringify({unlocked:3}))"); await pg.reload(); await pg.wait_for_timeout(600)
         await pg.click('[data-lv="2"]'); await pg.wait_for_timeout(300)
+        await J("setInterval(()=>{ if(S&&S.phase==='open') window.__maxStuck=Math.max(window.__maxStuck||0, stuckList().length); },50); 0")
         for line in await J(SETUP): print(' ', line)
         await J("__jam.run(200)")
         await pg.screenshot(path='v3_prep.png')
@@ -65,6 +66,6 @@ async def main():
             print('day', day, info)
             if await J("S.phase==='report'"):
                 await J("document.getElementById('bNext').click()")
-        print('errors', errs[:5])
+        print('max stuck', await J('window.__maxStuck||0'), 'stuck people at end', await J('stuckList().length'), 'blocked rooms', await J('JSON.stringify(S.rooms.filter(r=>r.blocked).map(r=>r.type+": "+r.blocked))')); print('errors', errs[:5])
         await b.close()
 asyncio.run(main())

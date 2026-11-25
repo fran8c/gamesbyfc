@@ -21,3 +21,7 @@ Screenshots go to `tests/shots/`. Each test prints `errors []` when it passes.
 | undo_autofurnish_panels | Undo, auto-furnish, panels, settings |
 | mouse_and_save | Mouse building and saving/loading |
 | phone_layout | Sideways phone layout |
+| blocking | Spot markers while placing, room checks, stuck alerts |
+| grouped_toolbar_and_ux | New toolbar, checklist, celebrations, walkout reasons, staff undo |
+| two_desks | Two GP desks with two doctors see two patients at once |
+| ux_round2 | Moving rooms, queue lists, patience bars, VIP pop-up, day graph, How it works |
