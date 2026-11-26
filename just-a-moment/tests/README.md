@@ -25,3 +25,6 @@ Screenshots go to `tests/shots/`. Each test prints `errors []` when it passes.
 | grouped_toolbar_and_ux | New toolbar, checklist, celebrations, walkout reasons, staff undo |
 | two_desks | Two GP desks with two doctors see two patients at once |
 | ux_round2 | Moving rooms, queue lists, patience bars, VIP pop-up, day graph, How it works |
+| music | Music moods, stings, ducking under the PA, volume sliders |
+| spots_protected | Items can't be placed on staff, patient or seat spots |
+| problem_markers | Red rings and labels on problems, edge arrows, alert button and problem list |
