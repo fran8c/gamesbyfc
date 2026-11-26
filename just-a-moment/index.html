@@ -105,7 +105,9 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle
 #goalCard .gr{display:flex;justify-content:space-between;gap:6px}
 #goalCard .gr.ok{color:#2e9a2a}#goalCard .gr.mini{color:#555;font-size:11px}
 #goalCard .gb{height:5px;background:#e6dcc8;border-radius:3px;margin:1px 0 3px;overflow:hidden}#goalCard .gb i{display:block;height:100%;background:#3fc33a}
-#alertBtn{align-self:flex-end;background:#ff4f4f;color:#fff;border:3px solid var(--ink);border-radius:999px;box-shadow:0 3px 0 var(--ink);padding:4px 12px;font-weight:800;font-size:15px;align-items:center;gap:5px;cursor:pointer;animation:pulse 1.2s infinite}
+#alertBtn{align-self:stretch;box-sizing:border-box;max-width:100%;background:#ff3b3b;color:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink);padding:6px 10px;font-weight:800;font-size:14px;align-items:center;gap:8px;cursor:pointer;text-align:left;animation:pulse 1.4s infinite}
+#alertBtn .ai{font-size:24px;flex:none}#alertBtn .at{display:flex;flex-direction:column;min-width:0}#alertBtn .at small{font-weight:700;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:190px}
+#alertBtn.flash{background:#ffd23f;color:var(--ink)}
 #alertBtn small{font-size:11px;font-weight:700}
 @keyframes pulse{50%{transform:scale(1.07)}}
 .paper{background:#fbf7ec;max-width:520px;font-family:Georgia,serif;text-align:left}
@@ -138,6 +140,7 @@ html,body{margin:0;height:100%;overflow:hidden;background:radial-gradient(circle
 .dcol{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
 .dstack{flex:1;width:100%;display:flex;gap:2px;align-items:flex-end}.dstack i{flex:1;display:block;border-radius:3px 3px 0 0;min-height:1px}
 i.dc,.dkey.dc{background:#3fc33a}i.dw,.dkey.dw{background:#ff4f4f}.dkey{display:inline-block;width:10px;height:10px;border-radius:2px;margin:0 3px 0 6px}
+.vol{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;font-size:14px;padding:4px 2px}.vol input{flex:1;max-width:60%;accent-color:var(--pink)}
 .quip{font-style:italic;color:#7a5cff;font-size:13px;margin:4px 0 8px}
 .memo{background:#fff;border:3px dashed var(--ink);border-radius:10px;padding:8px 10px;text-align:left;font-size:13px;margin:10px 0}
 .memo b{display:block;font-size:12px;opacity:.75}
@@ -327,11 +330,19 @@ function audioInit(){
   const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
   AU.ctx = new C();
   const master = AU.ctx.createGain(); master.gain.value = 0.9; master.connect(AU.ctx.destination);
-  AU.mg = AU.ctx.createGain(); AU.mg.gain.value = 0.16; AU.mg.connect(master);
+  AU.mg = AU.ctx.createGain(); AU.mg.gain.value = 0.16;
+  // music bus: instruments -> warmth filter -> dry + small-room reverb -> compressor -> music volume
+  const comp = AU.ctx.createDynamicsCompressor(); comp.threshold.value = -18; comp.ratio.value = 3; comp.connect(AU.mg); AU.mg.connect(master);
+  const warm = AU.ctx.createBiquadFilter(); warm.type = 'lowpass'; warm.frequency.value = 7000;
+  const rv = AU.ctx.createConvolver(), rl = AU.ctx.sampleRate * 1.6, ir = AU.ctx.createBuffer(2, rl, AU.ctx.sampleRate);
+  for (let c = 0; c < 2; c++){ const d = ir.getChannelData(c); for (let i = 0; i < rl; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / rl, 3.2); }
+  rv.buffer = ir; const wet = AU.ctx.createGain(); wet.gain.value = 0.22;
+  warm.connect(comp); warm.connect(rv); rv.connect(wet); wet.connect(comp);
+  AU.mus = warm;
   AU.sg = AU.ctx.createGain(); AU.sg.gain.value = 0.45; AU.sg.connect(master);
   const len = AU.ctx.sampleRate; AU.noise = AU.ctx.createBuffer(1, len, len);
   const d = AU.noise.getChannelData(0); for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  startMusic();
+  startMusic(); tracksInit(); applyVolume();
 }
 function tone(f, t, dur, type, dest, vol = 0.5, f2 = null, attack = 0.005){
   const o = AU.ctx.createOscillator(), g = AU.ctx.createGain();
@@ -366,40 +377,173 @@ function sfx(name){
     case 'star':     [784, 988, 1175, 1568].forEach((f, i) => tone(f, t + i * 0.12, 0.3, 'triangle', D, 0.3)); break;
   }
 }
-const BPM = 112, SIXT = 60 / BPM / 4;
-const CHORDS = ['C','Am','F','G','F','G','Em','G'];
-const CH = {C:['C3','C4','E4','G4'], Am:['A2','A3','C4','E4'], F:['F2','F3','A3','C4'], G:['G2','G3','B3','D4'], Em:['E2','E3','G3','B3']};
-const MEL = [
-  'E5 - G5 - A5 G5 E5 - D5 - C5 - D5 - E5 -','C5 - E5 - A5 - G5 E5 - - D5 - C5 - - -',
-  'A5 - C6 - A5 G5 F5 - A5 - G5 - F5 - E5 -','D5 - G5 - B5 - A5 G5 - - D5 - E5 - D5 -',
-  'C5 - - A4 C5 - F5 - - - E5 - F5 - A5 -','G5 - - - D5 - G5 - B5 - A5 - G5 - - -',
-  'E5 - G5 - B5 - G5 - E5 - D5 - E5 - G5 -','A5 - G5 - F5 - E5 - D5 - - - B4 - D5 -',
-].map(s => s.split(' '));
+// ---------- music: three moods that follow the hospital ----------
+//   build: calm and slower, between shifts     open: the main tune     tense: faster, extra drums, when things go wrong
+const MOODS = {build:{bpm:84}, open:{bpm:108}, tense:{bpm:132}};
+AU.mood = 'build'; AU.vol = {music:0.7, sfx:0.8}; AU.duckUntil = 0;
+try { const v = JSON.parse(localStorage.getItem('just-a-moment-volume') || 'null'); if (v) AU.vol = v; } catch (e){}
+function musicMood(){
+  if (!S || $('title').style.display !== 'none') return 'build';
+  if (S.phase !== 'open') return 'build';
+  const busy = (S.fire && !S.fire.autoAt) || S.emergency || allPoints().some(p => p.queue.length >= 7) || S.patients.filter(p => p.patience < 30).length >= 4;
+  return busy ? 'tense' : 'open';
+}
+// ---------- instruments (all synthesised) ----------
 function freq(n){
   const m = n.match(/^([A-G])(#|b)?(\d)$/), base = {C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]] + (m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0);
   return 440 * Math.pow(2, (base + (parseInt(m[3]) + 1) * 12 - 69) / 12);
 }
-function scheduleStep(step, t){
-  const bar = Math.floor(step / 16) % 8, s = step % 16, ch = CH[CHORDS[bar]], M = AU.mg;
-  if (s === 0 || s === 8) tone(55, t, 0.18, 'sine', M, 0.9, 40);
-  if (s === 4 || s === 12) noise(t, 0.12, 'bandpass', 1800, M, 0.5);
-  if (s % 2 === 0) noise(t, s % 4 === 2 ? 0.08 : 0.03, 'highpass', 7000, M, 0.18);
-  if (s === 0 || s === 6 || s === 8 || s === 14) tone(freq(ch[0]) * (s === 6 ? 1.5 : s === 14 ? 2 : 1), t, 0.22, 'triangle', M, 0.7);
-  if (s === 2 || s === 6 || s === 10 || s === 14) ch.slice(1).forEach(n => tone(freq(n), t, 0.09, 'square', M, 0.07));
-  const note = MEL[bar][s];
-  if (note && note !== '-'){ tone(freq(note), t, 0.16, 'triangle', M, 0.32); tone(freq(note) * 2, t, 0.08, 'sine', M, 0.06); }
+const midi = n => 69 + 12 * Math.log2(freq(n) / 440), hz = m => 440 * Math.pow(2, (m - 69) / 12);
+// gamelan-style bell: inharmonic partials that ring and fade
+function bell(f, t, vol, dur = 1.2, dest = AU.mus){ [[1, 1], [2.76, 0.45], [5.4, 0.2], [8.9, 0.08]].forEach(([k, a], i) => tone(f * k, t, dur / (1 + i * 0.8), 'sine', dest, vol * a, null, 0.002)); }
+// marimba: warm sine with a short wooden overtone
+function marimba(f, t, vol, dest = AU.mus){ tone(f, t, 0.45, 'sine', dest, vol, null, 0.002); tone(f * 4, t, 0.06, 'sine', dest, vol * 0.25, null, 0.001); tone(f * 10, t, 0.015, 'sine', dest, vol * 0.1, null, 0.001); }
+// pizzicato strings
+function pizz(f, t, vol, dest = AU.mus){
+  const o = AU.ctx.createOscillator(), fl = AU.ctx.createBiquadFilter(), g = AU.ctx.createGain();
+  o.type = 'sawtooth'; o.frequency.value = f; fl.type = 'lowpass'; fl.frequency.setValueAtTime(f * 6, t); fl.frequency.exponentialRampToValueAtTime(f * 1.2, t + 0.2);
+  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+  o.connect(fl); fl.connect(g); g.connect(dest); o.start(t); o.stop(t + 0.3);
 }
+// soft pad: two detuned saws through a slow filter
+function pad(fs, t, dur, vol, dest = AU.mus){
+  for (const f of fs) for (const det of [-6, 6]){
+    const o = AU.ctx.createOscillator(), fl = AU.ctx.createBiquadFilter(), g = AU.ctx.createGain();
+    o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = det; fl.type = 'lowpass'; fl.frequency.value = 900;
+    g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * 0.35); g.gain.linearRampToValueAtTime(0.0001, t + dur);
+    o.connect(fl); fl.connect(g); g.connect(dest); o.start(t); o.stop(t + dur + 0.05);
+  }
+}
+function bass(f, t, dur, vol, dest = AU.mus){ tone(f, t, dur, 'sine', dest, vol, null, 0.004); tone(f * 2, t, dur * 0.5, 'triangle', dest, vol * 0.25, null, 0.004); }
+// kompang (frame drum): a low "dum" and a bright "tak"
+function kompang(t, open, vol, dest = AU.mus){ if (open){ tone(170, t, 0.16, 'sine', dest, vol, 85, 0.002); noise(t, 0.05, 'bandpass', 900, dest, vol * 0.4); } else { noise(t, 0.06, 'bandpass', 2600, dest, vol * 0.8); tone(420, t, 0.04, 'triangle', dest, vol * 0.3, 300, 0.001); } }
+function shaker(t, vol, dest = AU.mus){ noise(t, 0.035, 'highpass', 7500, dest, vol); }
+function kick(t, vol, dest = AU.mus){ tone(60, t, 0.2, 'sine', dest, vol, 38, 0.002); }
+
+// ---------- songs: three tunes, a new one each day; every tune has an A and a B section (16 bars) ----------
+const CHORD_NOTES = {C:[0,4,7], Cm:[0,3,7], Dm:[2,5,9], D:[2,6,9], Em:[4,7,11], E:[4,8,11], F:[5,9,12], G:[7,11,14], Am:[9,12,16], A:[9,13,16], Bb:[10,14,17], Bm:[11,14,18], Gm:[7,10,14]};
+const SONGS = [
+  {name:'Waiting Room Shuffle', key:48, chords:'C Am F G F G Em G  Am F C G Am F G G', mel:[
+    'E5 - G5 - A5 G5 E5 - D5 - C5 - D5 - E5 -','C5 - E5 - A5 - G5 E5 - - D5 - C5 - - -',
+    'A5 - C6 - A5 G5 F5 - A5 - G5 - F5 - E5 -','D5 - G5 - B5 - A5 G5 - - D5 - E5 - D5 -',
+    'C5 - - A4 C5 - F5 - - - E5 - F5 - A5 -','G5 - - - D5 - G5 - B5 - A5 - G5 - - -',
+    'E5 - G5 - B5 - G5 - E5 - D5 - E5 - G5 -','A5 - G5 - F5 - E5 - D5 - - - B4 - D5 -',
+    'A5 - - - G5 - E5 - C5 - E5 - A5 - - -','F5 - A5 - C6 - A5 - G5 - F5 - E5 - - -',
+    'G5 - E5 - C5 - E5 - G5 - - - C6 - - -','B5 - A5 - G5 - D5 - B4 - D5 - G5 - - -',
+    'C6 - B5 - A5 - - - E5 - A5 - C6 - - -','A5 - F5 - C5 - F5 - A5 - G5 - F5 - - -',
+    'G5 - - - B5 - - - D6 - C6 - B5 - A5 -','G5 - - - - - - - D5 - E5 - F5 - G5 -']},
+  {name:'Form 27B', key:53, chords:'F Dm Bb C F Am Bb C  Dm Bb F C Gm C F F', mel:[
+    'A5 - - C6 A5 - F5 - - - G5 - A5 - - -','F5 - - A5 D6 - C6 - A5 - - - F5 - - -',
+    'D6 - - - C6 - Bb5 - A5 - - - G5 - - -','E5 - G5 - C6 - - - Bb5 - A5 - G5 - - -',
+    'F5 - A5 - C6 - D6 - C6 - A5 - F5 - - -','E5 - - G5 C6 - - - A5 - G5 - E5 - - -',
+    'D5 - F5 - Bb5 - - - A5 - - - G5 - F5 -','G5 - - - - - E5 - G5 - Bb5 - C6 - - -',
+    'D6 - - - A5 - - - F5 - A5 - D6 - - -','D6 - C6 - Bb5 - F5 - D5 - F5 - Bb5 - - -',
+    'C6 - - - A5 - F5 - A5 - C6 - F6 - - -','E6 - - - C6 - G5 - E5 - G5 - C6 - - -',
+    'Bb5 - - - G5 - D5 - G5 - Bb5 - D6 - - -','C6 - Bb5 - A5 - G5 - E5 - - - G5 - - -',
+    'F5 - - - A5 - C6 - F6 - - - C6 - - -','A5 - - - - - - - F5 - G5 - A5 - C6 -']},
+  {name:'Kopi Break', key:43, chords:'G Em C D G Bm C D  Am D G Em C D G G', mel:[
+    'B4 - D5 - G5 - - B5 - - A5 - G5 - - -','E5 - G5 - B5 - - - A5 - G5 - E5 - - -',
+    'E5 - G5 - C6 - - - B5 - A5 - G5 - - -','F#5 - A5 - D6 - - - C6 - B5 - A5 - - -',
+    'G5 - - - D5 - G5 - B5 - - - D6 - - -','D6 - - - B5 - F#5 - D5 - F#5 - B5 - - -',
+    'C6 - - - G5 - E5 - G5 - C6 - E6 - - -','D6 - C6 - B5 - A5 - F#5 - - - A5 - - -',
+    'A5 - - - C6 - - - E6 - - - C6 - A5 -','F#5 - - - A5 - - - D6 - C6 - A5 - - -',
+    'G5 - B5 - D6 - - - B5 - G5 - D5 - - -','E5 - - - G5 - B5 - - - G5 - E5 - - -',
+    'C6 - - - E6 - - - G6 - E6 - C6 - - -','D6 - - - F#6 - - - A6 - F#6 - D6 - - -',
+    'G6 - - - D6 - B5 - G5 - - - D5 - - -','G5 - - - - - - - - - - - - - - -']},
+].map(S2 => ({...S2, chords:S2.chords.split(/\s+/), mel:S2.mel.map(m => m.split(' '))}));
+const songNow = () => SONGS[((S && S.day) || 0) % SONGS.length];
+function chordFreqs(name, key, low){ const c = CHORD_NOTES[name] || CHORD_NOTES.C; return c.map(x => hz(key + x + (low ? 0 : 12))); }
+function rootFreq(name, key){ return hz(key - 12 + (CHORD_NOTES[name] || [0])[0]); }
+
+function scheduleStep(step, t){
+  const md = MOODS[AU.mood], sg = songNow(), bar = Math.floor(step / 16) % 16, s = step % 16, ch = sg.chords[bar];
+  const swing = (s % 2 === 1) ? 60 / md.bpm / 4 * 0.18 : 0, tt = t + swing, beat = 60 / md.bpm;
+  const note = sg.mel[bar][s], nf = note && note !== '-' ? freq(note) : 0;
+  if (AU.mood === 'build'){
+    // calm lift music: pad chords, soft bass, bell melody on the beat, gentle shaker
+    if (s === 0) pad(chordFreqs(ch, sg.key, true), t, beat * 4.2, 0.065);
+    if (s === 0 || s === 8) bass(rootFreq(ch, sg.key), t, beat * 1.6, 0.5);
+    if (nf && s % 4 === 0) bell(nf, t, 0.17, 1.6);
+    if (s % 4 === 2) shaker(tt, 0.05);
+    return;
+  }
+  const tense = AU.mood === 'tense';
+  // drums: kick + kompang pattern + shaker
+  if (s === 0 || s === 8 || (tense && (s === 6 || s === 14))) kick(t, 0.8);
+  if ([4, 12].includes(s)) kompang(t, false, 0.5);
+  if ([3, 7, 10, 15].includes(s)) kompang(tt, true, tense ? 0.4 : 0.3);
+  if (s % 2 === 0 || tense) shaker(tt, s % 4 === 2 ? 0.09 : 0.05);
+  // bass: walking root and fifth
+  const r = rootFreq(ch, sg.key);
+  if (s === 0) bass(r, t, beat * 0.9, 0.6); if (s === 6) bass(r * 1.5, tt, beat * 0.45, 0.45); if (s === 8) bass(r, t, beat * 0.9, 0.55); if (s === 14) bass(r * 2, tt, beat * 0.4, 0.4);
+  // pizzicato off-beat chords
+  if ([2, 6, 10, 14].includes(s)) chordFreqs(ch, sg.key, false).forEach(f => pizz(f, tt, tense ? 0.06 : 0.045));
+  // melody: marimba, doubled by a bell an octave up on the strong beats; tense adds a square-wave echo
+  if (nf){ marimba(nf, tt, 0.32); if (s % 4 === 0) bell(nf * 2, tt, 0.04, 0.6); if (tense) tone(nf, tt + beat * 0.5, 0.07, 'square', AU.mus, 0.035); }
+  // B section gets a little counter-melody bell on the off-beats
+  if (bar >= 8 && s === 10 && !tense) bell(chordFreqs(ch, sg.key, false)[2] * 2, tt, 0.05, 0.8);
+  if (tense && s % 4 === 2) tone(hz(sg.key + 36 + (CHORD_NOTES[ch] || [0])[2]), tt, 0.04, 'square', AU.mus, 0.03);   // ticking stab
+}
+// volume, with ducking under the PA and stings
+function musicGain(){ const duck = AU.ctx && AU.ctx.currentTime < AU.duckUntil ? 0.35 : 1; return 0.23 * AU.vol.music * duck * (AU.music ? 1 : 0); }
+function duck(secs){ if (!AU.ctx) return; AU.duckUntil = Math.max(AU.duckUntil, AU.ctx.currentTime + secs); }
+function applyVolume(){
+  if (!AU.ctx) return;
+  const t = AU.ctx.currentTime;
+  AU.mg.gain.setTargetAtTime(TRACKS.on ? 0 : musicGain(), t, 0.15);
+  AU.sg.gain.setTargetAtTime(0.55 * AU.vol.sfx * (AU.sfx ? 1 : 0), t, 0.05);
+  tracksVolume();
+}
+function saveVolume(){ try { localStorage.setItem('just-a-moment-volume', JSON.stringify(AU.vol)); } catch (e){} applyVolume(); }
 function startMusic(){
   if (!AU.ctx || AU.timer) return;
   AU.next = AU.ctx.currentTime + 0.1;
   AU.timer = setInterval(() => {
-    if (!AU.music) return;
-    while (AU.next < AU.ctx.currentTime + 0.15){ scheduleStep(AU.step, AU.next); AU.next += SIXT; AU.step = (AU.step + 1) % 128; }
+    const m = musicMood(); if (m !== AU.mood){ AU.mood = m; tracksMood(m); }
+    applyVolume();
+    if (!AU.music || TRACKS.on) { AU.next = AU.ctx.currentTime + 0.05; return; }
+    const sixt = 60 / MOODS[AU.mood].bpm / 4;
+    while (AU.next < AU.ctx.currentTime + 0.15){ scheduleStep(AU.step, AU.next); AU.next += sixt; AU.step = (AU.step + 1) % 256; }
   }, 25);
 }
-function setMusic(on){ AU.music = on; if (AU.ctx){ AU.next = AU.ctx.currentTime + 0.05; } $('bMusic').classList.toggle('off', !on); }
-function setSfx(on){ AU.sfx = on; $('bSfx').classList.toggle('off', !on); }
+function setMusic(on){ AU.music = on; if (AU.ctx){ AU.next = AU.ctx.currentTime + 0.05; } $('bMusic').classList.toggle('off', !on); applyVolume(); }
+function setSfx(on){ AU.sfx = on; $('bSfx').classList.toggle('off', !on); applyVolume(); }
 
+// ---------- stings: short jingles over the music, which dips underneath ----------
+function sting(name){
+  if (!AU.ctx || !AU.sfx) return;
+  const t = AU.ctx.currentTime + 0.02, D = AU.sg; duck(name === 'awards' ? 4 : 2.2);
+  const play = (notes, gap, type, vol, len) => notes.forEach((n, i) => { if (n) tone(freq(n), t + i * gap, len || gap * 1.6, type, D, vol); });
+  if (name === 'vip'){ play(['G4','C5','E5','G5', null, 'E5','G5'], 0.11, 'triangle', 0.35); play(['C4', null, null, 'G3', null, null, 'C4'], 0.11, 'sine', 0.3, 0.3); noise(t + 0.66, 0.4, 'highpass', 6000, D, 0.2); }
+  else if (name === 'fire'){ for (let i = 0; i < 4; i++){ tone(880, t + i * 0.3, 0.14, 'square', D, 0.18); tone(660, t + i * 0.3 + 0.15, 0.14, 'square', D, 0.18); } }
+  else if (name === 'awards'){ play(['C5','C5','C5','G5', null, 'E5','G5','C6'], 0.16, 'triangle', 0.35, 0.3); play(['C3', null, null, 'G3', null, 'C4', null, 'C3'], 0.16, 'sawtooth', 0.12, 0.4); noise(t + 1.1, 0.8, 'highpass', 5000, D, 0.25); }
+  else if (name === 'goal'){ play(['E5','G5','C6'], 0.1, 'triangle', 0.3); }
+}
+
+// ---------- optional recorded tracks: put MP3s in assets/music to replace the built-in tune ----------
+//   assets/music/build.mp3 (calm), open.mp3 (main), tense.mp3 (busy). Any missing mood falls back to open.mp3, then to the built-in tune.
+const TRACKS = {on:false, el:{}, cur:null, ok:{}};
+function tracksInit(){
+  for (const m of ['build', 'open', 'tense']){
+    const a = new Audio(); a.loop = true; a.preload = 'auto'; a.volume = 0;
+    a.addEventListener('canplaythrough', () => { TRACKS.ok[m] = true; if (TRACKS.ok.open && !TRACKS.on){ TRACKS.on = true; tracksMood(AU.mood); } }, {once:true});
+    a.addEventListener('error', () => { TRACKS.ok[m] = false; });
+    a.src = 'assets/music/' + m + '.mp3'; TRACKS.el[m] = a;
+  }
+}
+function trackFor(m){ return TRACKS.ok[m] ? m : 'open'; }
+function tracksMood(m){
+  if (!TRACKS.on) return;
+  const want = trackFor(m); if (TRACKS.cur === want) return;
+  const old = TRACKS.el[TRACKS.cur]; TRACKS.cur = want;
+  const a = TRACKS.el[want]; if (old !== a){ a.currentTime = old ? (old.currentTime % (a.duration || 1)) : 0; a.play().catch(() => {}); }
+  if (old && old !== a) setTimeout(() => { old.pause(); }, 1200);
+}
+function tracksVolume(){
+  if (!TRACKS.on) return;
+  const v = clamp(musicGain() * 3.2, 0, 1);
+  for (const [m, a] of Object.entries(TRACKS.el)){ const target = m === TRACKS.cur ? v : 0; a.volume = clamp(a.volume + (target - a.volume) * 0.08, 0, 1); }
+}
 
 
 // one combined content object (your first satire file + round-3 files)
@@ -617,7 +761,7 @@ function loadSprite(key, src){ const img = new Image(); LOADING.total++; img.onl
 const hasSprite = k => { const im = SPRITES[k]; return !!(im && im.complete && im.naturalWidth > 0); };
 ['doctor','nurse','receptionist','pharmacist','handyman','patient-1','patient-2','patient-3','patient-4','patient-5','patient-6','vip-nephew','vip-influencer','vip-auntie']
   .forEach(n => loadSprite('person:' + n, 'assets/people/' + n + '.png'));
-['reception-desk','ticket-machine','ticket-machine-empty','bench','bench-back','plant','vending-machine','gp-desk','exam-couch','pharmacy-shelves','pharmacy-counter','ward-bed','scanner','treatment-bed','monitor','filing-cabinets','stamp-desk','photocopier','photocopier-jammed','trolley-bed','crash-cart','neuro-chair','physio-set','operating-table','ambulance','motorbike','console-desk','water-cooler','storage-shelf','notice-board','fire-extinguisher','kopi-trolley','cat','pigeon','bin','litter','toilet','toilet-occupied','sink','shrub-planter','reception-desk-back','gp-desk-back','pharmacy-counter-back','stamp-desk-back','console-desk-back','pharmacy-shelves-back','storage-shelf-back','filing-cabinets-back','ticket-machine-back','notice-board-back','scanner-back','vending-machine-back','physio-set-back','exam-couch-back','trolley-bed-back','ward-bed-back','treatment-bed-back','neuro-chair-back','operating-table-back','water-cooler-back','photocopier-back','crash-cart-back','kopi-trolley-back','toilet-back','bin-back']
+['reception-desk','ticket-machine','ticket-machine-empty','bench','bench-back','plant','vending-machine','gp-desk','exam-couch','pharmacy-shelves','pharmacy-counter','ward-bed','scanner','treatment-bed','monitor','filing-cabinets','stamp-desk','photocopier','photocopier-jammed','trolley-bed','crash-cart','neuro-chair','physio-set','operating-table','ambulance','motorbike','console-desk','water-cooler','storage-shelf','notice-board','fire-extinguisher','kopi-trolley','cat','pigeon','bin','litter','toilet','toilet-occupied','sink','shrub-planter','reception-desk-back','gp-desk-back','pharmacy-counter-back','stamp-desk-back','console-desk-back','pharmacy-shelves-back','storage-shelf-back','filing-cabinets-back','ticket-machine-back','notice-board-back','scanner-back','vending-machine-back','physio-set-back','exam-couch-back','trolley-bed-back','ward-bed-back','treatment-bed-back','neuro-chair-back','operating-table-back','water-cooler-back','photocopier-back','crash-cart-back','kopi-trolley-back','toilet-back','bin-back','generator']
   .forEach(n => loadSprite('prop:' + n, 'assets/furniture/' + n + '.png'));
 ['star','advisor'].forEach(n => loadSprite('ui:' + n, 'assets/ui/' + n + '.png'));
 // each character's own poses, listed here once their pose sheets have been cut: stand, walk1, walk2, back, sit, sit-back, lie, act
@@ -767,9 +911,10 @@ function objMirrorRaw(o, key){
 function seatsOf(o){
   const def = OBJ[o.key]; if (!def.seats) return [];
   const out = [];
-  // seats follow the bench picture: spread along its length, feet just in front of the seat
+  // seats follow the bench picture: spread along its length; seen from the front the feet sit just in front of
+  // the seat, seen from behind the person sits in the middle of the seat, behind the backrest
   const r = objRect(o), len = o.o % 2 ? r.h : r.w, dep = o.o % 2 ? r.w : r.h, off = o.o % 2 ? r.y - o.y : r.x - o.x;
-  for (let i = 0; i < def.seats; i++){ const u = off + (i + 0.5) * len / def.seats; out.push({i, pos:toWorld(o, u, Math.min(def.D - 0.05, dep * 0.95)), front:tileOfPt(toWorld(o, u, def.D + 0.5))}); }
+  for (let i = 0; i < def.seats; i++){ const u = off + (i + 0.5) * len / def.seats; out.push({i, pos:toWorld(o, u, o.o >= 2 ? dep * 0.5 : Math.min(def.D - 0.05, dep * 0.95)), front:tileOfPt(toWorld(o, u, def.D + 0.5))}); }
   return out;
 }
 // which way a person faces when sitting on / using an item (1 = down-right, -1 = down-left)
@@ -830,7 +975,7 @@ function save(){
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(S, (k, v) => k === 'lineCache' || k === 'sbubbles' || k === 'bubble' ? undefined : v)); } catch (e) { /* storage blocked: keep playing */ }
 }
 // GAME_VER goes up with every release; older saves are upgraded by filling in anything they lack
-const GAME_VER = 8;
+const GAME_VER = 9;
 let saveProblem = false;
 function upgradeSave(d){
   if (!LEVELS[d.level]) throw new Error('unknown level');
@@ -951,7 +1096,7 @@ function person(x, y, L, o = {}){
     const squash = (o.walk ? 1 - Math.abs(sw) * 0.04 : 1 + Math.sin(t * 2.2 + ph) * 0.01) * (sitFake ? 0.86 : 1);
     const seatedPic = false;
     const ref = SPRITES['person:doctor'], k = ref && ref.naturalHeight > 200 ? 56 / ref.naturalHeight : 0;
-    if (k) drawSpriteK('person:' + spr, x, y, bob + (seatedPic ? 3 : 0), k * (o.scale || 1), face, tilt, squash);
+    if (k) drawSpriteK('person:' + spr, x, y, bob + (o.lift || 0), k * (o.scale || 1), face, tilt, squash);
     else drawSpriteAt('person:' + spr, x, y, bob + (seatedPic ? 4 : 0), seatedPic ? 46 : 50, seatedPic ? 44 : 54, face, 1, tilt);
     if (o.mood != null && o.mood < 30){ const hx = sx + 12, hy = sy - 48 - bob; g.beginPath(); g.moveTo(hx, hy - 7); g.quadraticCurveTo(hx + 5, hy, hx, hy + 3); g.quadraticCurveTo(hx - 4, hy, hx, hy - 7); fillInk('#7fd0ff', 1.4); }
     return;
@@ -1121,6 +1266,7 @@ function checkPlace(g, free){
     if (objAt(t.x, t.y)) return 'Something is in the way';
     if (isEntTile(t.x, t.y)) return 'Keep the entrance clear';
     if (doorIns.some(d => (d.x === t.x && d.y === t.y) || (d.ox === t.x && d.oy === t.y))) return 'Keep the doorway clear';
+    const sp = spotTaken(t.x, t.y, g); if (sp) return sp.msg;
   }
   for (const k of ['s', 'p']){
     if (!def[k] || def.onIt && k === 'p') continue;
@@ -2156,7 +2302,7 @@ function chaosTypes(){
 }
 function startChaos(type){
   const c = {type, taps:0, need: type === 'powerCut' ? 5 : 3, until:S.time + 30};
-  if (type === 'powerCut'){ c.x = S.ent + 1.5; c.y = S.bh + 0.5; S.freezeUntil = Infinity; }
+  if (type === 'powerCut'){ c.x = S.ent + 4.6; c.y = S.bh + 0.55; S.freezeUntil = Infinity; }
   if (type === 'lobbyPigeon'){ const d = pick(S.objs.filter(o => o.key === 'reception')); c.at = 'o' + d.id; const sp = spotOf(d, 'p'); c.x = sp.x + 0.3; c.y = sp.y - 0.4; }
   if (type === 'wardCat'){ const w = pick(S.rooms.filter(r => r.type === 'ward' && r.state === 'ready')); c.at = 'r' + w.id; const sp = freeTileIn(w); c.x = sp.x; c.y = sp.y; S.blocks[c.at] = Infinity; }
   S.chaos = c; S.chaosToday = type; pa('event', {}, CONTENT.chaos[type].announce); sfx('empty');
@@ -2244,7 +2390,7 @@ function startFire(o){
   const ext = objNear({x:S.fire.x, y:S.fire.y}, 'extinguisher', TUNING.extinguisherRange);
   if (ext) S.fire.autoAt = S.time + 2.5;
   else { const rid = roomAt(o.x, o.y); if (rid) { S.fire.room = 'r' + rid; S.blocks[S.fire.room] = Infinity; } }
-  pa('event', {item:name.toLowerCase()}, FIRE_PA.start); sfx('empty');
+  pa('event', {item:name.toLowerCase()}, FIRE_PA.start); sting('fire');
   firstTip('fire', 'Fires start in machines like copiers and drinks machines. A Fire Extinguisher within 5 tiles puts them out by itself.', {x:S.fire.x, y:S.fire.y});
   addLog('🔥 Fire near the ' + name + '!' + (ext ? ' The extinguisher is on it.' : ' Tap the fire to put it out. Tip: an extinguisher nearby puts fires out by itself.'), 'alert', {x:S.fire.x, y:S.fire.y});
 }
@@ -2440,11 +2586,17 @@ const SYMMETRIC = ['plant', 'extinguisher', 'sink', 'monitor'];
 function objKey(o){ return o.x + o.y + 1; }
 // patients lie on these while being treated
 const LIE_ON = ['ward-bed', 'treat-bed', 'trolley', 'op-table', 'scanner'];
+// turns where a bed's pillow end faces the viewer
+const HEAD_NEAR = {'ward-bed':[2, 3]};
 function drawLying(pt, o){
   const f = foot(OBJ[o.key], o.o), cx = o.x + f.w / 2, cy = o.y + f.h / 2, base = patientSprite(pt);
   const [sx, sy] = iso(cx, cy), ref = SPRITES['person:doctor'], k = ref && ref.naturalHeight > 200 ? 56 / ref.naturalHeight : 0.18;
   const z = o.key === 'scanner' ? 20 : 15, lie = base && hasSprite('person:' + base + '/lie') ? 'person:' + base + '/lie' : null;
-  if (lie){ const im = SPRITES[lie], w = im.naturalWidth * k, h = im.naturalHeight * k; g.save(); g.translate(sx, sy - z); g.scale(o.o % 2 ? -1 : 1, 1); g.drawImage(im, -w / 2, -h * 0.7, w, h); g.restore(); }
+  if (lie){
+    // the lying picture has the head at the far end; on these beds' back views the pillow is at the near end,
+    // so the patient is turned end to end to keep their head on the pillow
+    const im = SPRITES[lie], w = im.naturalWidth * k, h = im.naturalHeight * k, rev = HEAD_NEAR[o.key] && HEAD_NEAR[o.key].includes(o.o);
+    g.save(); g.translate(sx, sy - z); g.scale(o.o % 2 ? -1 : 1, 1); if (rev){ g.rotate(Math.PI); g.drawImage(im, -w / 2, -h * 0.3, w, h); } else g.drawImage(im, -w / 2, -h * 0.7, w, h); g.restore(); }
   else if (base && hasSprite('person:' + base)){
     // no lying picture yet: lay the character's own picture along the bed
     const im = SPRITES['person:' + base], w = im.naturalWidth * k * 0.85, h = im.naturalHeight * k * 0.85;
@@ -2490,7 +2642,7 @@ function sceneItems(alpha){
     items.push({key:ax + S.bh + 2.5, box:[ax - 1, S.bh + 1.2, ax + 1, S.bh + 2], h:100, draw:() => { if (!(hasSprite('prop:ambulance') && drawSpriteAt('prop:ambulance', ax, S.bh + 1.6, 0, 120, 100, 1))) box(ax - 0.9, S.bh + 1.2, 1.8, 0.8, 26, '#ffffff'); }});
   }
   if (S.fire){ const f = S.fire; items.push({key:f.x + f.y + 1.2, box:pbox(f.x, f.y), h:60, draw:() => drawFire(f)}); }
-  if (S.chaos && S.chaos.type === 'powerCut') items.push({key:S.chaos.x + S.chaos.y, box:pbox(S.chaos.x, S.chaos.y), h:30, draw:() => { box(S.chaos.x - 0.25, S.chaos.y - 0.2, 0.5, 0.4, 18, '#ffd23f'); }});
+  if (S.chaos && S.chaos.type === 'powerCut') items.push({key:S.chaos.x + S.chaos.y, box:pbox(S.chaos.x, S.chaos.y), h:30, draw:() => { const sh = Math.sin(now / 60) * 0.6; if (!drawSpriteAt('prop:generator', S.chaos.x + sh * 0.01, S.chaos.y, 0, 46, 48)) box(S.chaos.x - 0.25, S.chaos.y - 0.2, 0.5, 0.4, 18, '#ffd23f'); }});
   if (S.chaos && S.chaos.type !== 'powerCut'){ const c = S.chaos, cat = c.type === 'wardCat', key = cat ? 'prop:cat' : 'prop:pigeon';
     items.push({key:c.x + c.y + 0.3, box:pbox(c.x, c.y), h:30, draw:() => { const hop = cat ? 0 : Math.abs(Math.sin(now / 160)) * 5; if (!drawSpriteAt(key, c.x, c.y, hop, cat ? 30 : 22, cat ? 26 : 20)) ell(c.x, c.y, 8 + hop, 8, 6, cat ? '#ff9a3c' : '#8a8f9c'); }}); }
   // staff
@@ -2516,7 +2668,12 @@ function sceneItems(alpha){
     const onIt = pt.st === 'serve' && so && OBJ[so.key].onIt;
     let key = x + y + 0.02, face = pt.face;
     if (sitting){ const [oid] = pt.seat.split(':'), b = objById(+oid); if (b){ face = faceOf(b); key = objKey(b) + (b.o >= 2 ? -0.3 : 0.3) + x * 0.001; } }
+    // sitting in a chair (neuro chair): sit in the middle of the chair, facing the way the chair faces;
+    // on the two back-facing turns, show their back and draw them behind the backrest
+    const sitOn = onIt && so.key === 'neuro-chair';
+    let px = x, py = y - (onIt ? 0.05 : 0), chairBack = false;
     if (onIt) key = objKey(so) + 0.05;
+    if (sitOn){ const r = objRect(so); px = r.x + r.w / 2; py = r.y + r.h / 2; face = faceOf(so); chairBack = so.o >= 2; key = objKey(so) + (chairBack ? -0.3 : 0.3); }
     let look = null;
     if (!moving && !sitting && so && !onIt && (pt.st === 'serve' || pt.st === 'call')) look = lookAt(pt.pos.x, pt.pos.y, patientTarget(pt, so));
     if (look) face = look.face;
@@ -2525,10 +2682,9 @@ function sceneItems(alpha){
       const stand = patientSprite(pt);
       const back = sitting && pt.wait && pt.wait.back;
       const away = moving && (pt.pos.x - pt.prev.x) + (pt.pos.y - pt.prev.y) < -0.001;
-      const sitOn = onIt && so.key === 'neuro-chair';
-      person(x, y - (onIt ? 0.05 : 0), pt.look, {walk:moving, face, phase:pt.phase, mood:pt.patience, sit:sitting || sitOn, back: sitting ? !!back : look ? look.back : away, sprite:stand,
+      person(px, py, pt.look, {walk:moving, face, phase:pt.phase, mood:pt.patience, sit:sitting || sitOn, back: sitting ? !!back : sitOn ? chairBack : look ? look.back : away, sprite:stand, lift: (sitting && back) || (sitOn && chairBack) ? 13 : 0,
         scale: L === 'ego' ? 1.14 : 1, lean: L === 'lean' && !sitting ? 0.16 : 0, jitter: L === 'shake'});
-      if (!sitting || !back) illness(pt, x, y + (sitting ? 0.15 : 0));
+      if (!(sitting && back) && !(sitOn && chairBack)) illness(pt, px, py + (sitting || sitOn ? 0.15 : 0));
     }});
   }
   return items;
@@ -2541,14 +2697,14 @@ function render(alpha){
   drawRoomTints(); drawBuildUnder();
   depthSort(sceneItems(alpha)).forEach(it => it.draw());
   drawHighlights();
-  drawBuildOver(); drawPlaceMarkers(); drawMoveRoom();
+  drawExistingSpots(); drawBuildOver(); drawPlaceMarkers(); drawMoveRoom();
   // confetti
   const tnow = performance.now();
   fx = fx.filter(p => tnow - p.t0 < 1100);
   for (const p of fx){ const k = (tnow - p.t0) / 1000, [sx, sy] = iso(p.x, p.y); g.globalAlpha = 1 - k / 1.1; g.fillStyle = p.col; g.fillRect(sx + p.vx * k - 2, sy - 40 + p.vy * k + 120 * k * k - 2, 4, 5); }
   g.globalAlpha = 1;
   g.setTransform(dpr, 0, 0, dpr, 0, 0);
-  drawOverlay(alpha); drawAttention(); drawPatienceBars(); if (S.phase === 'open'){ refreshRoomChecks(); drawStuck(); }
+  drawOverlay(alpha); window.__edgeHits = []; drawAttention(); drawPatienceBars(); drawProblemMarkers(); if (S.phase === 'open'){ refreshRoomChecks(); drawStuck(); }
 }
 // ---------- build previews ----------
 function tileQuad(x, y, w, h, fill, stroke){ P([iso(x, y), iso(x + w, y), iso(x + w, y + h), iso(x, y + h)]); g.fillStyle = fill; g.fill(); if (stroke){ g.lineWidth = 2; g.strokeStyle = stroke; g.stroke(); } }
@@ -2641,7 +2797,7 @@ function drawOverlay(alpha){
   }
   if (S.flood && !S.flood.mopped && S.flood.x !== undefined){ const [fx2, fy2] = toScreen(S.flood.x + 0.5, S.flood.y + 0.5, 10); plate(fx2, fy2 - 14, 'Flooded! Click ×' + (3 - S.flood.taps), '#3b8bff'); }
   if (S.fire && !S.fire.autoAt){ const f = S.fire, [fx, fy] = toScreen(f.x, f.y, 70); plate(fx, fy - pulse * 3, '🔥 Fire! Tap it ×' + (f.need - f.taps) + ' · ' + Math.ceil(f.until - S.time) + 's', '#ff4f4f'); }
-  if (S.chaos){ const c = S.chaos, [cx, cy] = toScreen(c.x, c.y, c.type === 'powerCut' ? 46 : -16); plate(cx, cy + pulse * 3, (c.type === 'powerCut' ? 'Power cut! Click the generator' : c.type === 'wardCat' ? 'Cat in the ward! Click it' : 'Pigeon! Click it') + ' ×' + (c.need - c.taps), '#ff4f4f'); }
+  if (S.chaos){ const c = S.chaos, [cx, cy] = toScreen(c.x, c.y, c.type === 'powerCut' ? 64 : -16); plate(cx, cy + pulse * 3, (c.type === 'powerCut' ? 'Power cut! Click the generator' : c.type === 'wardCat' ? 'Cat in the ward! Click it' : 'Pigeon! Click it') + ' ×' + (c.need - c.taps), '#ff4f4f'); }
   if (S.bubble){ const pt = S.patients.find(q => q.id === S.bubble.id); if (pt) speech(pt.pos.x, pt.pos.y, S.bubble.text, '#fff'); }
   for (const b of S.sbubbles || []){ if (b.until < S.time) continue; const st = S.staff.find(s => s.id === b.sid); if (st && st.pos) speech(st.pos.x, st.pos.y, b.text, '#dff2ff'); }
   if (T.mode === 'room' && T.ghostInfo && T.hover){ const gi = T.ghostInfo, [gx, gy] = toScreen(gi.r.x + gi.r.w / 2, gi.r.y + gi.r.h / 2, 8); plate(gx, gy, gi.r.w + '×' + gi.r.h + ' · $' + gi.cost + (gi.err && T.drag ? ' · ' + gi.err : ''), gi.err && T.drag ? '#ff4f7c' : '#3fc33a'); }
@@ -3026,7 +3182,7 @@ function toTitle(){ save(); refreshTitle(); $('title').style.display = 'flex'; $
 $('bCont').onclick = () => { const d = loadSave(); if (!d) return; audioInit(); S = d; rebuildGrid(); $('title').style.display = 'none'; $('hud').style.display = 'flex'; $('toolbar').style.display = 'flex'; fitCamera(); setSpeed(1); if (S.dilemmaOpen){ const dd = S.dilemmaOpen; S.dilemmaOpen = null; dd.emergency ? null : openDilemma(dd); } if (S.phase === 'report'){ S.phase = 'prep'; nextDay(); } drawAdvisor(); };
 // toolbar
 $('tSandbox').onclick = () => { cancelTool(); sandboxPanel(); sfx('click'); };
-$('alertBtn').onclick = () => jumpToProblem();
+$('alertBtn').onclick = () => openProblemList();
 $('goalCard').onclick = () => { goalOpen = !goalOpen; updateGoalCard(); sfx('click'); };
 $('bSandbox').onclick = () => startSandbox();
 $('tBuild').onclick = () => { cancelTool(); openBuild(); sfx('click'); };
@@ -3053,12 +3209,15 @@ $('bMenu').onclick = () => {
     <button class="btn white opt" data-set="big"><span>${SET.big ? '✅' : '⬜'} Larger text</span></button>
     <button class="btn white opt" data-set="calm"><span>${SET.calm ? '✅' : '⬜'} Less motion<small>No bouncing, shaking or confetti</small></span></button>
     <button class="btn white opt" data-set="cb"><span>${SET.cb ? '✅' : '⬜'} Colour-blind friendly colours<small>Blue, orange and purple bars</small></span></button>
+    <label class="vol">🎵 Music <input type="range" min="0" max="100" value="${Math.round(AU.vol.music * 100)}" data-vol="music"></label>
+    <label class="vol">🔊 Sound effects <input type="range" min="0" max="100" value="${Math.round(AU.vol.sfx * 100)}" data-vol="sfx"></label>
     <div class="grid2"><button class="btn sm white" data-mus>${AU.music ? '🎵 Music on' : '🔇 Music off'}</button><button class="btn sm white" data-sfx>${AU.sfx ? '🔊 Sound on' : '🔇 Sound off'}</button></div>
     <button class="btn white opt" data-title><span>Save and quit to the title screen</span></button></div>`);
   on('[data-help]', () => openHelp('basics'));
   on('[data-fit]', () => { fitCamera(); closeSheet(); });
   on('[data-title]', () => toTitle());
   on('[data-set]', b => { SET[b.dataset.set] = !SET[b.dataset.set]; saveSet(); $('bMenu').onclick(); });
+  sheet.querySelectorAll('[data-vol]').forEach(el => el.oninput = () => { audioInit(); AU.vol[el.dataset.vol] = el.value / 100; saveVolume(); if (el.dataset.vol === 'sfx') sfx('click'); });
   on('[data-mus]', () => { audioInit(); setMusic(!AU.music); $('bMenu').onclick(); });
   on('[data-sfx]', () => { audioInit(); setSfx(!AU.sfx); $('bMenu').onclick(); });
 };
@@ -3327,11 +3486,6 @@ function drawAttention(){
     if (d){ const [dx, dy] = toScreen(d.x + 0.5, d.y + 0.5, 30); big(dx, dy - pulse * 3, A.icon, '#fff'); }
   }
 }
-function updateAlert(){
-  const b = $('alertBtn'); if (!b) return;
-  const n = problems().length; b.style.display = n ? 'flex' : 'none';
-  if (n) b.innerHTML = '⚠️ <b>' + n + '</b><small>' + (n === 1 ? 'problem' : 'problems') + '</small>';
-}
 
 // ---------- pinned goal card ----------
 let goalOpen = !matchMedia('(pointer:coarse)').matches && innerWidth > 800;
@@ -3360,7 +3514,7 @@ function tickerPush(text){
   const el = $('ticker'); if (!el) return;
   el.innerHTML = '<span class="tpa">📢 PA</span><div class="tview"><span class="tmsg"></span></div>';
   const m = el.querySelector('.tmsg'); m.textContent = text;
-  const dur = Math.max(9, text.length / 9); m.style.animation = 'none'; void m.offsetWidth; m.style.animation = `tick ${dur}s linear 1`;
+  const dur = Math.max(9, text.length / 9); duck(Math.min(6, dur * 0.6)); m.style.animation = 'none'; void m.offsetWidth; m.style.animation = `tick ${dur}s linear 1`;
   el.style.display = 'flex';
 }
 
@@ -3413,7 +3567,7 @@ function awardCeremony(won){
     <div class="stats"><span>Cures this year</span><span>${S.totalCures}</span><span>Rating</span><span>${rate ? rate.toFixed(1) : '–'} ★</span><span>Money</span><span>${money(S.cash)}</span><span><b>Score</b></span><span><b>${score}</b> (best ${S.bestScore})</span></div>
     <div class="memo"><b>Year ${y + 1}: what changes</b>About 15% more patients every day · VIPs and chaos a little more often${AILMENTS[Object.keys(AILMENTS).find(k => AILMENTS[k].year === y + 1)] ? ' · a new illness: <b>' + AILMENTS[Object.keys(AILMENTS).find(k => AILMENTS[k].year === y + 1)].icon + ' ' + AILMENTS[Object.keys(AILMENTS).find(k => AILMENTS[k].year === y + 1)].name + '</b>' : ''}<br>Targets: ${nextG.cures} cures, ${money(nextG.bank)}, ${nextG.rating} ★</div>
     <button class="btn go" id="bYear">Start Year ${y + 1} →</button>`;
-  $('report').style.display = 'flex'; sfx('star');
+  $('report').style.display = 'flex'; sting('awards');
   $('bYear').onclick = () => { S.year = y + 1; S.expands = 0; S.day = 0; S.totalCures = 0; S.lvRateSum = 0; S.lvRateN = 0; nextDay(); };
 }
 
@@ -3604,7 +3758,7 @@ function updateGoalCard(){
 function celebrate(title, sub){
   const el = $('celebrate'); el.innerHTML = title + (sub ? '<small>' + sub + '</small>' : '');
   el.classList.add('show'); clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove('show'), 2600);
-  sfx('star');
+  sting('goal');
   if (!SET.calm && S){ const c = {x:S.ent + 1, y:S.bh - 3}; for (let i = 0; i < 40; i++) fx.push({x:c.x + (fxRand() - 0.5) * 6, y:c.y + (fxRand() - 0.5) * 6, vx:(fxRand() - 0.5) * 160, vy:-80 - fxRand() * 120, col:['#ff5d8f', '#ffd23f', '#3fc33a', '#5ab8ff', '#a77bff'][i % 5], t0:performance.now()}); }
 }
 function checkCelebrations(){
@@ -3712,6 +3866,8 @@ function roomProblem(r){
   const inside = t => inMap(t.x, t.y) && di[t.y * W + t.x] >= 0;
   const near = p => { const t = tileOfPt(p); return inside(t) || [[1,0],[-1,0],[0,1],[0,-1]].some(([dx, dy]) => inside({x:t.x + dx, y:t.y + dy})); };
   if (objAt(r.door.x, r.door.y)) return 'has furniture blocking the doorway';
+  for (const o of roomObjs(r)) for (const sp of spotsOfObj(o)){ const id = objAt(sp.t.x, sp.t.y), b = id && objById(id);
+    if (b && b !== o) return 'has the ' + (sp.kind === 's' ? 'staff spot' : sp.kind === 'p' ? 'patient spot' : 'seat space') + ' of the ' + OBJ[o.key].name + ' is covered by the ' + OBJ[b.key].name; }
   for (const o of roomObjs(r)){ const def = OBJ[o.key];
     if (def.s && !near(spotOf(o, 's'))) return 'staff can\'t reach the ' + def.name;
     if (def.p && !near(spotOf(o, 'p'))) return 'patients can\'t reach the ' + def.name;
@@ -3740,6 +3896,39 @@ function drawStuck(){
   const pulse = 0.5 + 0.5 * Math.sin(now / 250);
   for (const a of stuckList()){ const [sx, sy] = toScreen(a.pos.x, a.pos.y, 82); g.save(); g.beginPath(); g.arc(sx, sy - pulse * 3, 14, 0, 7); g.fillStyle = '#ffd23f'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = OL; g.stroke(); g.font = '15px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('🚧', sx, sy - pulse * 3 + 1); g.restore(); }
   for (const r of S.rooms) if (r.blocked){ const [cx, cy] = toScreen(r.x + r.w / 2, r.y + r.h / 2, 46); plate(cx, cy + 22, '⚠️ ' + r.blocked, '#ff4f4f'); }
+}
+
+// ---------- standing spots of furniture already placed: nothing may be put on them ----------
+function spotsOfObj(o){
+  const def = OBJ[o.key], out = [];
+  if (def.s) out.push({t:tileOfPt(spotOf(o, 's')), kind:'s', o});
+  if (def.p && !def.onIt) out.push({t:tileOfPt(spotOf(o, 'p')), kind:'p', o});
+  for (const st of seatsOf(o)) out.push({t:st.front, kind:'seat', o});
+  return out;
+}
+let spotCache = {v:-1, map:null};
+function spotMap(){
+  if (spotCache.v === layoutV && spotCache.n === S.objs.length) return spotCache.map;
+  const m = new Map(); for (const o of S.objs) for (const sp of spotsOfObj(o)) m.set(sp.t.x + ',' + sp.t.y, sp);
+  spotCache = {v:layoutV, n:S.objs.length, map:m}; return m;
+}
+function spotTaken(x, y, g){
+  const sp = spotMap().get(x + ',' + y); if (!sp || (g && T.moving && sp.o === T.moving)) return null;
+  const name = OBJ[sp.o.key].name;
+  sp.msg = sp.kind === 's' ? 'That\'s where staff stand to use the ' + name : sp.kind === 'p' ? 'That\'s where patients stand at the ' + name : 'Patients need that space to sit on the ' + name;
+  return sp;
+}
+// while placing: show every existing standing spot nearby, so you can see where not to put things
+function drawExistingSpots(){
+  if (T.mode !== 'place' || !T.ghost) return;
+  const gh = T.ghost, mine = objTiles(gh);
+  for (const sp of spotMap().values()){
+    if (Math.abs(sp.t.x - gh.x) > 6 || Math.abs(sp.t.y - gh.y) > 6) continue;
+    const hit = mine.some(q => q.x === sp.t.x && q.y === sp.t.y);
+    tileQuad(sp.t.x + 0.2, sp.t.y + 0.2, 0.6, 0.6, hit ? 'rgba(255,79,79,.85)' : 'rgba(122,92,255,.35)', hit ? '#ff2a2a' : null);
+    const [sx, sy] = iso(sp.t.x + 0.5, sp.t.y + 0.5); g.font = '11px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.globalAlpha = hit ? 1 : 0.7;
+    g.fillText(sp.kind === 's' ? '👤' : sp.kind === 'p' ? '🙂' : '🪑', sx, sy); g.globalAlpha = 1;
+  }
 }
 
 // ================== gameplay information inside the game ==================
@@ -3818,6 +4007,7 @@ function firstTip(key, text, at){
 // VIP arrival: who it is and what to do
 function vipArrived(pt){
   const v = VIP_INFO[pt.vip]; if (!v) return;
+  sting('vip');
   S.tips = S.tips || {}; const first = !S.tips.vip; S.tips.vip = 1;
   toast('⭐ ' + v.name + ' has arrived! ' + (first ? v.twist + ' ' : '') + v.tip + (first ? ' VIPs pay double and always review.' : ''), first ? 9000 : 6000, pt.pos);
   addLog('⭐ ' + v.name + ' arrived. ' + v.twist, 'advice', pt.pos);
@@ -3918,6 +4108,73 @@ function dayGraphHtml(){
   const lbl = i => { const hr = 9 + i; return (hr % 12 || 12) + (hr < 12 ? 'am' : 'pm'); };
   return `<div class="dgraph"><b>Your day, hour by hour</b><div class="dbars">${D.b.map((x, i) => `<div class="dcol" title="${lbl(i)}: ${x.c} cured, ${x.w} walked out, ${money(x.m)}"><div class="dstack"><i class="dc" style="height:${x.c / maxC * 100}%"></i><i class="dw" style="height:${x.w / maxC * 100}%"></i></div><small>${lbl(i)}</small></div>`).join('')}</div>
     <small><span class="dkey dc"></span> cured <span class="dkey dw"></span> walked out${D.b[worst].w ? ' · worst hour: <b>' + lbl(worst) + '</b> (' + D.b[worst].w + ' walked out)' : ''}</small></div>`;
+}
+
+// ================== making problems impossible to miss ==================
+// 1. a pulsing red ring and label on every problem in the hospital
+// 2. arrows at the edge of the screen pointing at problems you can't see
+// 3. the alert button shows the most urgent problem in words; tapping it opens the full list
+// 4. a new problem gives a short "ping" and a flash of the button
+const PRIORITY = {'🔥':0, '🚑':1, '⚡':2, '🚧':3, '⚠️':3, '📦':4, '🔧':5, '🙋':5, '😩':6, '⏳':7, '🧻':8, '🖨️':8, '🎫':8, '🐈':2, '🐦':2};
+function sortedProblems(){ return problems().slice().sort((a, b) => (PRIORITY[a.icon] ?? 9) - (PRIORITY[b.icon] ?? 9)); }
+let seenProblems = new Set(), alertFlash = 0;
+function drawProblemMarkers(){
+  if (!S || S.phase !== 'open') return;
+  const list = sortedProblems(), now2 = performance.now(), pulse = 0.5 + 0.5 * Math.sin(now2 / 220);
+  const top = ($('hud').offsetHeight || 46) + 40, bottom = innerHeight - ($('toolbar').offsetHeight || 80) - 16, left = 16, right = innerWidth - 16;
+  // new problems: ping once
+  const keys = new Set(list.map(p => p.key));
+  for (const k of keys) if (!seenProblems.has(k)){ alertFlash = now2; if (AU.ctx && AU.sfx){ const t = AU.ctx.currentTime; tone(1046, t, 0.12, 'triangle', AU.sg, 0.25); tone(1318, t + 0.1, 0.16, 'triangle', AU.sg, 0.22); } break; }
+  seenProblems = keys;
+  let edge = 0, shown = 0;
+  for (const p of list){
+    if (!p.at) continue;
+    const [sx, sy] = toScreen(p.at.x, p.at.y, 30);
+    const on = sx > left && sx < right && sy > top && sy < bottom;
+    if (on && shown++ < 6){
+      // ring on the floor + icon + short label
+      g.save();
+      g.lineWidth = 4; g.strokeStyle = 'rgba(255,60,60,' + (0.55 + 0.45 * pulse) + ')';
+      g.beginPath(); g.ellipse(sx, sy + 22 * cam.z, (26 + pulse * 6) * cam.z, (13 + pulse * 3) * cam.z, 0, 0, 7); g.stroke();
+      g.restore();
+      const short = p.text.split(/[.!]/)[0];
+      g.font = 'bold 12px sans-serif'; const w = Math.min(260, g.measureText(short).width + 34);
+      const bx = clamp(sx - w / 2, 6, innerWidth - w - 6), by = sy - 64 * cam.z - 18 - pulse * 3;
+      g.beginPath(); g.roundRect(bx, by, w, 24, 12); g.fillStyle = '#ff3b3b'; g.fill(); g.lineWidth = 2.5; g.strokeStyle = OL; g.stroke();
+      g.fillStyle = '#fff'; g.textAlign = 'left'; g.textBaseline = 'middle';
+      g.font = '14px sans-serif'; g.fillText(p.icon, bx + 7, by + 12.5);
+      g.font = 'bold 12px sans-serif'; g.fillText(short.length > 34 ? short.slice(0, 33) + '…' : short, bx + 26, by + 12.5);
+    } else if (!on && edge < 5){
+      // off-screen: an arrow on the edge pointing towards it
+      edge++;
+      const cx = innerWidth / 2, cy = (top + bottom) / 2, a = Math.atan2(sy - cy, sx - cx);
+      const ex = clamp(sx, left + 22, right - 22), ey = clamp(sy, top + 22, bottom - 22);
+      g.save(); g.translate(ex, ey);
+      g.beginPath(); g.arc(0, 0, 19 + pulse * 2, 0, 7); g.fillStyle = '#ff3b3b'; g.fill(); g.lineWidth = 3; g.strokeStyle = OL; g.stroke();
+      g.font = '16px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#fff'; g.fillText(p.icon, 0, 1);
+      g.rotate(a); g.beginPath(); g.moveTo(32, 0); g.lineTo(21, -8); g.lineTo(21, 8); g.closePath(); g.fillStyle = '#ff3b3b'; g.fill(); g.stroke();
+      g.restore();
+      (window.__edgeHits = window.__edgeHits || []).push({x:ex, y:ey, at:p.at});
+    }
+  }
+}
+// tapping an edge arrow jumps there
+function edgeArrowAt(sx, sy){ const h = (window.__edgeHits || []).find(e => Math.hypot(e.x - sx, e.y - sy) < 26); return h ? h.at : null; }
+
+function updateAlert(){
+  const b = $('alertBtn'); if (!b) return;
+  const list = sortedProblems(), n = list.length; b.style.display = n ? 'flex' : 'none';
+  if (!n) return;
+  const top = list[0], flash = performance.now() - alertFlash < 900;
+  const h = `<span class="ai">${top.icon}</span><span class="at"><b>${n === 1 ? '1 problem' : n + ' problems'}</b><small>${top.text.split(/[.!]/)[0]}</small></span>`;
+  if (b.innerHTML !== h) b.innerHTML = h;
+  b.classList.toggle('flash', flash);
+}
+function openProblemList(){
+  const list = sortedProblems();
+  if (!list.length){ toast('No problems right now. Enjoy it while it lasts.'); return; }
+  showSheet(`<h3>⚠️ Problems (${list.length})</h3><p class="sub">Most urgent first. Tap 📍 to go there.</p>` + list.map((p, i) => `<div class="hrow"><span class="hic">${p.icon}</span><span style="flex:1">${p.text}</span>${p.at ? `<button class="btn sm white" data-goto="${i}">📍</button>` : ''}</div>`).join(''));
+  sheet.querySelectorAll('[data-goto]').forEach(btn => btn.onclick = () => { const p = list[+btn.dataset.goto]; centerOn(p.at); closeSheet(); sfx('click'); });
 }
 
 
@@ -4021,6 +4278,7 @@ function click(sx, sy){
   if (T.mode === 'furnish'){ const o = objectAtScreen(sx, sy); if (o && o.room === T.roomId){ openObjCard(o); } return; }
   if (T.mode === 'room') return;
   if (T.mode === 'moveRoom'){ if (T.moveAt) finishMoveRoom(T.moveAt.x, T.moveAt.y); return; }
+  const ea = edgeArrowAt(sx, sy); if (ea){ centerOn(ea); sfx('click'); return; }
   // quick fixes first
   if (S.phase === 'open'){
     if (S.fire && !S.fire.autoAt){ const [fx, fy] = toScreen(S.fire.x, S.fire.y, 20); if (Math.hypot(sx - fx, sy - fy) < 50 * Math.max(0.8, cam.z)){ tapFire(); return; } }
