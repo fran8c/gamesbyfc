@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Games by FC — The Arcade</title>
-<meta name="description" content="Free browser games by FC. Velocity, SkyDuel, Harvest Tide, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole. No download, no sign-up. Play on your phone or computer.">
-<meta name="theme-color" content="#05060f">
+<meta name="description" content="Free browser games by FC: Velocity, Just a Moment!, SkyDuel, Harvest Tide, Time Hole, Neon 3026, Shaman! and Pappies Monopoly. No download, no sign-up. Play on your phone or computer.">
+<meta name="theme-color" content="#2b2d6e">
 <meta name="color-scheme" content="dark">
 
 <!-- Sharing -->
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Games by FC">
 <meta property="og:title" content="Games by FC — The Arcade">
-<meta property="og:description" content="Feel-good games for your spare five minutes. Build, hustle, explore and chase a high score. Free in your browser.">
+<meta property="og:description" content="Little games for big grins. Make your first million, survive a day at the hospital, race the rings or raise a tribe. Free in your browser.">
 <meta property="og:url" content="https://fran8c.github.io/gamesbyfc/">
 <meta property="og:image" content="https://fran8c.github.io/gamesbyfc/og.png">
 <meta property="og:image:width" content="1200">
@@ -31,7 +31,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Bungee&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -416,8 +416,203 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
 .sheet-box b{color:#fff}
 .sheet-box button{margin-top:16px;width:100%;height:46px;border:0;border-radius:12px;font:800 14px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:#06121e;background:linear-gradient(180deg,#a8ecff,#3aa8dd);cursor:pointer}
 
+/* =========================================================
+   FRESH LOOK — "Dusk to Reef" arcade hall (Nov 2026)
+   SkyDuel's sunset at the top, Harvest Tide's reef below,
+   coral from Just a Moment! for the lights.
+   ========================================================= */
+:root{
+  --bg:#06223f;
+  --dim:#d6dcf2;
+  --faint:#b4c0de;
+  --line:rgba(255,194,74,.16);
+  --panel:#1e2257;
+  --coral:#ff6f61;
+  --gold2:#ffc24a;
+  --aqua:#7fe9ff;
+  --hallbg:#142a55;
+  --btn-bg:#182c5c;
+  --btn-bd:#3a5a9a;
+  --tickerbg:#0b1636;
+  --sign:'Bungee',Impact,'Arial Black',sans-serif;
+}
+body{
+  background:
+    radial-gradient(60rem 30rem at 50% -8%,rgba(255,179,71,.28),transparent 65%),
+    linear-gradient(180deg,#2b2d6e 0%,#3a2f6a 16%,#16437a 52%,#08304f 82%,#06223f 100%);
+  background-color:#06223f;
+}
+.bg{background:none}
+.bg::after{
+  background-image:
+    radial-gradient(circle at 20px 20px,rgba(255,111,97,.10) 2.5px,transparent 3.5px),
+    radial-gradient(circle at 60px 50px,rgba(127,233,255,.09) 2.5px,transparent 3.5px),
+    radial-gradient(circle at 40px 82px,rgba(255,194,74,.08) 2px,transparent 3px);
+  background-size:90px 100px;-webkit-mask-image:none;mask-image:none}
+::selection{background:rgba(255,194,74,.35)}
+
+/* top bar */
+.top{background:linear-gradient(180deg,rgba(30,34,87,.95),rgba(30,34,87,.8));border-bottom:1px solid rgba(255,194,74,.18)}
+.brand b{color:var(--gold2)}
+.theme-btn{background:var(--btn-bg);border-color:var(--btn-bd);color:#f4f1ff}
+.theme-btn.on,.si-go{background:linear-gradient(135deg,var(--gold2),var(--coral));color:#10122e}
+.now-playing-pill,.sound-invite{background:rgba(20,26,70,.94);border-color:rgba(255,194,74,.35)}
+.now-playing-pill button{background:var(--gold2);color:#10122e}
+.si-no{color:#c9d2ec}
+
+/* hero: the lit sign */
+.hero{padding:clamp(26px,6vw,60px) 0 clamp(18px,3vw,28px)}
+.marquee{position:relative;display:inline-block;max-width:100%;
+  padding:clamp(28px,4vw,36px) clamp(18px,5vw,48px) clamp(24px,3.4vw,32px);
+  border-radius:22px;background:var(--panel);border:4px solid var(--gold2);
+  box-shadow:0 0 0 6px var(--panel),0 0 0 9px var(--coral),0 0 60px rgba(255,111,97,.38)}
+.marquee::before,.marquee::after{content:"";position:absolute;left:18px;right:18px;height:8px;
+  background:radial-gradient(circle,#ffe08a 0 2.6px,rgba(255,224,138,.22) 3.2px,transparent 4px) 0 0/22px 8px repeat-x;
+  animation:bulbs 1.1s steps(2) infinite}
+.marquee::before{top:9px}
+.marquee::after{bottom:9px;animation-direction:reverse}
+@keyframes bulbs{to{background-position:22px 0}}
+.hero h1{font-family:var(--sign);font-weight:400;font-size:clamp(30px,8.6vw,92px);line-height:1.02;letter-spacing:.02em;
+  color:#fff;text-shadow:0 0 18px rgba(255,111,97,.55),4px 4px 0 var(--coral)}
+.hero h1 span{display:inline}
+.hero h1 .l2{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;filter:none}
+.marquee .kicker{display:block;border:0;background:none;padding:0;margin:12px 0 0;border-radius:0;
+  font-family:var(--sign);font-weight:400;font-size:clamp(10.5px,2.6vw,15px);letter-spacing:.16em;color:var(--aqua)}
+.lede{color:var(--dim);max-width:560px}
+.facts-row{color:var(--faint)}
+.facts-row li::before{background:var(--gold2)}
+
+/* jump back in */
+.resume-h{color:var(--faint)}
+.chip-link{background:rgba(20,42,85,.85);border-color:rgba(255,194,74,.3)}
+@media (hover:hover){.chip-link:hover{border-color:var(--gold2)}}
+
+/* news ticker */
+.ticker{display:flex;align-items:center;gap:12px;margin:0 0 clamp(26px,4vw,40px);padding:9px 14px;min-height:44px;
+  border-radius:10px;background:var(--tickerbg);border:2px solid var(--btn-bd);overflow:hidden;text-decoration:none;
+  font-family:var(--sign);font-size:13px;letter-spacing:.05em;color:var(--gold2);white-space:nowrap}
+.ticker:focus-visible{outline:3px solid var(--gold2);outline-offset:3px}
+.tk-new{flex:none;color:#10122e;background:var(--gold2);padding:2px 8px;border-radius:4px}
+.tk-view{flex:1;min-width:0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.tk-track{display:inline-flex;animation:tick 34s linear infinite}
+.tk-track span{padding-right:34px}
+.tk-track b{color:var(--coral);font-weight:400;padding-right:34px}
+@media (hover:hover){.ticker:hover .tk-track{animation-play-state:paused}}
+@keyframes tick{to{transform:translateX(-50%)}}
+
+/* section headings */
+.sec-h{flex-wrap:wrap;align-items:center;gap:12px 16px;margin-bottom:18px}
+.sec-h h2{font-family:var(--sign);font-weight:400;font-size:clamp(20px,3vw,26px);letter-spacing:.02em;text-transform:none;color:#fff}
+#allCount{font-family:var(--sans);font-size:14px;font-weight:600;letter-spacing:0;color:var(--faint)}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.flt{font:700 13px var(--sans);min-height:44px;padding:0 16px;border-radius:10px;cursor:pointer;
+  border:2px solid var(--btn-bd);background:var(--btn-bg);color:#f4f1ff}
+.flt.on{background:var(--gold2);border-color:var(--gold2);color:#10122e}
+.flt:focus-visible{outline:3px solid var(--aqua);outline-offset:2px}
+@media (hover:hover){.flt:not(.on):hover{border-color:var(--gold2)}}
+
+/* featured: two cabinets */
+.featured-slot{display:grid;grid-template-columns:minmax(0,1fr);gap:clamp(18px,2.4vw,26px);margin-bottom:clamp(40px,6vw,60px)}
+@media (min-width:980px){.featured-slot{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);align-items:stretch}}
+@media (min-width:860px){
+  .card.is-featured{flex-direction:column;min-height:0}
+  .card.is-featured .pv-wrap{aspect-ratio:16/9;flex:none;min-height:0}
+  .card.is-featured .body{flex:1 1 auto;padding:22px 26px 24px}
+  .card--velocity.is-featured{transform:none}
+}
+@media (min-width:980px){
+  .card--jam.is-featured .pv-wrap{aspect-ratio:auto;flex:1 1 auto;min-height:210px}
+  .card--jam.is-featured .body{flex:none}
+}
+
+/* every game is a cabinet: lit name on top, screen in a bezel */
+.card{border-radius:20px 20px 12px 12px}
+.marq{margin:0;padding:9px 12px 8px;text-align:center;font-family:var(--sign);font-weight:400;
+  font-size:clamp(15px,1.8vw,18px);line-height:1.15;letter-spacing:.03em;text-transform:uppercase;
+  color:#10122e;background:var(--acc,#fff)}
+.is-featured .marq{font-size:clamp(19px,2.6vw,26px);padding:12px 14px 11px}
+.card .pv-wrap{margin:12px 12px 0;border:6px solid rgba(4,10,30,.55);border-radius:12px}
+.card .pv-wrap::after{display:none}
+.card .body{padding-top:16px}
+.card:not(.card--velocity):not(.card--jam):not(.card--soon) .tag{color:var(--acc);background:transparent;border:1.5px solid var(--acc)}
+.games{grid-template-columns:minmax(0,1fr)}
+@media (min-width:640px){.games{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (min-width:1000px){.games{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.games .card[hidden]{display:none}
+.card--skyduel{--acc:#ffb347;border:3px solid #ffb347}
+.card--harvest{--acc:#3fe3ff;border:3px solid #3fe3ff}
+.card--timehole{--acc:#c77dff;border:3px solid #c77dff}
+.card--neon{--acc:#7ef9ff;border:3px solid #7ef9ff}
+.card--shaman{--acc:#7fe0ff;border:3px solid #7fe0ff}
+.card--pappies{--acc:#f472b6;border:3px solid #f472b6}
+
+/* Velocity keeps its comic look */
+.card--velocity{--acc:var(--red)}
+.card--velocity .marq{font-family:var(--comic);font-size:clamp(26px,3.8vw,40px);letter-spacing:.06em;text-transform:none;
+  color:#fff;background:var(--red);border-bottom:3px solid var(--ink);-webkit-text-stroke:1px var(--ink);text-shadow:3px 3px 0 var(--ink)}
+.marq small{display:block;font-size:.55em;letter-spacing:.08em;margin-top:2px}
+.card--velocity .pv-wrap{border:8px solid #2a2230;border-bottom:8px solid #2a2230}
+@media (min-width:860px){.card--velocity.is-featured .pv-wrap{border:8px solid #2a2230}}
+
+/* Just a Moment!: cartoon cream and ink, like the game */
+.card--jam{--acc:#ff5d8f;background:#fff7e6;color:#2b2238;border:3px solid #2b2238;box-shadow:6px 6px 0 #2b2238;
+  --chip-fg:#2b2238;--chip-bg:#fff;--chip-bd:#2b2238;--save:#0f7a70}
+.card--jam .marq{background:#ff5d8f;color:#fff;border-bottom:3px solid #2b2238;text-shadow:2px 2px 0 #2b2238}
+.card--jam .pv-wrap{border:8px solid #2b2238}
+.card--jam .badge{background:#ffd23f;color:#2b2238;border:2px solid #2b2238;box-shadow:2px 2px 0 #2b2238}
+.card--jam .tag{color:#fff;background:#0f8f84;border:2px solid #2b2238;box-shadow:2px 2px 0 #2b2238}
+.card--jam .desc{color:#54475e;font-weight:600}
+.card--jam .facts li{box-shadow:2px 2px 0 #2b2238}
+.card--jam .cta{color:#2b2238;background:linear-gradient(#ffe36e,#ffc21a);border:3px solid #2b2238;border-radius:14px;box-shadow:0 4px 0 #2b2238;
+  font-family:"Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif;font-size:16px;letter-spacing:.01em;text-transform:none}
+@media (hover:hover){.card--jam:hover{transform:translate(-2px,-4px);box-shadow:9px 10px 0 #2b2238}}
+.card--jam:active{transform:translate(2px,2px);box-shadow:3px 3px 0 #2b2238}
+.card--jam.now-playing{outline-color:#ff5d8f}
+
+/* next cabinet: always a full-width banner at the end of the hall */
+.card--soon{border:3px dashed var(--btn-bd);background:rgba(20,42,85,.55)}
+.card--soon .pv-wrap{margin:12px}
+@media (min-width:640px){
+  .card--soon{grid-column:1 / -1;flex-direction:row;min-height:0}
+  .card--soon .pv-wrap{aspect-ratio:auto;width:200px;flex:none}
+  .card--soon .body{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:8px 20px;padding:18px 22px}
+  .card--soon .tag{flex-basis:100%;align-self:flex-start}
+  .card--soon .tag{margin:0}
+  .card--soon .desc{margin:0;flex:1 1 260px}
+  .card--soon .foot{margin:0;padding:0}
+}
+.card--soon .tag{color:var(--aqua);border:1px solid rgba(127,233,255,.35)}
+.card--soon .desc{color:var(--dim)}
+.card--soon .cta{color:var(--faint);border:1.5px solid var(--btn-bd)}
+
+/* what's new */
+.news li.more{display:none}
+.news.open li.more{display:grid}
+.news p{color:#e6eaf8}
+.news-more{margin-top:16px}
+
+/* Gentle Games: a quieter sister site, in its own calm colours */
+.gentle{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 32px;
+  margin:clamp(44px,7vw,72px) 0 0;padding:clamp(22px,3vw,30px) clamp(20px,3vw,34px);
+  border-radius:18px;background:#fff;color:#1b2a41;text-decoration:none;font-family:var(--sans)}
+.gentle:focus-visible{outline:3px solid var(--gold2);outline-offset:4px}
+.gg-txt{flex:1 1 380px;display:block}
+.gg-k{display:block;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#4a5a70}
+.gg-h{display:block;margin:4px 0 8px;font-size:clamp(21px,2.6vw,26px);font-weight:800;line-height:1.25;color:#1f3a5f}
+.gg-d{display:block;font-size:16px;line-height:1.55;color:#4a5a70}
+.gg-cta{flex:none;display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 22px;border-radius:12px;
+  background:#1f3a5f;color:#fff;font-weight:700;font-size:16px}
+@media (hover:hover){.gentle:hover .gg-cta{background:#152a45}}
+
+/* footer */
+.foot-row .sep{color:#6a7bb0}
+.quote{color:var(--faint)}
+.sheet-box{background:#1e2257;border-color:rgba(255,194,74,.3)}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .tk-track{animation:none!important;transform:none!important}
+  .tk-track .tk-dup{display:none}
 }
 </style>
 </head>
@@ -451,9 +646,11 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
 
 <main class="wrap">
   <header class="hero">
-    <div class="kicker"><span class="dot"></span>Free · No download · No sign-up</div>
-    <h1><span class="l1">GAMES</span><span class="l2">BY FC</span></h1>
-    <p class="lede">Feel-good games for your spare five minutes. Grow a tiny tribe, net a golden koi, race through the clouds or make your first million. Pick a cabinet — there's always another round.</p>
+    <div class="marquee">
+      <h1><span class="l1">GAMES</span> <span class="l2">BY FC</span></h1>
+      <p class="kicker">Free · No download · No sign-up</p>
+    </div>
+    <p class="lede">Little games for big grins. Make your first million, survive a day at the hospital, race the rings or raise a tribe.</p>
     <ul class="facts-row">
       <li id="gameCount">Games</li>
       <li>Phone or computer</li>
@@ -466,32 +663,56 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
     <div class="resume-list" id="resumeList"></div>
   </section>
 
+  <a class="ticker" id="ticker" href="#news" aria-label="What's new">
+    <span class="tk-new" aria-hidden="true">New</span>
+    <span class="tk-view" aria-hidden="true"><span class="tk-track" id="tickerTrack"></span></span>
+  </a>
+
   <section aria-labelledby="featH">
-    <div class="sec-h"><h2 id="featH">Featured</h2></div>
+    <h2 id="featH" class="sr">Featured games</h2>
     <div class="featured-slot" id="featured"></div>
   </section>
 
   <section aria-labelledby="allH">
-    <div class="sec-h"><h2 id="allH">All games</h2><span id="allCount"></span></div>
+    <div class="sec-h hall-h">
+      <h2 id="allH">The hall <span id="allCount"></span></h2>
+      <div class="filters" role="group" aria-label="Show games">
+        <button type="button" class="flt on" data-f="all" aria-pressed="true">All</button>
+        <button type="button" class="flt" data-f="quick" aria-pressed="false">Quick 5 minutes</button>
+        <button type="button" class="flt" data-f="long" aria-pressed="false">Longer play</button>
+        <button type="button" class="flt" data-f="phone" aria-pressed="false">Plays on phone</button>
+      </div>
+    </div>
     <div class="games" id="games"></div>
   </section>
 
   <noscript>
     <ul>
       <li><a href="velocity/">Velocity: The ASEAN Hustle</a></li>
-      <li><a href="pappies-monopoly/">Pappies Monopoly</a></li>
-      <li><a href="shaman/">SHAMAN! A Tiny Beginning</a></li>
-      <li><a href="neon-3026/">Neon 3026</a></li>
-      <li><a href="time-hole/">Time Hole</a></li>
-      <li><a href="harvest-tide/">Harvest Tide</a></li>
+      <li><a href="just-a-moment/">Just a Moment!</a></li>
       <li><a href="skyduel/">SkyDuel</a></li>
+      <li><a href="harvest-tide/">Harvest Tide</a></li>
+      <li><a href="time-hole/">Time Hole</a></li>
+      <li><a href="neon-3026/">Neon 3026</a></li>
+      <li><a href="shaman/">SHAMAN! A Tiny Beginning</a></li>
+      <li><a href="pappies-monopoly/">Pappies Monopoly</a></li>
     </ul>
   </noscript>
 
-  <section class="news" aria-labelledby="newsH">
+  <section class="news" id="news" aria-labelledby="newsH">
     <div class="sec-h"><h2 id="newsH">What's new</h2></div>
     <ol id="newsList"></ol>
+    <button type="button" class="flt news-more" id="newsMore" aria-expanded="false">Show more</button>
   </section>
+
+  <a class="gentle" href="https://fran8c.github.io/gentlegames/">
+    <span class="gg-txt">
+      <span class="gg-k">Also by FC</span>
+      <span class="gg-h">Gentle Games · <span lang="zh">温和小游戏</span></span>
+      <span class="gg-d">Calm, unhurried activities to enjoy with older loved ones and the people who care for them. No scores, no timers, in English and <span lang="zh">中文</span>.</span>
+    </span>
+    <span class="gg-cta">Visit Gentle Games <span aria-hidden="true">→</span></span>
+  </a>
 </main>
 
 <footer class="wrap">
@@ -526,68 +747,76 @@ footer.wrap{text-align:center;padding-top:clamp(44px,7vw,72px);padding-bottom:ca
    preview   which animated preview to draw (see PREVIEWS below)
    ========================================================= */
 var GAMES = [
+  /* ---- Featured: Velocity is the main cabinet, Just a Moment! sits beside it ---- */
   {
     id: 'velocity', name: 'Velocity', href: 'velocity/', theme: 'velocity', preview: 'velocity', featured: true,
+    marq: '★ Velocity ★', marqSub: 'The ASEAN Hustle',
     stamp: 'Fiction.',
-    tag: 'Comic · Hustle',
-    title: 'VELOCITY', sub: 'The ASEAN Hustle',
+    tag: 'Build a startup',
+    len: 'long', phone: 'yes',
     desc: 'Pitch investors, build the buzz and take your startup from city to city across ASEAN. Start small, dream big and see how far your hustle can go.',
-    facts: ['Solo', 'Keyboard or tap', 'Phone: hold upright', 'Saves every city'],
-    cta: 'Start the hustle', meta: 'Issue #1'
+    facts: ['Solo', 'Longer play', 'Phone ✓', 'Saves every city'],
+    cta: 'Start the hustle'
   },
   {
-    id: 'skyduel', name: 'SkyDuel', href: 'skyduel/', theme: 'skyduel', preview: 'skyduel',
+    id: 'jam', name: 'Just a Moment!', href: 'just-a-moment/', theme: 'jam', preview: 'jam', featured: true,
+    marq: 'Just a Moment!',
     badge: 'New',
-    tag: 'Arcade · Air racer',
-    titleHTML: '<span class="s1">Sky</span><span class="s2">Duel</span>', title: 'SkyDuel',
-    sub: 'Race the rings',
+    tag: 'Run a hospital',
+    len: 'long', phone: 'small',
+    desc: 'Build a hospital, cure some very strange patients and survive the paperwork.',
+    facts: ['Solo', 'Longer play', 'Best on computer or tablet', 'Saves your hospital'],
+    cta: 'Open the doors'
+  },
+  /* ---- The hall: newest upload first. Add new games at the top of this part. ---- */
+  {
+    id: 'skyduel', name: 'SkyDuel', href: 'skyduel/', theme: 'skyduel', preview: 'skyduel',
+    tag: 'Race the skies',
+    len: 'quick', phone: 'sideways',
     desc: 'Thread glowing rings across Canyon Run, Cloud City and Neon City. Drift, draft and boost past the pack, win the Gold Cup and paint your plane your way.',
-    facts: ['Solo vs AI rivals', 'Race, Cup + Time Trial', 'Phone: hold sideways', 'Garage & paint shop'],
-    cta: 'Take off', meta: '3 tracks'
+    facts: ['Quick 5 minutes', 'Phone: turn sideways', 'Race, Cup + Time Trial'],
+    cta: 'Take off'
   },
   {
     id: 'harvest', name: 'Harvest Tide', href: 'harvest-tide/', theme: 'harvest', preview: 'harvest',
-    tag: 'Arcade · Fish shooter',
-    titleHTML: '<span class="h1">HARVEST</span> <span class="h2">TIDE</span>', title: 'Harvest Tide',
-    sub: 'Aim · Net · Chain · Spin',
-    desc: 'Two bright minutes on a glowing reef. Bounce shots, net whole schools and chain catches into Harvest Fever. Ride the Golden Tide, spin the Golden Koi wheel and win big.',
-    facts: ['Solo', 'Tap to shoot', 'Phone: hold sideways', '2-minute rounds'],
-    cta: 'Cast off', meta: 'Score attack'
-  },
-  {
-    id: 'pappies', name: 'Pappies Monopoly', href: 'pappies-monopoly/', theme: 'pappies', preview: 'pappies',
-    tag: 'Satire · Board game',
-    titleHTML: '<span class="a">PAPPIES</span> <span class="b">MONOPOLY</span>', title: 'Pappies Monopoly',
-    sub: 'Singapore property board',
-    desc: 'Buy your first HDB, grow a property empire and celebrate at the kopitiam. Roll the dice — your lucky break could be one turn away.',
-    facts: ['1–4 players + AI', 'Pass and play', 'Up to 60 rounds'],
-    cta: 'Take a seat', meta: '2026 edition'
-  },
-  {
-    id: 'shaman', name: 'Shaman!', href: 'shaman/', theme: 'shaman', preview: 'shaman',
-    tag: 'Strategy · Survival',
-    title: 'SHAMAN!', sub: 'A tiny beginning',
-    desc: 'Raise huts, welcome new followers and cast spells that shape the land. From a tiny beginning, grow a tribe that thrives.',
-    facts: ['Solo vs 1–3 tribes', 'Touch or mouse', '6 world types'],
-    cta: 'Begin', meta: 'Single player'
-  },
-  {
-    id: 'neon', name: 'Neon 3026', href: 'neon-3026/', theme: 'neon', preview: 'neon',
-    tag: "Arcade · Shoot 'em up",
-    titleHTML: '<span class="n">NEON</span> <span class="y">3026</span>', title: 'Neon 3026',
-    sub: 'Endless waves',
-    desc: 'Chain combos, call in your wingmen and light up the sky. Every run makes you sharper — the Dreadnought is going down.',
-    facts: ['Solo', 'Keyboard or touch', 'Top-10 scoreboard'],
-    cta: 'Insert coin', meta: 'Arcade'
+    tag: 'Net the reef',
+    len: 'quick', phone: 'sideways',
+    desc: 'Two bright minutes on a glowing reef. Bounce shots, net whole schools and chain catches into Harvest Fever. Ride the Golden Tide and spin the Golden Koi wheel.',
+    facts: ['Quick 5 minutes', 'Phone: turn sideways', '2-minute rounds'],
+    cta: 'Cast off'
   },
   {
     id: 'timehole', name: 'Time Hole', href: 'time-hole/', theme: 'timehole', preview: 'timehole',
-    tag: 'Arcade · 3D shooter',
-    titleHTML: '<span class="t1">TIME</span> <span class="t2">HOLE</span>', title: 'Time Hole',
-    sub: "A chrono traveller's run",
+    tag: 'Dash through time',
+    len: 'quick', phone: 'yes',
     desc: 'Dive through time and keep your run alive. Grab the green cells to power up, aim for the Monster\'s red eye and see how far you can fly.',
-    facts: ['Solo', 'Mouse, keys or touch', 'Easy, Hard + tutorial', 'Daily run'],
-    cta: 'Jump in', meta: 'Chrono run'
+    facts: ['Quick 5 minutes', 'Phone ✓', 'Daily run'],
+    cta: 'Jump in'
+  },
+  {
+    id: 'neon', name: 'Neon 3026', href: 'neon-3026/', theme: 'neon', preview: 'neon',
+    tag: 'Blast the waves',
+    len: 'quick', phone: 'yes',
+    desc: 'Chain combos, call in your wingmen and light up the sky. Every run makes you sharper — the Dreadnought is going down.',
+    facts: ['Quick 5 minutes', 'Phone ✓', 'Top-10 scoreboard'],
+    cta: 'Insert coin'
+  },
+  {
+    id: 'shaman', name: 'Shaman!', href: 'shaman/', theme: 'shaman', preview: 'shaman',
+    marq: 'SHAMAN!',
+    tag: 'Grow a tribe',
+    len: 'long', phone: 'yes',
+    desc: 'Raise huts, welcome new followers and cast spells that shape the land. From a tiny beginning, grow a tribe that thrives.',
+    facts: ['Longer play', 'Phone ✓', 'Solo vs 1–3 tribes'],
+    cta: 'Begin'
+  },
+  {
+    id: 'pappies', name: 'Pappies Monopoly', href: 'pappies-monopoly/', theme: 'pappies', preview: 'pappies',
+    tag: 'Buy up Singapore',
+    len: 'long', phone: 'yes',
+    desc: 'Buy your first HDB, grow a property empire and celebrate at the kopitiam. Roll the dice — your lucky break could be one turn away.',
+    facts: ['Longer play', 'Phone ✓', '1–4 players, pass and play'],
+    cta: 'Take a seat'
   }
 ];
 
@@ -600,6 +829,8 @@ var COMING_SOON = {
 
 /* Newest first. */
 var NEWS = [
+  { date: '2026-11-26', html: '<b>Just a Moment! opens its doors.</b> Build your own hospital and survive the paperwork. Best on a computer or tablet.' },
+  { date: '2026-11-26', html: '<b>A fresh look for the arcade.</b> New colours, a lit-up sign, filters to find a quick game, and a “please hold” part for the theme song.' },
   { date: '2026-11-21', html: '<b>SkyDuel takes off.</b> A 3D air race through glowing rings on three tracks. Win the cups, beat your best time and paint your plane in the Garage. Hold your phone sideways.' },
   { date: '2026-11-21', html: '<b>Seven parts now.</b> “Insert Coin” adds a fast racing part for SkyDuel.' },
   { date: '2026-11-20', html: '<b>Harvest Tide update.</b> Rounds now last two minutes, with a Golden Tide halfway through (points ×2), Frenzy schools and new goals to chase.' },
@@ -675,6 +906,18 @@ var PROGRESS = {
     if (best > 0) return { line: 'Your best · ' + fmt(best), resume: 'Best ' + fmt(best) };
     return null;
   },
+  jam: function () {
+    // the game's own save: name, level (0-2 levels, 3 Endless, 4 Sandbox), day, year
+    var d = readJSON('just-a-moment-v2');
+    if (d && d.day) {
+      var lv = d.level, where = lv === 4 ? 'Sandbox' : lv === 3 ? 'Endless Year ' + (d.year || 1) : 'Level ' + ((lv || 0) + 1);
+      var nm = String(d.name || 'Your hospital').slice(0, 24);
+      return { line: 'Saved · ' + nm + ' · ' + where + ', Day ' + d.day, cta: 'Back to work', resume: where + ', Day ' + d.day };
+    }
+    var p = readJSON('just-a-moment-v2-progress');
+    if (p && p.unlocked > 1) return { line: p.unlocked > 3 ? 'Endless mode unlocked' : 'Level ' + p.unlocked + ' unlocked' };
+    return null;
+  },
   neon: function () {
     var best = Math.max(readNum('neon3026_best'), readNum('neon1942_best'));
     if (best > 0) return { line: 'Your best · ' + fmt(best), resume: 'Best ' + fmt(best) };
@@ -682,13 +925,13 @@ var PROGRESS = {
   }
 };
 
-var RESUME_DOT = { velocity: '#fbbf24', pappies: '#ec4899', shaman: '#7fe0ff', neon: '#ff3ec8', timehole: '#3dffa8', harvest: '#FFC93C', skyduel: '#ffb347' };
+var RESUME_DOT = { jam: '#ff5d8f', velocity: '#fbbf24', pappies: '#ec4899', shaman: '#7fe0ff', neon: '#ff3ec8', timehole: '#3dffa8', harvest: '#FFC93C', skyduel: '#ffb347' };
 
 /* ---------- build cards ---------- */
 function cardHTML(g) {
-  var title = g.titleHTML || esc(g.title);
   return '' +
-    '<a class="card card--' + g.theme + (g.featured ? ' is-featured' : '') + '" href="' + g.href + '" data-id="' + g.id + '">' +
+    '<a class="card card--' + g.theme + (g.featured ? ' is-featured' : '') + '" href="' + g.href + '" data-id="' + g.id + '" data-len="' + g.len + '" data-phone="' + g.phone + '">' +
+      '<h3 class="marq">' + esc(g.marq || g.name) + (g.marqSub ? '<small>' + esc(g.marqSub) + '</small>' : '') + '</h3>' +
       '<div class="pv-wrap" aria-hidden="true">' +
         '<canvas class="pv" data-pv="' + g.preview + '"></canvas>' +
         (g.badge ? '<span class="badge">' + esc(g.badge) + '</span>' : '') +
@@ -696,14 +939,11 @@ function cardHTML(g) {
       '</div>' +
       '<div class="body">' +
         '<span class="tag">' + esc(g.tag) + '</span>' +
-        '<h3 class="title">' + title + '</h3>' +
-        (g.sub ? '<p class="subtitle">' + esc(g.sub) + '</p>' : '') +
         '<p class="desc">' + esc(g.desc) + '</p>' +
         '<ul class="facts" aria-label="How it plays">' + g.facts.map(function (f) { return '<li>' + esc(f) + '</li>'; }).join('') + '</ul>' +
         '<p class="save" data-save></p>' +
         '<div class="foot">' +
           '<span class="cta"><span data-cta>' + esc(g.cta) + '</span> <span class="arrow" aria-hidden="true">→</span></span>' +
-          '<span class="meta">' + esc(g.meta || '') + '</span>' +
         '</div>' +
       '</div>' +
     '</a>';
@@ -711,7 +951,7 @@ function cardHTML(g) {
 
 function soonHTML(s) {
   return '' +
-    '<div class="card card--soon' + (s.wide ? ' wide' : '') + '" aria-label="Coming soon">' +
+    '<div class="card card--soon" aria-label="Coming soon">' +
       '<div class="pv-wrap" aria-hidden="true"><span class="soon-q">?</span></div>' +
       '<div class="body">' +
         '<span class="tag">' + esc(s.tag) + '</span>' +
@@ -722,23 +962,63 @@ function soonHTML(s) {
     '</div>';
 }
 
+var NEWS_SHOWN = 3;
+
 function build() {
-  var feat = GAMES.filter(function (g) { return g.featured; })[0];
-  var rest = GAMES.filter(function (g) { return g !== feat; });
+  var feats = GAMES.filter(function (g) { return g.featured; });
+  var rest = GAMES.filter(function (g) { return !g.featured; });
   var fEl = $('#featured');
-  if (feat) fEl.innerHTML = cardHTML(feat);
+  if (feats.length) fEl.innerHTML = feats.map(cardHTML).join('');
   else fEl.parentNode.style.display = 'none';
-  $('#games').innerHTML = rest.map(cardHTML).join('') + (COMING_SOON ? soonHTML(Object.assign({ wide: rest.length % 2 === 0 }, COMING_SOON)) : '');
+  $('#games').innerHTML = rest.map(cardHTML).join('') + (COMING_SOON ? soonHTML(COMING_SOON) : '');
 
   var n = GAMES.length;
   $('#gameCount').textContent = n + (n === 1 ? ' game' : ' games');
-  $('#allCount').textContent = feat ? (rest.length + ' more') : '';
+  hallCount();
   document.title = 'Games by FC — The Arcade';
 
-  $('#newsList').innerHTML = NEWS.map(function (it) {
-    return '<li><time datetime="' + it.date + '">' + niceDate(it.date) + '</time><p>' + it.html + '</p></li>';
+  $('#newsList').innerHTML = NEWS.map(function (it, i) {
+    return '<li' + (i >= NEWS_SHOWN ? ' class="more"' : '') + '><time datetime="' + it.date + '">' + niceDate(it.date) + '</time><p>' + it.html + '</p></li>';
   }).join('');
+  var more = $('#newsMore');
+  if (NEWS.length <= NEWS_SHOWN) more.style.display = 'none';
+  more.addEventListener('click', function () {
+    var open = $('#news').classList.toggle('open');
+    more.textContent = open ? 'Show less' : 'Show more';
+    more.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
+
+  // ticker: the latest headlines, written twice so the loop is seamless
+  var heads = NEWS.slice(0, 3).map(function (it) {
+    var m = /<b>(.*?)<\/b>/.exec(it.html);
+    return (m ? m[1] : it.html).replace(/<[^>]+>/g, '').replace(/\.$/, '');
+  });
+  var line = heads.map(function (h) { return '<span>' + esc(h) + '</span><b>★</b>'; }).join('');
+  $('#tickerTrack').innerHTML = '<span class="tk-one">' + line + '</span><span class="tk-dup">' + line + '</span>';
 }
+
+function hallCount() {
+  var cards = document.querySelectorAll('#games .card[data-id]');
+  var shown = 0;
+  cards.forEach(function (c) { if (!c.hidden) shown++; });
+  var on = document.querySelector('.flt.on'), all = !on || on.dataset.f === 'all';
+  $('#allCount').textContent = '· ' + shown + (all ? ' more cabinets' : (shown === 1 ? ' cabinet' : ' cabinets'));
+}
+
+/* hall filters */
+document.addEventListener('click', function (e) {
+  var b = e.target.closest && e.target.closest('.flt[data-f]');
+  if (!b) return;
+  var f = b.dataset.f;
+  document.querySelectorAll('.flt[data-f]').forEach(function (x) { var on = x === b; x.classList.toggle('on', on); x.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  document.querySelectorAll('#games .card[data-id]').forEach(function (c) {
+    var ok = f === 'all' || (f === 'quick' && c.dataset.len === 'quick') || (f === 'long' && c.dataset.len === 'long') ||
+      (f === 'phone' && (c.dataset.phone === 'yes' || c.dataset.phone === 'sideways'));
+    c.hidden = !ok;
+  });
+  hallCount();
+  window.dispatchEvent(new Event('resize'));
+});
 
 /* Fill in saved progress. Runs again when you come back from a game. */
 function refreshProgress() {
@@ -785,6 +1065,116 @@ var TAU = Math.PI * 2;
 function rnd(a, b) { return a + Math.random() * (b - a); }
 
 var PREVIEWS = {
+
+  /* Just a Moment!: the waiting room, drawn with the game's own pictures (in previews/just-a-moment.json).
+     Patients queue for reception, the board counts up, the receptionist keeps them waiting. */
+  jam: (function () {
+    var IMG = null, PICS = 'previews/just-a-moment.json';
+    var PEOPLE = ['patient-1', 'patient-2', 'patient-3', 'patient-4', 'patient-5', 'patient-6'];
+    var LINES = ['Just a moment!', 'Take a number.', 'Form 7B, please.', 'Next!', 'Please hold…', 'Stamp first.'];
+    var SHIRT = ['#e0393e', '#ffffff', '#ffd23f', '#2ec4b6', '#ff5d8f', '#7ad3ff'];
+    function load() {
+      IMG = {};
+      var want = [];
+      function add(k, src) { want.push([k, src]); }
+      add('floor', 'tiles/floor-3.png'); add('wall', 'tiles/wall-in-window.png');
+      add('desk', 'furniture/reception-desk.png'); add('rec', 'people/receptionist/sit.png');
+      add('ticket', 'furniture/ticket-machine.png'); add('plant', 'furniture/plant.png'); add('bench', 'furniture/bench.png');
+      PEOPLE.forEach(function (p) { add(p + 'a', 'people/' + p + '/walk1.png'); add(p + 'b', 'people/' + p + '/walk2.png'); add(p + 's', 'people/' + p + '/stand.png'); });
+      // the pictures come from one small file next to the landing page (copied from the game)
+      fetch(PICS).then(function (r) { return r.json(); }).then(function (d) {
+        var left = 0;
+        function one() { if (--left === 0) window.dispatchEvent(new Event('jampics')); }
+        want.forEach(function (w) { if (d[w[1]]) { left++; var im = new Image(); im.onload = im.onerror = one; im.src = d[w[1]]; IMG[w[0]] = im; } });
+      }).catch(function () {});
+    }
+    function ok(im) { return im && im.complete && im.naturalWidth > 0; }
+    // draw a picture standing on (x, y), hgt tall
+    function pic(c, k, x, y, hgt) {
+      var im = IMG[k]; if (!ok(im)) return false;
+      var wd = hgt * im.naturalWidth / im.naturalHeight;
+      c.drawImage(im, x - wd / 2, y - hgt, wd, hgt); return true;
+    }
+    function bubble(c, x, y, txt, u) {
+      c.font = '700 ' + Math.round(13 * u) + 'px "Comic Sans MS","Chalkboard SE","Trebuchet MS",sans-serif';
+      var tw = c.measureText(txt).width, bw = tw + 18 * u, bh = 26 * u, bx = x - bw / 2, r = 9 * u;
+      c.fillStyle = '#fff'; c.strokeStyle = '#2b2238'; c.lineWidth = 2.5 * u;
+      c.beginPath();
+      c.moveTo(bx + r, y); c.arcTo(bx + bw, y, bx + bw, y + bh, r); c.arcTo(bx + bw, y + bh, bx, y + bh, r);
+      c.lineTo(x + 6 * u, y + bh); c.lineTo(x + 12 * u, y + bh + 9 * u); c.lineTo(x - 2 * u, y + bh);
+      c.arcTo(bx, y + bh, bx, y, r); c.arcTo(bx, y, bx + bw, y, r); c.closePath();
+      c.fill(); c.stroke();
+      c.fillStyle = '#2b2238'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, x, y + bh / 2 + u);
+    }
+    return function (c, w, h, t, s, dt) {
+      if (!IMG) load();
+      dt = Math.min(dt || 0, 0.1);
+      var u = h / 260, wallH = h * 0.44, gy = wallH + (h - wallH) * 0.66, ph = 104 * u;
+      var deskX = w * 0.8, front = deskX - 74 * u, gap = 40 * u;
+      if (!s.init) { s.init = 1; s.q = []; s.spawn = 0.2; s.serve = 0; s.num = 41; s.line = 0; s.n = Math.floor(rnd(0, 6)); s.said = -9; }
+
+      // wall with windows, floor tiles
+      var wi = IMG.wall, fl = IMG.floor;
+      c.fillStyle = '#f6ecd0'; c.fillRect(0, 0, w, wallH);
+      if (ok(wi)) { var ww = wallH * wi.naturalWidth / wi.naturalHeight; for (var x = 0; x < w; x += ww) c.drawImage(wi, x, 0, ww + 0.5, wallH); }
+      c.fillStyle = '#efe3cf'; c.fillRect(0, wallH, w, h - wallH);
+      if (ok(fl)) { var ts = 56 * u; for (var fy = wallH; fy < h; fy += ts) for (var fx = 0; fx < w; fx += ts) c.drawImage(fl, fx, fy, ts + 0.5, ts + 0.5); }
+      c.fillStyle = 'rgba(43,34,56,.12)'; c.fillRect(0, wallH, w, 4 * u);
+
+      // "now serving" board
+      var bw = 118 * u, bh = 40 * u, bx = deskX - bw / 2, by = wallH * 0.16;
+      c.fillStyle = '#2b2238'; c.fillRect(bx, by, bw, bh);
+      c.strokeStyle = '#ffd23f'; c.lineWidth = 2 * u; c.strokeRect(bx + 3 * u, by + 3 * u, bw - 6 * u, bh - 6 * u);
+      c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.fillStyle = '#ffd23f'; c.font = '800 ' + Math.round(8.5 * u) + 'px system-ui,sans-serif'; c.fillText('NOW SERVING', deskX, by + 12 * u);
+      c.fillStyle = '#ff5d8f'; c.font = '900 ' + Math.round(17 * u) + 'px ui-monospace,Menlo,Consolas,monospace';
+      c.fillText('A-' + ('00' + s.num).slice(-3), deskX, by + 28 * u);
+
+      // furniture at the back
+      pic(c, 'bench', w * 0.34, wallH + 36 * u, 66 * u);
+      pic(c, 'ticket', w * 0.06, gy - 6 * u, 92 * u);
+      pic(c, 'plant', w * 0.97, gy - 40 * u, 74 * u);
+
+      // the queue
+      if (s.spawn > 0) s.spawn -= dt;
+      var waiting = s.q.filter(function (p) { return p.st !== 'out'; });
+      if (s.spawn <= 0 && waiting.length < 5) { s.q.push({ k: PEOPLE[s.n++ % PEOPLE.length], x: -30 * u, st: 'in', ph: rnd(0, 2) }); s.spawn = rnd(1.4, 2.8); }
+      waiting.forEach(function (p, i) {
+        var tx = front - i * gap;
+        p.walk = Math.abs(tx - p.x) > 1.5 * u;
+        if (p.walk) p.x += Math.sign(tx - p.x) * Math.min(Math.abs(tx - p.x), 58 * u * dt);
+      });
+      var head = waiting[0];
+      if (head && !head.walk && Math.abs(head.x - front) < 2 * u) {
+        s.serve += dt;
+        if (s.serve > 2.6) { head.st = 'out'; s.num++; s.line = (s.line + 1) % LINES.length; s.serve = 0; s.said = t; }
+      }
+      s.q.forEach(function (p) { if (p.st === 'out') { p.x += 74 * u * dt; p.walk = true; } });
+      s.q = s.q.filter(function (p) { return p.x < w + 60 * u; });
+
+      // receptionist behind the desk
+      pic(c, 'rec', deskX + 14 * u, gy - 22 * u, 92 * u);
+      pic(c, 'desk', deskX + 4 * u, gy + 4 * u, 84 * u);
+
+      // people: waiting line, then anyone leaving walks in front
+      function person(p) {
+        var k = p.k + (p.walk ? (Math.floor(t * 5 + p.ph) % 2 ? 'a' : 'b') : 's');
+        var bob = p.walk ? Math.abs(Math.sin(t * 10 + p.ph)) * 2 * u : 0;
+        var y = p.st === 'out' ? gy + 18 * u : gy;
+        if (!pic(c, k, p.x, y - bob, ph)) {
+          c.fillStyle = SHIRT[PEOPLE.indexOf(p.k) % SHIRT.length]; c.strokeStyle = '#2b2238'; c.lineWidth = 2 * u;
+          c.beginPath(); c.arc(p.x, y - ph * 0.8, 13 * u, 0, TAU); c.fill(); c.stroke();
+          c.fillRect(p.x - 12 * u, y - ph * 0.62, 24 * u, ph * 0.62);
+        }
+      }
+      s.q.filter(function (p) { return p.st !== 'out'; }).forEach(person);
+      s.q.filter(function (p) { return p.st === 'out'; }).forEach(person);
+
+      // the receptionist talks: right after serving, then every so often
+      var talk = (t - s.said < 1.8) || (head && !head.walk && s.serve > 0.4 && s.serve < 1.6);
+      if (talk) bubble(c, deskX - 6 * u, gy - 150 * u, LINES[s.line], u);
+    };
+  })(),
 
   /* Velocity: comic street, the CEO walks, investors pay up */
   velocity: function (c, w, h, t, s) {
@@ -1373,7 +1763,10 @@ var PREVIEWS = {
   if (reduce) {
     // one still frame per preview
     items.forEach(function (it) { it.t = 2.2; for (var i = 0; i < 40; i++) { it.t += .05; draw(it, .05); } });
-    window.addEventListener('resize', function () { items.forEach(function (it) { it.st = {}; it.t = 2.2; for (var i = 0; i < 40; i++) { it.t += .05; draw(it, .05); } }); });
+    function still() { items.forEach(function (it) { it.st = {}; it.t = 2.2; for (var i = 0; i < 40; i++) { it.t += .05; draw(it, .05); } }); }
+    window.addEventListener('resize', still);
+    window.addEventListener('load', still);
+    window.addEventListener('jampics', still);   // redraw once the Just a Moment! pictures arrive
     return;
   }
   var last = performance.now(), acc = 0;
@@ -1412,12 +1805,13 @@ var PREVIEWS = {
 /* =========================================================
    THEME SONG — "Insert Coin", the Games by FC theme.
    Made live in the browser, nothing to download.
-   One tune, five parts: each part plays it in the style of a game.
+   One tune, eight parts: each part plays it in the style of a game.
    ========================================================= */
 var Theme = (function () {
   var BPM = 112, STEP = 60 / BPM / 4, BARS = 8, PART = BARS * 16;
   var PARTS = [
     { id: 'velocity', name: 'Velocity' },
+    { id: 'jam',      name: 'Just a Moment!' },
     { id: 'pappies',  name: 'Pappies Monopoly' },
     { id: 'shaman',   name: 'Shaman!' },
     { id: 'neon',     name: 'Neon 3026' },
@@ -1512,7 +1906,7 @@ var Theme = (function () {
     var root = ROOT[ch], tri = TRIAD[ch], half = Math.floor((ls % 64) / 32), hs = ls % 32;
     var id = PARTS[part].id, last = bar === BARS - 1;
 
-    if (ls === 0 && id !== 'timehole' && id !== 'harvest') crash(t);
+    if (ls === 0 && id !== 'timehole' && id !== 'harvest' && id !== 'jam') crash(t);
     if (last && pos === 0 && id !== 'pappies') whoosh(t, STEP * 16);
 
     // the hook: bars 3-8 of each part (bars 1-2 are the groove settling in)
@@ -1562,6 +1956,23 @@ var Theme = (function () {
       if (pos === 0) tri.forEach(function (n, j) { tone(mtof(n), t, STEP * 16, 'sawtooth', 0.016, { atk: 0.5, hold: 0.6, lp: 300 + bar * 180, lpTo: 900 + bar * 260, detune: j * 6 - 6 }); });
       if (pos % 2 === 0) tone(mtof(tri[(pos / 2 + bar) % 3] + 24), t, STEP * 1.2, 'triangle', 0.02, { echo: 0.5 });
       if (lead) { tone(mtof(lead[1]), t, STEP * lead[2] * 1.3, 'sine', 0.08, { echo: 0.45, atk: 0.02 }); tone(mtof(lead[1] + 12), t, STEP * lead[2], 'triangle', 0.015, { echo: 0.4 }); }
+    }
+    else if (id === 'jam') {                       // just a moment!: "please hold" phone-line bossa
+      var bs = (pos % 4 === 2) ? STEP * 0.18 : 0;
+      if (ls === 0) {                              // keypad beep-beep before the hold music starts
+        tone(1209, t, 0.09, 'sine', 0.03); tone(697, t, 0.09, 'sine', 0.03);
+        tone(1336, t + 0.15, 0.09, 'sine', 0.03); tone(770, t + 0.15, 0.09, 'sine', 0.03);
+      }
+      if (pos === 0 || pos === 8) kick(t, 0.24);
+      if (pos === 0 || pos === 3 || pos === 6 || pos === 10 || pos === 12) rim(t);   // bossa clave
+      shaker(t + bs, pos % 2 ? 0.03 : 0.016);
+      if (pos === 0 || pos === 3 || pos === 8 || pos === 11) tone(mtof(root + (pos === 3 || pos === 11 ? 7 : 0)), t, STEP * 2.6, 'triangle', 0.15, { lp: 800 });
+      if (pos === 2 || pos === 6 || pos === 10 || pos === 14) tri.concat([SEVENTH[ch]]).forEach(function (n) { tone(mtof(n), t + bs, STEP * 1.5, 'sine', 0.02, { vib: 1 }); });
+      if (lead) {                                  // a thin, slightly wobbly "on hold" melody
+        var hf = mtof(lead[1]);
+        tone(hf, t, STEP * lead[2] * 1.05, 'triangle', 0.06, { lp: 2400, echo: 0.2, vib: 1 });
+        tone(hf * 2, t, STEP * lead[2] * 0.6, 'sine', 0.012);
+      }
     }
     else if (id === 'skyduel') {                   // skyduel: fast racing drive, sixteenths and a soaring lead
       if (pos % 4 === 0) kick(t, 0.55);

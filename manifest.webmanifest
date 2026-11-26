@@ -1,13 +1,13 @@
 {
   "name": "Games by FC",
   "short_name": "Games by FC",
-  "description": "Free browser games by FC: Velocity, SkyDuel, Harvest Tide, Pappies Monopoly, Shaman!, Neon 3026 and Time Hole.",
+  "description": "Free browser games by FC: Velocity, Just a Moment!, SkyDuel, Harvest Tide, Time Hole, Neon 3026, Shaman! and Pappies Monopoly.",
   "id": "./",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#05060f",
-  "theme_color": "#05060f",
+  "background_color": "#1e2257",
+  "theme_color": "#2b2d6e",
   "icons": [
     {
       "src": "icons/icon-192.png",
@@ -34,6 +34,10 @@
       "url": "velocity/"
     },
     {
+      "name": "Just a Moment!",
+      "url": "just-a-moment/"
+    },
+    {
       "name": "SkyDuel",
       "url": "skyduel/"
     },
@@ -46,16 +50,16 @@
       "url": "time-hole/"
     },
     {
-      "name": "Pappies Monopoly",
-      "url": "pappies-monopoly/"
+      "name": "Neon 3026",
+      "url": "neon-3026/"
     },
     {
       "name": "Shaman!",
       "url": "shaman/"
     },
     {
-      "name": "Neon 3026",
-      "url": "neon-3026/"
+      "name": "Pappies Monopoly",
+      "url": "pappies-monopoly/"
     }
   ]
 }

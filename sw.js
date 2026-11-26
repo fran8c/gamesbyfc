@@ -4,7 +4,7 @@
    Everything else (icons, fonts): use the saved copy, refresh in the background.
    When you add a game, add its folder to PAGES and bump VERSION. */
 
-var VERSION = 'gbfc-v4';
+var VERSION = 'gbfc-v5';
 var PAGES = [
   './',
   './velocity/',
@@ -14,13 +14,15 @@ var PAGES = [
   './time-hole/',
   './harvest-tide/',
   './skyduel/'
+  // just-a-moment/ has its own offline worker (and is 3 MB), so it isn't pre-saved here
 ];
 var ASSETS = [
   './manifest.webmanifest',
   './favicon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/apple-touch-icon.png'
+  './icons/apple-touch-icon.png',
+  './previews/just-a-moment.json'
 ];
 
 self.addEventListener('install', function (e) {
