@@ -5,6 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="theme-color" content="#06223F">
 <title>Harvest Tide</title>
+<!-- share info (Games by FC) -->
+<meta name="description" content="Two bright minutes on a glowing reef. Net whole schools, ride the Golden Tide and spin the Golden Koi wheel. Free to play in your browser, by Games by FC.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Games by FC">
+<meta property="og:title" content="Harvest Tide — Games by FC">
+<meta property="og:description" content="Two bright minutes on a glowing reef. Net whole schools, ride the Golden Tide and spin the Golden Koi wheel. Free to play in your browser, by Games by FC.">
+<meta property="og:url" content="https://fran8c.github.io/gamesbyfc/harvest-tide/">
+<meta property="og:image" content="https://fran8c.github.io/gamesbyfc/harvest-tide/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+
 <!-- Games by FC: icons, install, offline -->
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -415,7 +427,11 @@ function loadArt(base = '') {
   const jobs = Object.entries(ART_FILES).map(([key, path]) => new Promise(resolve => {
     const img = new Image();
     const embedded = typeof window !== 'undefined' && window.HT_EMBED && window.HT_EMBED[path];
-    if (embedded) img.src = embedded; else img.src = base + path;
+    // Games by FC: the live site has no assets/ folder yet, so only use pictures built into the page.
+    // (To use painted art later, upload the assets/ folder and set HT_USE_ART_FOLDER = true.)
+    if (embedded) img.src = embedded;
+    else if (typeof window !== 'undefined' && window.HT_USE_ART_FOLDER) img.src = base + path;
+    else return resolve();
     img.onload = () => { ART[key] = key === 'background' ? img : (trim(img) || img); resolve(); };
     img.onerror = () => resolve();
   }));
